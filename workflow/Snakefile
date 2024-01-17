@@ -17,8 +17,7 @@ RESULTS_GENOMES = f"{RESULTS}/genomes"
 
 rule all:
     input:
-        [f"{RESULTS_GENOMES}/{genome}/{genome}.faa" for genome in GENOMES],
-        [f"{RESULTS_GENOMES}/{genome}/{genome}.gff" for genome in GENOMES],
+        [f"{RESULTS_GENOMES}/{genome}/blastp.tsv" for genome in GENOMES],
         # not sold on the snakemake.io.expand
 
 
@@ -40,12 +39,16 @@ rule blastp:
         faa=rules.download_genome.output.faa,
         queries=f"{INPUT_GENES}",
     output:
-        tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}/blastp.tsv",
+        tsv=f"{RESULTS_GENOMES}/{{genome}}/blastp.tsv",
     params:
-        db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}/diamond_DB",
+        db=f"{RESULTS_GENOMES}/{{genome}}/diamond_DB",
+        tsv_format="6 qseqid sseqid pident qcovhsp scovhsp evalue"
     shell:
         """
         diamond makedb --in {input.faa} -d {params.db}
-        diamond blastp -d {params.db} -o {output.tsv}
+        diamond blastp --header --outfmt {params.tsv_format}\
+            -o {output.tsv}\
+            -d {params.db}\
+            -q {input.queries}
         """
 
