@@ -1,0 +1,150 @@
+configfile: "config/config.yaml"
+
+INPUT_GENOMES = "input_genomes.txt"
+INPUT_GENES = "input_genes.faa"
+
+
+with open(INPUT_GENOMES, "r") as f:
+    GENOMES = list()
+    for line in f:
+        GENOMES.append(line.strip())
+
+print(GENOMES)
+
+
+RESULTS="results"
+RESULTS_GENOMES=f"{RESULTS}/genomes"
+
+
+rule all:
+    input:
+        [ f"{RESULTS_GENOMES}/{genome}/{genome}.faa" for genome in GENOMES ],
+        [ f"{RESULTS_GENOMES}/{genome}/{genome}.gff" for genome in GENOMES ],
+
+
+rule download_genomes:
+    output:
+        faa=f"{RESULTS_GENOMES}/{{GENOME}}/{{GENOME}}.faa",
+        gff=f"{RESULTS_GENOMES}/{{GENOME}}/{{GENOME}}.gff",
+    conda:
+        "envs/ncbi_datasets.yaml"
+    shell:
+        """
+        mkdir -p {RESULTS_GENOMES}/{wildcards.GENOME}
+        workflow/scripts/download_genome.py --include protein gff3 --out-dir {RESULTS_GENOMES}/{wildcards.GENOME} -- {wildcards.GENOME}
+        """
+
+
+
+
+# rule index_reference:
+#     input:
+#         fna=rules.unzip_reference.output.fna,
+#     output:
+#         indexes=multiext(
+#             f"{RESULTS_DIR_REFERENCE}/{ID}",
+#             ".1.bt2",
+#             ".2.bt2",
+#             ".3.bt2",
+#             ".4.bt2",
+#             ".rev.1.bt2",
+#             ".rev.2.bt2",
+#         ),
+#     params:
+#         indexes_basename=f"{RESULTS_DIR_REFERENCE}/{ID}",
+#     threads: BOWTIE2_THREADS
+#     conda:
+#         "envs/bowtie2.yaml"
+#     shell:
+#         """
+#         bowtie2-build --threads {threads} {input.fna} {params.indexes_basename}
+#         """
+
+
+# rule align:
+#     input:
+#         fq_forward=lambda w: FORWARDS[NAMES.index(w.name)],
+#         fq_reverse=lambda w: REVERSES[NAMES.index(w.name)],
+#         indexes=rules.index_reference.output.indexes,
+#     output:
+#         sam=f"{RESULTS_DIR_ALIGN}/{{name}}.sam",
+#     params:
+#         indexes_basename=f"{RESULTS_DIR_REFERENCE}/{ID}",
+#     threads: BOWTIE2_THREADS
+#     conda:
+#         "envs/bowtie2.yaml"
+#     shell:
+#         """
+#         bowtie2 -p {threads} -x {params.indexes_basename} -1 {input.fq_forward} -2 {input.fq_reverse} -S {output.sam}
+#         """
+
+
+# rule get_bam:
+#     input:
+#         sam=rules.align.output.sam,
+#     output:
+#         bam=f"{RESULTS_DIR_ALIGN}/{{name}}.bam",
+#     conda:
+#         "envs/samtools.yaml"
+#     shell:
+#         """
+#         samtools view -S -b {input.sam} >| {output.bam}
+#         """
+
+
+# rule sort_bam:
+#     input:
+#         bam=rules.get_bam.output.bam,
+#     output:
+#         sbam=f"{RESULTS_DIR_ALIGN}/{{name}}.sorted.bam",
+#     conda:
+#         "envs/samtools.yaml"
+#     shell:
+#         """
+#         samtools sort {input.bam} -o {output.sbam}
+#         """
+
+
+# rule index_bam:
+#     input:
+#         sbam=rules.sort_bam.output.sbam,
+#     output:
+#         bai=f"{RESULTS_DIR_ALIGN}/{{name}}.sorted.bam.bai",
+#     conda:
+#         "envs/samtools.yaml"
+#     shell:
+#         """
+#         samtools index {input.sbam} -o {output.bai}
+#         """
+
+
+# rule get_mpileup:
+#     input:
+#         fna=rules.unzip_reference.output.fna,
+#         sbam=rules.sort_bam.output.sbam,
+#     output:
+#         mpileup=f"{RESULTS_DIR_ALIGN}/{{name}}.mpileup",
+#     conda:
+#         "envs/samtools.yaml"
+#     shell:
+#         """
+#         samtools mpileup -f {input.fna} {input.sbam} -o {output.mpileup}
+#         """
+
+
+# rule call_variants:
+#     input:
+#         mpileup=rules.get_mpileup.output.mpileup,
+#     output:
+#         tsv=f"{RESULTS_DIR}/{{name}}.varscan.tsv",
+#     log:
+#         f"{RESULTS_DIR}/{{name}}.varscan.log",
+#     params:
+#         pval=PVAL,
+#         freq=FREQ,
+#     conda:
+#         "envs/varscan.yaml"
+#     shell:
+#         """
+#         varscan pileup2snp {input.mpileup} --min-var-freq {params.freq} --p-value {params.pval} >| {output.tsv} 2>| {log}
+#         """
