@@ -9,8 +9,6 @@ with open(INPUT_GENOMES, "r") as f:
     for line in f:
         GENOMES.append(line.strip())
 
-print(GENOMES)
-
 
 RESULTS="results"
 RESULTS_GENOMES=f"{RESULTS}/genomes"
@@ -20,9 +18,9 @@ rule all:
     input:
         [ f"{RESULTS_GENOMES}/{genome}/{genome}.faa" for genome in GENOMES ],
         [ f"{RESULTS_GENOMES}/{genome}/{genome}.gff" for genome in GENOMES ],
+        # not sold on the snakemake.io.expand
 
-
-rule download_genomes:
+rule download_genome:
     output:
         faa=f"{RESULTS_GENOMES}/{{GENOME}}/{{GENOME}}.faa",
         gff=f"{RESULTS_GENOMES}/{{GENOME}}/{{GENOME}}.gff",
@@ -35,30 +33,19 @@ rule download_genomes:
         """
 
 
-
-
-# rule index_reference:
-#     input:
-#         fna=rules.unzip_reference.output.fna,
-#     output:
-#         indexes=multiext(
-#             f"{RESULTS_DIR_REFERENCE}/{ID}",
-#             ".1.bt2",
-#             ".2.bt2",
-#             ".3.bt2",
-#             ".4.bt2",
-#             ".rev.1.bt2",
-#             ".rev.2.bt2",
-#         ),
-#     params:
-#         indexes_basename=f"{RESULTS_DIR_REFERENCE}/{ID}",
-#     threads: BOWTIE2_THREADS
-#     conda:
-#         "envs/bowtie2.yaml"
-#     shell:
-#         """
-#         bowtie2-build --threads {threads} {input.fna} {params.indexes_basename}
-#         """
+rule blastp:
+    input:
+        faa=rules.download_genome.output.faa,
+        queries=f"{INPUT_GENES}",
+    output:
+        tsv=f"{RESULTS_GENOMES}/{{GENOME}}/{{GENOME}}/blastp.tsv",
+    params:
+        db=f"{RESULTS_GENOMES}/{{GENOME}}/{{GENOME}}/diamond_DB",
+    shell:
+        """
+        diamond makedb --in {input.faa} -d {params.db}
+        diamond blastp -d {params.db} -o {output.tsv}
+        """
 
 
 # rule align:
