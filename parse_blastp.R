@@ -5,8 +5,8 @@ library(Rgff)
 GFF <- "/home/ebecerra/2-projects/viuva/results/genomes/GCA_000743215.1/GCA_000743215.1.gff"
 # GFF quality
 Rgff::check_gff(GFF)
-Rgff::gff_stats(GFF)
-x <- Rgff::get_features(GFF)
+# Rgff::gff_stats(GFF)
+# Rgff::get_features(GFF)
 
 BLASTP <- "/home/ebecerra/2-projects/viuva/results/genomes/GCA_000743215.1/blastp.tsv"
 HEADER <- c("QueryID", "SubjectID", "PercentageIdentity", "QueryCoverage", "SubjectCoverage", "EValue")
@@ -33,6 +33,21 @@ gff <- segmenTools::gff2tab(GFF) |>
     \(x) !(all(is.na(x)) | all(x == ""))
   }) # exclude empty cols
 
+# definition of neighbor
+gff <- gff |>
+  arrange(start) |>
+  mutate(order = 1:nrow(gff))
+
+
 # some don't have them annotated, GenBank
+# with Rgff, check if they have pseudogenes?
 # gff <- gff |>
 # filter(is.na(pseudo)) # exclude pseudogenes
+
+blastp <- bind_rows(blastp, blastp)
+queries <- group_split(blastp, QueryID)
+
+gene1 <- gff |>
+  filter(protein_id %in% queries[[1]]$SubjectID)
+gene2 <- gff |>
+  filter(protein_id %in% queries[[2]]$SubjectID)
