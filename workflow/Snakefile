@@ -17,7 +17,7 @@ RESULTS_GENOMES = f"{RESULTS}/genomes"
 
 rule all:
     input:
-        [f"{RESULTS_GENOMES}/{genome}/blastp.tsv" for genome in GENOMES],
+        [f"{RESULTS_GENOMES}/{genome}/distances.tsv" for genome in GENOMES],
         # not sold on the snakemake.io.expand
 
 
@@ -52,3 +52,14 @@ rule blastp:
             -q {input.queries}
         """
 
+
+rule get_distances:
+    input:
+        tsv=rules.blastp.output.tsv,
+        gff=rules.download_genome.output.gff,
+    output:
+        distances=f"{RESULTS_GENOMES}/{{genome}}/distances.tsv",
+    shell:
+        """
+        workflow/scripts/parse_blastp.R {input} {output}
+        """

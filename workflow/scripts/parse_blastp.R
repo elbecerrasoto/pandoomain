@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/Rscript
 library(tidyverse)
 library(stringr)
 library(segmenTools)
@@ -25,6 +25,11 @@ get_genome <- function(path) {
   str_replace(path, ".*(GC[FA]_[0-9]+\\.[0-9])\\.gff+", "\\1")
 }
 
+graceful_exit <- function() {
+  write_tsv(tibble(), OUT)
+  quit(status = 0)
+}
+
 GENOME <- get_genome(GFF)
 
 blastp <- read_tsv(BLASTP, col_names = HEADER, comment = "#", )
@@ -36,6 +41,9 @@ blastp <- blastp |>
     SubjectCoverage >= SCOVERAGE,
     EValue <= EVAL
   )
+
+if (nrow(blastp) < 2) graceful_exit()
+
 
 gff <- segmenTools::gff2tab(GFF) |>
   tibble() |>
@@ -50,6 +58,8 @@ gff <- gff |>
   mutate(order = 1:nrow(gff))
 
 queries <- group_split(blastp, QueryID)
+
+if (length(queries) < 2) graceful_exit()
 
 genes_q1 <- gff |>
   filter(protein_id %in% queries[[1]]$SubjectID)
