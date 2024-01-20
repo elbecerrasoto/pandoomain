@@ -1,5 +1,6 @@
 configfile: "config/config.yaml"
-
+wildcard_constraints:
+    genome="GC[AF]_\d+\.\d"
 
 INPUT_GENOMES = "input_genomes.txt"
 INPUT_GENES = "input_genes.faa"
@@ -17,8 +18,7 @@ RESULTS_GENOMES = f"{RESULTS}/genomes"
 
 rule all:
     input:
-        [f"{RESULTS_GENOMES}/{genome}/distances.tsv" for genome in GENOMES],
-        # not sold on the snakemake.io.expand
+        f"{RESULTS}/all_distances.tsv",
 
 
 rule download_genome:
@@ -62,4 +62,16 @@ rule get_distances:
     shell:
         """
         workflow/scripts/parse_blastp.R {input} {output}
+        """
+
+
+rule join_distances:
+    input:
+        [f"{RESULTS_GENOMES}/{genome}/distances.tsv" for genome in GENOMES],
+    output:
+        f"{RESULTS}/all_distances.tsv",
+    shell:
+        """
+        fd -I 'distances.tsv' '{RESULTS_GENOMES}' | xargs cat >| {output}
+        sed -i $'1i genome\tywqJ\tywqL\tdistance\tgene_count\tsame_strand\tywqJ_first\tcontig\trefseq' {output}
         """
