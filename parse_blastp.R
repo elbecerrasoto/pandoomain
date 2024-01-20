@@ -6,7 +6,11 @@ library(Rgff)
 
 args <- commandArgs(trailingOnly = TRUE)
 
-BLASTP <- "/home/ebecerra/2-projects/viuva/results/genomes/GCA_000743215.1/blastp.tsv" # args[1]
+print(args)
+
+OUT <- args[3]
+
+BLASTP <- args[1]
 HEADER <- c("QueryID", "SubjectID", "PercentageIdentity", "QueryCoverage", "SubjectCoverage", "EValue")
 
 IDENTITY <- 30
@@ -14,7 +18,7 @@ QCOVERAGE <- 60
 SCOVERAGE <- 60
 EVAL <- 0.05
 
-GFF <- "/home/ebecerra/2-projects/viuva/results/genomes/GCA_000743215.1/GCA_000743215.1.gff" # args[2]
+GFF <- args[2]
 Rgff::check_gff(GFF)
 
 get_genome <- function(path) {
@@ -52,7 +56,6 @@ genes_q1 <- gff |>
 genes_q2 <- gff |>
   filter(protein_id %in% queries[[2]]$SubjectID)
 
-
 calc <- function(gene1, gene2) {
   contig1 <- gene1$seqname
   contig2 <- gene2$seqname
@@ -71,23 +74,25 @@ calc <- function(gene1, gene2) {
       distance = distance,
       gene_count = gene_count,
       same_strand = same_strand,
-      gene1_first = gene1_first
+      gene1_first = gene1_first,
+      contig = contig1
     ))
   } else {
     return(list())
   }
 }
 
-g1 <- genes_q1[1, ]
-g2 <- genes_q2[1, ]
+lresults <- vector("list", length = nrow(genes_q1) * nrow(genes_q2))
+n <- 0
 
-calc(g1, g2)
+for (i in seq_len(nrow(genes_q1))) {
+  for (j in seq_len(nrow(genes_q2))) {
+    n <- n + 1
+    gene1 <- genes_q1[i, ]
+    gene2 <- genes_q2[j, ]
+    lresults[[n]] <- calc(gene1, gene2)
+  }
+}
 
-# for (i in seq_len(nrow(genes_q1))){
-#   for (j in seq_len(nrow(genes_q2))){
-#     # same contig
-#     if (identical(genes_q1[i,]$seqname, genes_q2[j,]$seqname)){
-#
-#     }
-#   }
-# }
+results <- bind_rows(map(lresults, as_tibble))
+write_tsv(results, OUT, col_names = FALSE)
