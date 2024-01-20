@@ -25,12 +25,15 @@ get_genome <- function(path) {
   str_replace(path, ".*(GC[FA]_[0-9]+\\.[0-9])\\.gff+", "\\1")
 }
 
+
+
 graceful_exit <- function() {
   write_tsv(tibble(), OUT)
   quit(status = 0)
 }
 
 GENOME <- get_genome(GFF)
+REFSEQ <- str_detect(GENOME, "GCF")
 
 blastp <- read_tsv(BLASTP, col_names = HEADER, comment = "#", )
 
@@ -51,6 +54,11 @@ gff <- segmenTools::gff2tab(GFF) |>
   select_if({
     \(x) !(all(is.na(x)) | all(x == ""))
   }) # exclude empty cols
+
+if ("pseudo" %in% names(gff)) {
+  gff <- gff |>
+    filter(is.na(pseudo))
+}
 
 # definition of neighbor
 gff <- gff |>
@@ -85,7 +93,8 @@ calc <- function(gene1, gene2) {
       gene_count = gene_count,
       same_strand = same_strand,
       gene1_first = gene1_first,
-      contig = contig1
+      contig = contig1,
+      refseq = REFSEQ
     ))
   } else {
     return(list())
