@@ -1,8 +1,11 @@
 configfile: "config/config.yaml"
-wildcard_constraints:
-    genome="GC[AF]_\d+\.\d"
 
-INPUT_GENOMES = "input_genomes.txt"
+
+wildcard_constraints:
+    genome="GC[AF]_\d+\.\d",
+
+
+INPUT_GENOMES = config["input_genomes"]
 INPUT_GENES = "input_genes.faa"
 
 
@@ -42,7 +45,7 @@ rule blastp:
         tsv=f"{RESULTS_GENOMES}/{{genome}}/blastp.tsv",
     params:
         db=f"{RESULTS_GENOMES}/{{genome}}/diamond_DB",
-        tsv_format="6 qseqid sseqid pident qcovhsp scovhsp evalue"
+        tsv_format="6 qseqid sseqid pident qcovhsp scovhsp evalue",
     shell:
         """
         diamond makedb --in {input.faa} -d {params.db}
