@@ -76,5 +76,4 @@ rule join_distances:
     shell:
         """
         fd -I 'distances.tsv' '{RESULTS_GENOMES}' | xargs cat >| {output}
-        sed -i $'1i genome\tywqJ\tywqL\tdistance\tgene_count\tsame_strand\tywqJ_first\tcontig\trefseq' {output}
         """

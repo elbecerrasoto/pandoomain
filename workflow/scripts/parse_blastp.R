@@ -6,11 +6,11 @@ library(Rgff)
 
 args <- commandArgs(trailingOnly = TRUE)
 
-print(args)
+BLASTP <- args[1] # "results/genomes/GCF_900110305.1/blastp.tsv"
+GFF <- args[2] # "results/genomes/GCF_900110305.1/GCF_900110305.1.gff"
+OUT <- args[3] # "x.tsv"
 
-OUT <- args[3]
 
-BLASTP <- args[1]
 HEADER <- c("QueryID", "SubjectID", "PercentageIdentity", "QueryCoverage", "SubjectCoverage", "EValue")
 
 IDENTITY <- 30
@@ -18,7 +18,7 @@ QCOVERAGE <- 60
 SCOVERAGE <- 60
 EVAL <- 0.05
 
-GFF <- args[2]
+
 Rgff::check_gff(GFF)
 
 get_genome <- function(path) {
@@ -47,6 +47,13 @@ blastp <- blastp |>
 
 if (nrow(blastp) < 2) graceful_exit()
 
+contigs <- segmenTools::gff2tab(GFF) |>
+  tibble() |>
+  filter(feature == "region") |> # only CDS
+  select_if({
+    \(x) !(all(is.na(x)) | all(x == ""))
+  }) # exclude empty cols
+
 
 gff <- segmenTools::gff2tab(GFF) |>
   tibble() |>
@@ -61,9 +68,13 @@ if ("pseudo" %in% names(gff)) {
 }
 
 # definition of neighbor
+# doit by contig
 gff <- gff |>
+  group_by(seqname) |>
   arrange(start) |>
-  mutate(order = 1:nrow(gff))
+  mutate(order = seq_along(start)) |>
+  relocate(order) |>
+  ungroup()
 
 queries <- group_split(blastp, QueryID)
 
@@ -79,6 +90,12 @@ calc <- function(gene1, gene2) {
   contig2 <- gene2$seqname
 
   if (identical(contig1, contig2)) {
+    contig <- contigs |>
+      filter(seqname == contig1)
+
+    contig_gff <- gff |>
+      filter(seqname == contig1)
+
     s2 <- max(gene1$start, gene2$start)
     e1 <- min(gene1$end, gene2$end)
     distance <- s2 - e1
@@ -92,8 +109,18 @@ calc <- function(gene1, gene2) {
       distance = distance,
       gene_count = gene_count,
       same_strand = same_strand,
+      gene1_order = gene1$order,
+      gene2_order = gene2$order,
       gene1_first = gene1_first,
       contig = contig1,
+      contig_ostart = min(contig_gff$order),
+      contig_oend = max(contig_gff$order),
+      contig_start = contig$start,
+      contig_end = contig$end,
+      gene1_start = gene1$start,
+      gene1_end = gene1$end,
+      gene2_start = gene2$start,
+      gene2_end = gene2$end,
       refseq = REFSEQ
     ))
   } else {
