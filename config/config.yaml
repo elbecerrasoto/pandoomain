@@ -1,0 +1,8 @@
+genomes:
+  "genomes.txt"
+
+genes:
+  "genes.faa"
+
+results:
+  "results/"
