@@ -5,4 +5,4 @@ genes:
   "tests/genes.faa"
 
 results:
-  "tests/results/"
+  "tests/results"

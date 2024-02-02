@@ -3,6 +3,7 @@ import subprocess as sp
 
 IN_GENOMES = config["genomes"]
 IN_GENES = config["genes"]
+IN_BLAST_FIELDS = "config/blast_fields.txt"
 
 RESULTS = config["results"]
 RESULTS_GENOMES = f"{RESULTS}/genomes"
@@ -25,33 +26,34 @@ def fasta_entries(path):
 assert fasta_entries(IN_GENES) == 2, "Pipeline is only valid for 2 genes"
 
 
-def parse_genomes(path):
+def parse(path, mode=None):
     with open(path, "r") as file:
-        genomes = list()
+        out = list()
         for line in file:
             line = re.sub(r"#.*$", "", line)  # rm comments
             line = line.strip()  # rm leading and trailing whitespace
-            if re.match(GENOME_REGEX, line).group(0) == line:
-                genomes.append(line)  # append only valid assembly ids
-    return genomes
+            if line == "":
+                continue
+            if mode != "genome":
+                out.append(line)
+            elif re.match(GENOME_REGEX, line).group(0) == line:
+                out.append(line)  # append only valid assembly ids
+    return out
 
 
-GENOMES = parse_genomes(IN_GENOMES)
+GENOMES = parse(IN_GENOMES, mode="genome")
+BLAST_FIELDS = " ".join(parse(IN_BLAST_FIELDS))
 
-print(GENOMES)
 
-
-rule help:
-    shell:
-        "bat workflow/Snakefile"
+rule all:
+    input:
+        [f"{RESULTS_GENOMES}/{genome}/{genome}.tsv" for genome in GENOMES],
 
 
 rule download_genome:
     output:
         faa=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.faa",
         gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
-    conda:
-        "envs/ncbi_datasets.yaml"
     shell:
         """
         mkdir -p {RESULTS_GENOMES}/{wildcards.genome}
@@ -67,11 +69,11 @@ rule blastp:
         tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.tsv",
     params:
         db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
-        format="6 qseqid sseqid pident qcovhsp scovhsp evalue",
+        format=f"{BLAST_FIELDS}",
     shell:
         """
         diamond makedb --in {input.faa} -d {params.db}
-        diamond blastp --header --outfmt {params.format}\
+        diamond blastp --outfmt {params.format}\
             -o {output.tsv}\
             -d {params.db}\
             -q {input.queries}
