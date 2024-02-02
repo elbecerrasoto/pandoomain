@@ -6,3 +6,6 @@ genes:
 
 results:
   "tests/results"
+
+threads:
+  "all"

@@ -1,5 +1,6 @@
 import re
 import subprocess as sp
+from snakemake.utils import available_cpu_count
 
 IN_GENOMES = config["genomes"]
 IN_GENES = config["genes"]
@@ -7,7 +8,11 @@ IN_BLAST_FIELDS = "config/blast_fields.txt"
 
 RESULTS = config["results"]
 RESULTS_GENOMES = f"{RESULTS}/genomes"
+RESULTS_BLASTS = f"{RESULTS}/blasts.tsv"
 
+THREADS = (
+    available_cpu_count() if config["threads"] == "all" else int(config["threads"])
+)
 GENOME_REGEX = r"GC[AF]_\d+\.\d"
 
 
@@ -47,7 +52,7 @@ BLAST_FIELDS = " ".join(parse(IN_BLAST_FIELDS))
 
 rule all:
     input:
-        [f"{RESULTS_GENOMES}/{genome}/{genome}.tsv" for genome in GENOMES],
+        f"{RESULTS_BLASTS}",
 
 
 rule download_genome:
@@ -77,4 +82,18 @@ rule blastp:
             -o {output.tsv}\
             -d {params.db}\
             -q {input.queries}
+        """
+
+
+rule bind_blasts:
+    input:
+        [f"{RESULTS_GENOMES}/{genome}/{genome}.tsv" for genome in GENOMES],
+    output:
+        blasts=f"{RESULTS_BLASTS}",
+    threads: THREADS
+    params:
+        debug="F",
+    shell:
+        """
+        workflow/scripts/bind_blasts.R {output} {RESULTS_GENOMES} {IN_GENOMES} {IN_BLAST_FIELDS} {threads} {params.debug}
         """

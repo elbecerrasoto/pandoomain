@@ -1,8 +1,18 @@
 #!/usr/bin/Rscript
 
-SUPRESS <- T # Suppress messages (stderr)
+args <- commandArgs(trailingOnly = TRUE)
 
-if (SUPRESS) {
+OUT <- args[1] # "tests/results/blasts.tsv"
+DATA_DIR <- args[2] # "tests/results/genomes"
+GENOMES_TXT <- args[3] # "tests/genomes.txt"
+FIELDS_TXT <- args[4] # "config/blast_fields.txt"
+CORES <- as.integer(args[5]) # 12
+DEBUG <- as.logical(args[6]) # Suppress messages (stderr)
+
+GENOME_REGEX <- "\\w+_\\d+\\.\\d"
+COL <- "genome"
+
+if (!DEBUG) {
   null <- file(nullfile(), open = "w")
   sink(null, type = "message")
 }
@@ -11,15 +21,6 @@ library(tidyverse)
 library(stringr)
 library(furrr)
 
-args <- commandArgs(trailingOnly = TRUE)
-
-OUT <- "tests/results/blasts.tsv" # args[1]
-DATA_DIR <- "tests/results/genomes" # args[2]
-GENOMES_TXT <- "tests/genomes.txt" # args[3]
-FIELDS_TXT <- "config/blast_fields.txt" # args[4]
-CORES <- 12 # args[5]
-GENOME_REGEX <- "\\w+_\\d+\\.\\d"
-COL <- "genome"
 
 plan(multisession, workers = CORES)
 
@@ -44,10 +45,7 @@ genomes <- read_tsv(GENOMES_TXT, col_names = F, comment = "#")[[1]] %>%
   subset(str_detect(., GENOME_REGEX)) # drop ill-formed assembly ids
 
 blasts <- str_c(DATA_DIR, "/", genomes, "/", genomes, ".tsv") %>%
-  future_map(read_tsv, col_names = fields)
-
-blasts <- str_c(DATA_DIR, "/", genomes, "/", genomes, ".tsv") %>%
-  future_map(read_tsv, col_names = fields)
+  future_map(possibly(\(x) read_tsv(x, col_names = fields), tibble()))
 
 names(blasts) <- genomes
 
@@ -65,6 +63,6 @@ blasts %>%
   write_tsv(OUT)
 
 
-if (SUPRESS) {
+if (!DEBUG) {
   sink()
 }
