@@ -1,0 +1,33 @@
+# Diamond BLASTp output format 6
+# Full documentation at:
+# https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options
+# -----------------------------------------------------------------
+6 # BLAST tabular format
+qseqid # Query Seq - id
+qlen # Query sequence length
+sseqid # Subject Seq - id
+slen # Subject sequence length
+qstart # Start of alignment in query
+qend # End of alignment in query
+sstart # Start of alignment in subject
+send # End of alignment in subject
+qseq # Aligned part of query sequence
+sseq # Aligned part of subject sequence
+full_sseq # Full subject sequence
+evalue # Expect value
+bitscore # Bit score
+score # Raw score
+length # Alignment length
+pident # Percentage of identical matches
+nident # Number of identical matches
+mismatch # Number of mismatches
+positive # Number of positive - scoring matches
+gapopen # Number of gap openings
+gaps # Total number of gaps
+ppos # Percentage of positive - scoring matches
+qframe # Query frame
+btop # Blast traceback operations(BTOP)
+cigar # CIGAR string
+stitle # Subject Title
+qcovhsp # Query Coverage Per HSP
+scovhsp # Subject Coverage Per HSP
