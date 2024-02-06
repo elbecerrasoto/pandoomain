@@ -1,35 +1,64 @@
+import re
+import subprocess as sp
+from snakemake.utils import available_cpu_count
+
+IN_GENOMES = config["genomes"]
+IN_GENES = config["genes"]
+IN_BLAST_FIELDS = "config/blast_fields.txt"
+
+RESULTS = config["results"]
+RESULTS_GENOMES = f"{RESULTS}/genomes"
+RESULTS_BLASTS = f"{RESULTS}/blasts.tsv"
+
+THREADS = (
+    available_cpu_count() if config["threads"] == "all" else int(config["threads"])
+)
+GENOME_REGEX = r"GC[AF]_\d+\.\d"
+
+
 configfile: "config/config.yaml"
 
 
 wildcard_constraints:
-    genome="GC[AF]_\d+\.\d",
+    genome=GENOME_REGEX,
 
 
-INPUT_GENOMES = config["input_genomes"]
-INPUT_GENES = "input_genes.faa"
+def fasta_entries(path):
+    CP = sp.run(f"grep -c '^>' {path}", shell=True, capture_output=True, check=True)
+    return int(CP.stdout)
 
 
-with open(INPUT_GENOMES, "r") as f:
-    GENOMES = list()
-    for line in f:
-        GENOMES.append(line.strip())
+assert fasta_entries(IN_GENES) == 2, "Pipeline is only valid for 2 genes"
 
 
-RESULTS = "results"
-RESULTS_GENOMES = f"{RESULTS}/genomes"
+def parse(path, mode=None):
+    with open(path, "r") as file:
+        out = list()
+        for line in file:
+            line = re.sub(r"#.*$", "", line)  # rm comments
+            line = line.strip()  # rm leading and trailing whitespace
+            if line == "":
+                continue
+            if mode != "genome":
+                out.append(line)
+            elif re.match(GENOME_REGEX, line).group(0) == line:
+                out.append(line)  # append only valid assembly ids
+    return out
+
+
+GENOMES = parse(IN_GENOMES, mode="genome")
+BLAST_FIELDS = " ".join(parse(IN_BLAST_FIELDS))
 
 
 rule all:
     input:
-        f"{RESULTS}/all_distances.tsv",
+        f"{RESULTS_BLASTS}",
 
 
 rule download_genome:
     output:
         faa=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.faa",
         gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
-    conda:
-        "envs/ncbi_datasets.yaml"
     shell:
         """
         mkdir -p {RESULTS_GENOMES}/{wildcards.genome}
@@ -40,40 +69,42 @@ rule download_genome:
 rule blastp:
     input:
         faa=rules.download_genome.output.faa,
-        queries=f"{INPUT_GENES}",
+        queries=f"{IN_GENES}",
     output:
-        tsv=f"{RESULTS_GENOMES}/{{genome}}/blastp.tsv",
+        tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.tsv",
     params:
-        db=f"{RESULTS_GENOMES}/{{genome}}/diamond_DB",
-        tsv_format="6 qseqid sseqid pident qcovhsp scovhsp evalue",
+        db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
+        format=f"{BLAST_FIELDS}",
     shell:
         """
         diamond makedb --in {input.faa} -d {params.db}
-        diamond blastp --header --outfmt {params.tsv_format}\
+        diamond blastp --outfmt {params.format}\
             -o {output.tsv}\
             -d {params.db}\
             -q {input.queries}
         """
 
 
-rule get_distances:
+rule bind_blasts:
     input:
-        tsv=rules.blastp.output.tsv,
-        gff=rules.download_genome.output.gff,
+        [f"{RESULTS_GENOMES}/{genome}/{genome}.tsv" for genome in GENOMES],
     output:
-        distances=f"{RESULTS_GENOMES}/{{genome}}/distances.tsv",
+        blasts=f"{RESULTS_BLASTS}",
+    threads: THREADS
+    params:
+        debug="F",
     shell:
         """
-        workflow/scripts/parse_blastp.R {input} {output}
+        workflow/scripts/bind_blasts.R {output} {RESULTS_GENOMES} {IN_GENOMES} {IN_BLAST_FIELDS} {threads} {params.debug}
         """
 
 
-rule join_distances:
+rule filter_blasts:
     input:
-        [f"{RESULTS_GENOMES}/{genome}/distances.tsv" for genome in GENOMES],
+        rules.bind_blasts.output,
     output:
-        f"{RESULTS}/all_distances.tsv",
+        f"{RESULTS_FILTERED}",
     shell:
         """
-        fd -I 'distances.tsv' '{RESULTS_GENOMES}' | xargs cat >| {output}
+        workflow/scripts/bind_blasts.R {output} {RESULTS_GENOMES} {IN_GENOMES} {IN_BLAST_FIELDS} {threads} {params.debug}
         """
