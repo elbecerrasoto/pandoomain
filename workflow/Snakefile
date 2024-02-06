@@ -1,22 +1,26 @@
 import re
 import subprocess as sp
+from pathlib import Path
+
 from snakemake.utils import available_cpu_count
 
-IN_GENOMES = config["genomes"]
-IN_GENES = config["genes"]
-IN_BLAST_FIELDS = "config/blast_fields.txt"
+IN_GENOMES = Path(config["genomes"])
+IN_QUERIES_DIR = Path(config["queries"])
+IN_BLAST_FIELDS = Path("config/blast_fields.txt")
 
-RESULTS = config["results"]
-RESULTS_GENOMES = f"{RESULTS}/genomes"
-RESULTS_BLASTS = f"{RESULTS}/blasts.tsv"
+assert IN_GENOMES.exists(), "Input genome assembly list file not found."
+assert IN_QUERIES_DIR.exists(), "Input query directory not found."
+assert IN_BLAST_FIELDS.exists(), "Input blast fields file not found."
+
+RESULTS = Path(config["results"])
+RESULTS_GENOMES = Path(f"{RESULTS}/genomes")
+
 
 THREADS = (
     available_cpu_count() if config["threads"] == "all" else int(config["threads"])
 )
+
 GENOME_REGEX = r"GC[AF]_\d+\.\d"
-
-
-configfile: "config/config.yaml"
 
 
 wildcard_constraints:
@@ -24,11 +28,10 @@ wildcard_constraints:
 
 
 def fasta_entries(path):
-    CP = sp.run(f"grep -c '^>' {path}", shell=True, capture_output=True, check=True)
-    return int(CP.stdout)
-
-
-assert fasta_entries(IN_GENES) == 2, "Pipeline is only valid for 2 genes"
+    completed = sp.run(
+        f"grep -c '^>' {path}", shell=True, capture_output=True, check=True
+    )
+    return int(completed.stdout)
 
 
 def parse(path, mode=None):
@@ -50,9 +53,9 @@ GENOMES = parse(IN_GENOMES, mode="genome")
 BLAST_FIELDS = " ".join(parse(IN_BLAST_FIELDS))
 
 
-rule all:
-    input:
-        f"{RESULTS_BLASTS}",
+rule help:
+    shell:
+        "bat workflow/Snakefile"
 
 
 rule download_genome:
@@ -69,9 +72,9 @@ rule download_genome:
 rule blastp:
     input:
         faa=rules.download_genome.output.faa,
-        queries=f"{IN_GENES}",
+        query=f"{IN_QUERIES_DIR}/{{query}}.faa",
     output:
-        tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.tsv",
+        tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_{{query}}.tsv",
     params:
         db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
         format=f"{BLAST_FIELDS}",
@@ -81,30 +84,5 @@ rule blastp:
         diamond blastp --outfmt {params.format}\
             -o {output.tsv}\
             -d {params.db}\
-            -q {input.queries}
-        """
-
-
-rule bind_blasts:
-    input:
-        [f"{RESULTS_GENOMES}/{genome}/{genome}.tsv" for genome in GENOMES],
-    output:
-        blasts=f"{RESULTS_BLASTS}",
-    threads: THREADS
-    params:
-        debug="F",
-    shell:
-        """
-        workflow/scripts/bind_blasts.R {output} {RESULTS_GENOMES} {IN_GENOMES} {IN_BLAST_FIELDS} {threads} {params.debug}
-        """
-
-
-rule filter_blasts:
-    input:
-        rules.bind_blasts.output,
-    output:
-        f"{RESULTS_FILTERED}",
-    shell:
-        """
-        workflow/scripts/bind_blasts.R {output} {RESULTS_GENOMES} {IN_GENOMES} {IN_BLAST_FIELDS} {threads} {params.debug}
+            -q {input.query}
         """
