@@ -53,6 +53,20 @@ GENOMES = parse(IN_GENOMES, mode="genome")
 BLAST_FIELDS = " ".join(parse(IN_BLAST_FIELDS))
 
 
+def ALL_BLASTS(queries_dir, genomes_dir, genomes):
+    queries = [query for query in queries_dir.iterdir() if query.suffix == ".faa"]
+    out = list()
+    for query in queries:
+        for genome in genomes:
+            blast_out = genomes_dir / genome / f"{genome}_{query.stem}.tsv"
+            out.append(str(blast_out))
+    return out
+
+
+rule all:
+    input:
+        ALL_BLASTS(IN_QUERIES_DIR, RESULTS_GENOMES, GENOMES),
+
 rule help:
     shell:
         "bat workflow/Snakefile"
