@@ -1,8 +1,8 @@
 genomes:
   "tests/genomes.txt"
 
-genes:
-  "tests/genes.faa"
+queries:
+  "tests/queries"
 
 results:
   "tests/results"
