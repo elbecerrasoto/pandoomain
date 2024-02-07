@@ -28,17 +28,21 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
-GENOMES_DF = pd.read_table(
-    IN_GENOMES, names=("genome",), delim_whitespace=True, comment="#"
-)
 BLAST_FIELDS_DF = pd.read_table(
     IN_BLAST_FIELDS,
     sep="\t",
     comment="#",
 )
-
-GENOMES = list(GENOMES_DF.genome)
 BLAST_FIELDS = " ".join(list(BLAST_FIELDS_DF.field))
+
+
+GENOMES_DF = pd.read_table(
+    IN_GENOMES, names=("genome",), delim_whitespace=True, comment="#"
+)
+
+genome_matches = [bool(re.match(GENOME_REGEX, g)) for g in GENOMES_DF.genome]
+GENOMES_DF = GENOMES_DF.loc[genome_matches, :].sort_values("genome")
+GENOMES = list(GENOMES_DF.genome)
 
 
 def ALL_BLASTS(queries_dir, genomes_dir, genomes):
@@ -49,6 +53,10 @@ def ALL_BLASTS(queries_dir, genomes_dir, genomes):
             blast_out = genomes_dir / genome / f"{genome}_{query.stem}.tsv"
             out.append(str(blast_out))
     return out
+
+
+def ALL_BINDED():
+    pass
 
 
 rule all:
@@ -70,9 +78,7 @@ rule sort_genomes:
     output:
         sorted=str(GENOMES_SORTED),
     run:
-        genome_matches = [bool(re.match(GENOME_REGEX, g)) for g in GENOMES_DF.genome]
-        df = GENOMES_DF.loc[genome_matches, :].sort_values("genome")
-        df.to_csv(output.sorted, header=False, index=False)
+        GENOMES_DF.to_csv(output.sorted, header=False, index=False)
 
 
 rule download_genome:
@@ -104,14 +110,31 @@ rule blastp:
         query=f"{IN_QUERIES_DIR}/{{query}}.faa",
         db=rules.makedb.output.db,
     output:
-        tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_{{query}}.tsv",
+        tsv6=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_{{query}}.tsv",
     params:
         format=f"6 {BLAST_FIELDS}",  # Number 6 is for ncbi blast tabular format
         db=rules.makedb.params.db,
     shell:
         """
         diamond blastp --outfmt {params.format}\
-            --out   {output.tsv}\
+            --out   {output.tsv6}\
             --db    {params.db}\
             --query {input.query}
+        """
+
+
+def blasts(query):
+    return [
+        str(RESULTS_GENOMES / genome / f"{genome}_{query}.tsv") for genome in GENOMES
+    ]
+
+
+rule bind_blasts:
+    input:
+        blasts,
+    output:
+        f"{RESULTS_GENOMES}/{{query}}.tsv",
+    shell:
+        """
+        cat {input} > {output}
         """
