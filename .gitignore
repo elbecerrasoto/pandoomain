@@ -1,3 +1,5 @@
+.snakemake/
+tests/results/
 .Rproj.user
 .Rhistory
 .RData
