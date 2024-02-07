@@ -76,27 +76,28 @@ rule makedb:
     input:
         faa=rules.download_genome.output.faa,
     output:
-        tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.dmnd",
+        db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.dmnd",
     params:
         db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
     shell:
         """
-        diamond makedb --in {input.faa} -d {params.db}
+        diamond makedb --db {params.db} --in {input.faa}
         """
 
 
 rule blastp:
     input:
         query=f"{IN_QUERIES_DIR}/{{query}}.faa",
+        db=rules.makedb.output.db,
     output:
         tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_{{query}}.tsv",
     params:
         format=f"6 {BLAST_FIELDS}",  # Number 6 is for ncbi blast tabular format
-        db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
+        db=rules.makedb.params.db,
     shell:
         """
         diamond blastp --outfmt {params.format}\
-            -o {output.tsv}\
-            -d {params.db}\
-            -q {input.query}
+            --out   {output.tsv}\
+            --db    {params.db}\
+            --query {input.query}
         """
