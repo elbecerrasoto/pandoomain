@@ -38,7 +38,7 @@ blast_fields_df = pd.read_table(
 )
 
 GENOMES = list(genomes_df.genome)
-BLASTS_FIELDS = " ".join(list(blast_fields_df.field))
+BLAST_FIELDS = " ".join(list(blast_fields_df.field))
 
 
 def ALL_BLASTS(queries_dir, genomes_dir, genomes):
@@ -72,18 +72,29 @@ rule download_genome:
         """
 
 
-rule blastp:
+rule makedb:
     input:
         faa=rules.download_genome.output.faa,
+    output:
+        tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.dmnd",
+    params:
+        db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
+    shell:
+        """
+        diamond makedb --in {input.faa} -d {params.db}
+        """
+
+
+rule blastp:
+    input:
         query=f"{IN_QUERIES_DIR}/{{query}}.faa",
     output:
         tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_{{query}}.tsv",
     params:
+        format=f"6 {BLAST_FIELDS}",  # Number 6 is for ncbi blast tabular format
         db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
-        format=f"6 {BLAST_FIELDS}", # Number 6 is for ncbi blast tabular format
     shell:
         """
-        diamond makedb --in {input.faa} -d {params.db}
         diamond blastp --outfmt {params.format}\
             -o {output.tsv}\
             -d {params.db}\
