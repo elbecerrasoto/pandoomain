@@ -1,12 +1,13 @@
 import re
 import subprocess as sp
 from pathlib import Path
+import pandas as pd
 
 from snakemake.utils import available_cpu_count
 
 IN_GENOMES = Path(config["genomes"])
 IN_QUERIES_DIR = Path(config["queries"])
-IN_BLAST_FIELDS = Path("config/blast_fields.txt")
+IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
 assert IN_GENOMES.exists(), "Input genome assembly list file not found."
 assert IN_QUERIES_DIR.exists(), "Input query directory not found."
@@ -27,30 +28,17 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
-def fasta_entries(path):
-    completed = sp.run(
-        f"grep -c '^>' {path}", shell=True, capture_output=True, check=True
-    )
-    return int(completed.stdout)
+genomes_df = pd.read_table(
+    IN_GENOMES, names=("genome",), delim_whitespace=True, comment="#"
+)
+blast_fields_df = pd.read_table(
+    IN_BLAST_FIELDS,
+    sep="\t",
+    comment="#",
+)
 
-
-def parse(path, mode=None):
-    with open(path, "r") as file:
-        out = list()
-        for line in file:
-            line = re.sub(r"#.*$", "", line)  # rm comments
-            line = line.strip()  # rm leading and trailing whitespace
-            if line == "":
-                continue
-            if mode != "genome":
-                out.append(line)
-            elif re.match(GENOME_REGEX, line).group(0) == line:
-                out.append(line)  # append only valid assembly ids
-    return out
-
-
-GENOMES = parse(IN_GENOMES, mode="genome")
-BLAST_FIELDS = " ".join(parse(IN_BLAST_FIELDS))
+GENOMES = list(genomes_df.genome)
+BLASTS_FIELDS = " ".join(list(blast_fields_df.field))
 
 
 def ALL_BLASTS(queries_dir, genomes_dir, genomes):
@@ -66,6 +54,7 @@ def ALL_BLASTS(queries_dir, genomes_dir, genomes):
 rule all:
     input:
         ALL_BLASTS(IN_QUERIES_DIR, RESULTS_GENOMES, GENOMES),
+
 
 rule help:
     shell:
@@ -91,7 +80,7 @@ rule blastp:
         tsv=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_{{query}}.tsv",
     params:
         db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
-        format=f"{BLAST_FIELDS}",
+        format=f"6 {BLAST_FIELDS}", # Number 6 is for ncbi blast tabular format
     shell:
         """
         diamond makedb --in {input.faa} -d {params.db}
