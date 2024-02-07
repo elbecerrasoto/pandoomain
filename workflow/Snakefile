@@ -44,6 +44,8 @@ genome_matches = [bool(re.match(GENOME_REGEX, g)) for g in GENOMES_DF.genome]
 GENOMES_DF = GENOMES_DF.loc[genome_matches, :].sort_values("genome")
 GENOMES = list(GENOMES_DF.genome)
 
+GENOMES_SORTED = str(IN_GENOMES.parent / f"{IN_GENOMES.stem}_sorted{IN_GENOMES.suffix}")
+
 
 def ALL_BLASTS(queries_dir, genomes_dir, genomes):
     queries = [query for query in queries_dir.iterdir() if query.suffix == ".faa"]
@@ -55,21 +57,21 @@ def ALL_BLASTS(queries_dir, genomes_dir, genomes):
     return out
 
 
-def ALL_BINDED():
-    pass
+def ALL_BINDED(queries_dir, results_dir):
+    out = list()
+    for query in queries_dir.iterdir():
+        out.append(str(results_dir / f"{query.stem}.tsv"))
+    return out
 
 
 rule all:
     input:
-        ALL_BLASTS(IN_QUERIES_DIR, RESULTS_GENOMES, GENOMES),
+        ALL_BINDED(IN_QUERIES_DIR, RESULTS) + [GENOMES_SORTED],
 
 
 rule help:
     shell:
         "bat workflow/Snakefile"
-
-
-GENOMES_SORTED = IN_GENOMES.parent / f"{IN_GENOMES.stem}_sorted{IN_GENOMES.suffix}"
 
 
 rule sort_genomes:
@@ -123,7 +125,8 @@ rule blastp:
         """
 
 
-def blasts(query):
+def blasts(wildcards):
+    query = wildcards.query
     return [
         str(RESULTS_GENOMES / genome / f"{genome}_{query}.tsv") for genome in GENOMES
     ]
@@ -133,7 +136,7 @@ rule bind_blasts:
     input:
         blasts,
     output:
-        f"{RESULTS_GENOMES}/{{query}}.tsv",
+        f"{RESULTS}/{{query}}.tsv",
     shell:
         """
         cat {input} > {output}
