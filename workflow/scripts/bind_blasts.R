@@ -2,20 +2,18 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 
-OUT <- args[1] # "tests/results/blasts.tsv"
-DATA_DIR <- args[2] # "tests/results/genomes"
-GENOMES_TXT <- args[3] # "tests/genomes.txt"
-FIELDS_TXT <- args[4] # "config/blast_fields.txt"
+IN <- args[1]
+OUT <- args[2] # "tests/results/blasts.tsv"
+
+DATA_DIR <- args[3] # "tests/results/genomes"
+GENOMES_TXT <- args[4] # "tests/genomes.txt"
+FIELDS_TSV <- args[5] # "config/blast_fields.txt"
+
 CORES <- as.integer(args[5]) # 12
-DEBUG <- as.logical(args[6]) # Suppress messages (stderr)
 
 GENOME_REGEX <- "\\w+_\\d+\\.\\d"
 COL <- "genome"
 
-if (!DEBUG) {
-  null <- file(nullfile(), open = "w")
-  sink(null, type = "message")
-}
 
 library(tidyverse)
 library(stringr)
@@ -61,8 +59,3 @@ blasts %>%
   future_map(seq_along(.), add_newcol_from_iname, l = .) %>%
   reduce(bind_rows) %>%
   write_tsv(OUT)
-
-
-if (!DEBUG) {
-  sink()
-}

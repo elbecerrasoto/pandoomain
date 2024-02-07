@@ -14,7 +14,7 @@ assert IN_QUERIES_DIR.exists(), "Input query directory not found."
 assert IN_BLAST_FIELDS.exists(), "Input blast fields file not found."
 
 RESULTS = Path(config["results"])
-RESULTS_GENOMES = Path(f"{RESULTS}/genomes")
+RESULTS_GENOMES = RESULTS / "genomes"
 
 
 THREADS = (
@@ -28,17 +28,17 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
-genomes_df = pd.read_table(
+GENOMES_DF = pd.read_table(
     IN_GENOMES, names=("genome",), delim_whitespace=True, comment="#"
 )
-blast_fields_df = pd.read_table(
+BLAST_FIELDS_DF = pd.read_table(
     IN_BLAST_FIELDS,
     sep="\t",
     comment="#",
 )
 
-GENOMES = list(genomes_df.genome)
-BLAST_FIELDS = " ".join(list(blast_fields_df.field))
+GENOMES = list(GENOMES_DF.genome)
+BLAST_FIELDS = " ".join(list(BLAST_FIELDS_DF.field))
 
 
 def ALL_BLASTS(queries_dir, genomes_dir, genomes):
@@ -59,6 +59,20 @@ rule all:
 rule help:
     shell:
         "bat workflow/Snakefile"
+
+
+GENOMES_SORTED = IN_GENOMES.parent / f"{IN_GENOMES.stem}_sorted{IN_GENOMES.suffix}"
+
+
+rule sort_genomes:
+    input:
+        f"{IN_GENOMES}",
+    output:
+        sorted=str(GENOMES_SORTED),
+    run:
+        genome_matches = [bool(re.match(GENOME_REGEX, g)) for g in GENOMES_DF.genome]
+        df = GENOMES_DF.loc[genome_matches, :].sort_values("genome")
+        df.to_csv(output.sorted, header=False, index=False)
 
 
 rule download_genome:
