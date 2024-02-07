@@ -122,6 +122,7 @@ rule blastp:
             --out   {output.tsv6}\
             --db    {params.db}\
             --query {input.query}
+        perl -i -ne 'print "{wildcards.genome}\\t" . "$_"' {output}
         """
 
 
