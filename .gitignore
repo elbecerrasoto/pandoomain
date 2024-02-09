@@ -1,5 +1,9 @@
-.snakemake/
-tests/results/
+results
+tests/results
+
+.snakemake
+
+.Rproj
 .Rproj.user
 .Rhistory
 .RData
