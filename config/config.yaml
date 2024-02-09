@@ -1,11 +1,11 @@
 genomes:
   "genomes.txt"
 
-genes:
-  "genes.faa"
+queries:
+  "queries"
 
 results:
   "results"
 
 threads:
-  "all"
+  8
