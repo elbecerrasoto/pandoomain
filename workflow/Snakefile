@@ -5,6 +5,10 @@ import pandas as pd
 
 from snakemake.utils import available_cpu_count
 
+
+configfile: "config/config.yaml"
+
+
 IN_GENOMES = Path(config["genomes"])
 IN_QUERIES_DIR = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
