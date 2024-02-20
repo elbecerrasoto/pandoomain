@@ -32,25 +32,6 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
-BLAST_FIELDS_DF = pd.read_table(
-    IN_BLAST_FIELDS,
-    sep="\t",
-    comment="#",
-)
-BLAST_FIELDS = " ".join(list(BLAST_FIELDS_DF.field))
-
-
-GENOMES_DF = pd.read_table(
-    IN_GENOMES, names=("genome",), delim_whitespace=True, comment="#"
-)
-
-genome_matches = [bool(re.match(GENOME_REGEX, g)) for g in GENOMES_DF.genome]
-GENOMES_DF = GENOMES_DF.loc[genome_matches, :].sort_values("genome")
-GENOMES = list(GENOMES_DF.genome)
-
-GENOMES_SORTED = str(IN_GENOMES.parent / f"{IN_GENOMES.stem}_sorted{IN_GENOMES.suffix}")
-
-
 def ALL_BLASTS(queries_dir, genomes_dir, genomes):
     queries = [query for query in queries_dir.iterdir() if query.suffix == ".faa"]
     out = list()
@@ -68,9 +49,35 @@ def ALL_BINDED(queries_dir, results_dir):
     return out
 
 
-rule all:
+# rule all:
+#     input:
+#         ALL_BINDED(IN_QUERIES_DIR, RESULTS) + [GENOMES_SORTED],
+
+
+GENOMES_SORTED = str(IN_GENOMES.parent / f"{IN_GENOMES.stem}_used{IN_GENOMES.suffix}")
+# check them to ... plox
+
+
+rule sort_genomes:
     input:
-        ALL_BINDED(IN_QUERIES_DIR, RESULTS) + [GENOMES_SORTED],
+        raw_ids=f"{IN_GENOMES}",
+    output:
+        sorted=str(GENOMES_SORTED),
+    run:
+        # read
+        GENOMES_DF = pd.read_table(
+            IN_GENOMES, names=("genome",), delim_whitespace=True, comment="#"
+        )
+        # filter and sort
+        genome_matches = [bool(re.match(GENOME_REGEX, g)) for g in GENOMES_DF.genome]
+        GENOMES_DF = GENOMES_DF.loc[genome_matches, :].sort_values("genome")
+        # write
+        GENOMES_DF.to_csv(output.sorted, header=False, index=False)
+
+
+        # faa=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.faa",
+        # gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
+
 
 
 rule help:
@@ -78,71 +85,64 @@ rule help:
         "bat workflow/Snakefile"
 
 
-rule sort_genomes:
-    input:
-        f"{IN_GENOMES}",
-    output:
-        sorted=str(GENOMES_SORTED),
-    run:
-        GENOMES_DF.to_csv(output.sorted, header=False, index=False)
+# rule download_genome:
+#     input:
+#         sorted=rules.output.sort_genomes.sorted
+#     output:
+#         downloaded=f"{RESULTS_GENOMES}/{{query}}_downloaded.txt"
+#     shell:
+#         """
+#         parallel mkdir -p {RESULTS_GENOMES}/{wildcards.genome}
+#         parallel workflow/scripts/download_genome.py --include protein gff3 --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
+#         touch {output}
+#         """
 
 
-rule download_genome:
-    output:
-        faa=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.faa",
-        gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
-    shell:
-        """
-        mkdir -p {RESULTS_GENOMES}/{wildcards.genome}
-        workflow/scripts/download_genome.py --include protein gff3 --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
-        """
-
-
-rule makedb:
-    input:
-        faa=rules.download_genome.output.faa,
-    output:
-        db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.dmnd",
-    params:
-        db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
-    shell:
-        """
-        diamond makedb --db {params.db} --in {input.faa}
-        """
-
-
-rule blastp:
-    input:
-        query=f"{IN_QUERIES_DIR}/{{query}}.faa",
-        db=rules.makedb.output.db,
-    output:
-        tsv6=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_{{query}}.tsv",
-    params:
-        format=f"6 {BLAST_FIELDS}",  # Number 6 is for ncbi blast tabular format
-        db=rules.makedb.params.db,
-    shell:
-        """
-        diamond blastp --outfmt {params.format}\
-            --out   {output.tsv6}\
-            --db    {params.db}\
-            --query {input.query}
-        perl -i -ne 'print "{wildcards.genome}\\t" . "$_"' {output}
-        """
-
-
-def blasts(wildcards):
-    query = wildcards.query
-    return [
-        str(RESULTS_GENOMES / genome / f"{genome}_{query}.tsv") for genome in GENOMES
-    ]
-
-
-rule bind_blasts:
-    input:
-        blasts,
-    output:
-        f"{RESULTS}/{{query}}.tsv",
-    shell:
-        """
-        cat {input} > {output}
-        """
+# rule makedb:
+#     input:
+#         faa=rules.download_genome.output.faa,
+#     output:
+#         db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.dmnd",
+#     params:
+#         db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}",
+#     shell:
+#         """
+#         diamond makedb --db {params.db} --in {input.faa}
+#         """
+# BLAST_FIELDS_DF = pd.read_table(
+#     IN_BLAST_FIELDS,
+#     sep="\t",
+#     comment="#",
+# )
+# BLAST_FIELDS = " ".join(list(BLAST_FIELDS_DF.field))
+# rule blastp:
+#     input:
+#         query=f"{IN_QUERIES_DIR}/{{query}}.faa",
+#         db=rules.makedb.output.db,
+#     output:
+#         tsv6=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_{{query}}.tsv",
+#     params:
+#         format=f"6 {BLAST_FIELDS}",  # Number 6 is for ncbi blast tabular format
+#         db=rules.makedb.params.db,
+#     shell:
+#         """
+#         diamond blastp --outfmt {params.format}\
+#             --out   {output.tsv6}\
+#             --db    {params.db}\
+#             --query {input.query}
+#         perl -i -ne 'print "{wildcards.genome}\\t" . "$_"' {output}
+#         """
+# def blasts(wildcards):
+#     query = wildcards.query
+#     return [
+#         str(RESULTS_GENOMES / genome / f"{genome}_{query}.tsv") for genome in GENOMES
+#     ]
+# rule bind_blasts:
+#     input:
+#         blasts,
+#     output:
+#         f"{RESULTS}/{{query}}.tsv",
+#     shell:
+#         """
+#         cat {input} > {output}
+#         """
