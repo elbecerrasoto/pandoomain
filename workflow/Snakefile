@@ -3,8 +3,6 @@ import subprocess as sp
 from pathlib import Path
 import pandas as pd
 
-from snakemake.utils import available_cpu_count
-
 
 configfile: "config/config.yaml"
 
@@ -21,16 +19,14 @@ RESULTS = Path(config["results"])
 RESULTS_GENOMES = RESULTS / "genomes"
 
 
-THREADS = (
-    available_cpu_count() if config["threads"] == "all" else int(config["threads"])
-)
-
 GENOME_REGEX = r"GC[AF]_\d+\.\d"
 
 
 wildcard_constraints:
     genome=GENOME_REGEX,
 
+
+CORES = workflow.cores
 
 def ALL_BLASTS(queries_dir, genomes_dir, genomes):
     queries = [query for query in queries_dir.iterdir() if query.suffix == ".faa"]
@@ -83,6 +79,8 @@ rule sort_genomes:
 rule help:
     shell:
         "bat workflow/Snakefile"
+
+
 
 
 # rule download_genome:
