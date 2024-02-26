@@ -9,7 +9,7 @@ IN_QUERIES = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
 assert IN_GENOMES.exists(), "Input genome assembly list file not found."
-assert IN_QUERIES_DIR.exists(), "Input query directory not found."
+assert IN_QUERIES.exists(), "Input query directory not found."
 assert IN_BLAST_FIELDS.exists(), "Input blast fields file not found."
 
 RESULTS = Path(config["results"])
@@ -23,30 +23,12 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
-def ALL_BLASTS(queries_dir, genomes_dir, genomes):
-    queries = [query for query in queries_dir.iterdir() if query.suffix == ".faa"]
-    out = list()
-    for query in queries:
-        for genome in genomes:
-            blast_out = genomes_dir / genome / f"{genome}_{query.stem}.tsv"
-            out.append(str(blast_out))
-    return out
+GENOMES_SORTED = str(RESULTS / f"{IN_GENOMES.stem}_used{IN_GENOMES.suffix}")
 
 
-def ALL_BINDED(queries_dir, results_dir):
-    out = list()
-    for query in queries_dir.iterdir():
-        out.append(str(results_dir / f"{query.stem}.tsv"))
-    return out
-
-
-# rule all:
-#     input:
-#         ALL_BINDED(IN_QUERIES_DIR, RESULTS) + [GENOMES_SORTED],
-
-
-GENOMES_SORTED = str(IN_GENOMES.parent / f"{IN_GENOMES.stem}_used{IN_GENOMES.suffix}")
-# check them to ... plox
+rule all:
+    input:
+        GENOMES_SORTED,
 
 
 rule filter_sort_genomes:
@@ -77,8 +59,6 @@ rule filter_sort_genomes:
 #         parallel workflow/scripts/download_genome.py --include protein gff3 --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
 #         touch {output}
 #         """
-
-
 # rule makedb:
 #     input:
 #         faa=rules.download_genome.output.faa,
