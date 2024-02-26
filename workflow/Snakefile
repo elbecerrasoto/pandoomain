@@ -4,9 +4,6 @@ from pathlib import Path
 import pandas as pd
 
 
-configfile: "config/config.yaml"
-
-
 IN_GENOMES = Path(config["genomes"])
 IN_QUERIES_DIR = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
@@ -25,8 +22,6 @@ GENOME_REGEX = r"GC[AF]_\d+\.\d"
 wildcard_constraints:
     genome=GENOME_REGEX,
 
-
-CORES = workflow.cores
 
 def ALL_BLASTS(queries_dir, genomes_dir, genomes):
     queries = [query for query in queries_dir.iterdir() if query.suffix == ".faa"]
@@ -54,7 +49,7 @@ GENOMES_SORTED = str(IN_GENOMES.parent / f"{IN_GENOMES.stem}_used{IN_GENOMES.suf
 # check them to ... plox
 
 
-rule sort_genomes:
+rule filter_sort_genomes:
     input:
         raw_ids=f"{IN_GENOMES}",
     output:
@@ -69,11 +64,6 @@ rule sort_genomes:
         GENOMES_DF = GENOMES_DF.loc[genome_matches, :].sort_values("genome")
         # write
         GENOMES_DF.to_csv(output.sorted, header=False, index=False)
-
-
-        # faa=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.faa",
-        # gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
-
 
 
 rule help:
