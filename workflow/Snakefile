@@ -5,7 +5,7 @@ import pandas as pd
 
 
 IN_GENOMES = Path(config["genomes"])
-IN_QUERIES_DIR = Path(config["queries"])
+IN_QUERIES = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
 assert IN_GENOMES.exists(), "Input genome assembly list file not found."
@@ -64,13 +64,6 @@ rule filter_sort_genomes:
         GENOMES_DF = GENOMES_DF.loc[genome_matches, :].sort_values("genome")
         # write
         GENOMES_DF.to_csv(output.sorted, header=False, index=False)
-
-
-rule help:
-    shell:
-        "bat workflow/Snakefile"
-
-
 
 
 # rule download_genome:
