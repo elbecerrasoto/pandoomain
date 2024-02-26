@@ -56,9 +56,24 @@ def ALL_BLASTS() -> list[str]:
     return tsv6s
 
 
+def ALL() -> list[str]:
+    return [f"{RESULTS}/all.tsv"]
+
+
 rule all:
     input:
+        ALL(),
+
+
+rule bind_blasts:
+    input:
         ALL_BLASTS(),
+    output:
+        ALL(),
+    shell:
+        """
+        cat {input} > {output}
+        """
 
 
 rule download_genome:
@@ -104,19 +119,3 @@ rule blastp:
             --query {input.query}
         perl -i -ne 'print "{wildcards.genome}\\t" . "$_"' {output.tsv6}
         """
-
-
-# def blasts(wildcards):
-#     query = wildcards.query
-#     return [
-#         str(RESULTS_GENOMES / genome / f"{genome}_{query}.tsv") for genome in GENOMES
-#     ]
-# rule bind_blasts:
-#     input:
-#         blasts,
-#     output:
-#         f"{RESULTS}/{{query}}.tsv",
-#     shell:
-#         """
-#         cat {input} > {output}
-#         """

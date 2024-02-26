@@ -1,5 +1,8 @@
 results
 tests/results
+dag.svg
+filegraph.svg
+rulegraph.svg
 
 .snakemake
 
