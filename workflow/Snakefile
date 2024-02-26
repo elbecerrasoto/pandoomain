@@ -1,7 +1,7 @@
 import re
 import subprocess as sp
-from pathlib import Path
 import pandas as pd
+from pathlib import Path
 
 
 IN_GENOMES = Path(config["genomes"])
@@ -23,42 +23,39 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
-GENOMES_SORTED = str(RESULTS / f"{IN_GENOMES.stem}_used{IN_GENOMES.suffix}")
+def sort_filter_genomes(path, filter_regex) -> list:
+    # read
+    df = pd.read_table(path, names=("genome",), delim_whitespace=True, comment="#")
+    # filter and sort
+    genome_matches = [bool(re.match(filter_regex, g)) for g in df.genome]
+    df = df.loc[genome_matches, :].sort_values("genome")
+    # write
+    # df.to_csv(output, header=False, index=False)
+    return list(df.genome)
+
+
+def ALL_GENOMES() -> list:
+    genomes = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
+    faas = [str(RESULTS_GENOMES / f"{genome}" / f"{genome}.faa") for genome in genomes]
+    gffs = [str(RESULTS_GENOMES / f"{genome}" / f"{genome}.gff") for genome in genomes]
+    return faas + gffs
 
 
 rule all:
     input:
-        GENOMES_SORTED,
+        ALL_GENOMES(),
 
 
-rule filter_sort_genomes:
-    input:
-        raw_ids=f"{IN_GENOMES}",
+rule download_genome:
     output:
-        sorted=str(GENOMES_SORTED),
-    run:
-        # read
-        GENOMES_DF = pd.read_table(
-            IN_GENOMES, names=("genome",), delim_whitespace=True, comment="#"
-        )
-        # filter and sort
-        genome_matches = [bool(re.match(GENOME_REGEX, g)) for g in GENOMES_DF.genome]
-        GENOMES_DF = GENOMES_DF.loc[genome_matches, :].sort_values("genome")
-        # write
-        GENOMES_DF.to_csv(output.sorted, header=False, index=False)
+        faa=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.faa",
+        gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
+    shell:
+        """
+        workflow/scripts/download_genome.py --include protein gff3 --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
+        """
 
 
-# rule download_genome:
-#     input:
-#         sorted=rules.output.sort_genomes.sorted
-#     output:
-#         downloaded=f"{RESULTS_GENOMES}/{{query}}_downloaded.txt"
-#     shell:
-#         """
-#         parallel mkdir -p {RESULTS_GENOMES}/{wildcards.genome}
-#         parallel workflow/scripts/download_genome.py --include protein gff3 --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
-#         touch {output}
-#         """
 # rule makedb:
 #     input:
 #         faa=rules.download_genome.output.faa,
