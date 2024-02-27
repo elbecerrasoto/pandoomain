@@ -40,7 +40,7 @@ def get_blast_fields(path) -> str:
         sep="\t",
         comment="#",
     )
-    return " ".join(list(df.field))
+    return list(df.field)
 
 
 def FALL_GENOMES() -> list[str]:
@@ -60,9 +60,12 @@ def FALL() -> list[str]:
     return [f"{RESULTS}/all.tsv"]
 
 
-BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
 ALL = FALL()
 ALL_BLASTS = FALL_BLASTS()
+
+BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
+BLAST_FORMAT = " ".join(BLAST_FIELDS)
+ALL_HEADER = "\t".join(["genome"] + BLAST_FIELDS)
 
 
 rule all:
@@ -75,9 +78,11 @@ rule bind_blasts:
         ALL_BLASTS,
     output:
         ALL,
+    params:
+        header=ALL_HEADER,
     shell:
         """
-        cat {input} > {output}
+        cat - {input} > {output} <<< '{params.header}'
         """
 
 
@@ -113,7 +118,7 @@ rule blastp:
     output:
         tsv6=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.tsv",
     params:
-        format=f"6 {BLAST_FIELDS}",  # Number 6 is for ncbi blast tabular format
+        format=f"6 {BLAST_FORMAT}",  # Number 6 is for ncbi blast tabular format
         db=rules.makedb.params.db,
     shell:
         """

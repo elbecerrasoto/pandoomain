@@ -2,8 +2,8 @@ CONFIG=tests/config.yaml
 SNAKEMAKE=snakemake --cores all --configfile $(CONFIG)
 
 
-.PHONY dry-test:
-dry-test:
+.PHONY test-dry:
+test-dry:
 	$(SNAKEMAKE) -np
 
 
@@ -15,11 +15,6 @@ test:
 .PHONY test-mtime:
 test-mtime:
 	$(SNAKEMAKE) --rerun-triggers mtime
-
-
-.PHONY debug:
-debug:
-	$(SNAKEMAKE) --debug
 
 
 .PHONY style:
