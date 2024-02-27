@@ -61,7 +61,8 @@ def FALL() -> list[str]:
 
 
 BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
-ALL, ALL_BLASTS = FALL(), FALL_GENOMES()
+ALL = FALL()
+ALL_BLASTS = FALL_BLASTS()
 
 
 rule all:
@@ -84,9 +85,11 @@ rule download_genome:
     output:
         faa=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.faa",
         gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
+    params:
+        include="protein gff3",
     shell:
         """
-        workflow/scripts/download_genome.py --include protein gff3 --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
+        workflow/scripts/download_genome.py --include {params.include} --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
         """
 
 
