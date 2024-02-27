@@ -1,8 +1,8 @@
 import re
 import subprocess as sp
-import pandas as pd
 from pathlib import Path
 
+import pandas as pd
 
 IN_GENOMES = Path(config["genomes"])
 IN_QUERIES = Path(config["queries"])
@@ -43,33 +43,37 @@ def get_blast_fields(path) -> str:
     return " ".join(list(df.field))
 
 
-def ALL_GENOMES() -> list[str]:
+def FALL_GENOMES() -> list[str]:
     genomes = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
     faas = [str(RESULTS_GENOMES / f"{genome}" / f"{genome}.faa") for genome in genomes]
     gffs = [str(RESULTS_GENOMES / f"{genome}" / f"{genome}.gff") for genome in genomes]
     return faas + gffs
 
 
-def ALL_BLASTS() -> list[str]:
+def FALL_BLASTS() -> list[str]:
     genomes = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
     tsv6s = [str(RESULTS_GENOMES / f"{genome}" / f"{genome}.tsv") for genome in genomes]
     return tsv6s
 
 
-def ALL() -> list[str]:
+def FALL() -> list[str]:
     return [f"{RESULTS}/all.tsv"]
+
+
+BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
+ALL, ALL_BLASTS = FALL(), FALL_GENOMES()
 
 
 rule all:
     input:
-        ALL(),
+        ALL,
 
 
 rule bind_blasts:
     input:
-        ALL_BLASTS(),
+        ALL_BLASTS,
     output:
-        ALL(),
+        ALL,
     shell:
         """
         cat {input} > {output}
@@ -97,9 +101,6 @@ rule makedb:
         """
         diamond makedb --db {params.db} --in {input.faa}
         """
-
-
-BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
 
 
 rule blastp:

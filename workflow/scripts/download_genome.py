@@ -4,14 +4,15 @@
 # Install with
 # mamba install -y -c conda-forge ncbi-datasets-cli
 
-import os
-import shutil
 import argparse
-import subprocess as sp
+import os
 import re
+import shutil
+import subprocess as sp
 from pathlib import Path
+from shlex import join, split
+
 from icecream import ic
-from shlex import split, join
 
 DESCRIPTION = """Wrapper for ncbi-datasets-cli
 
