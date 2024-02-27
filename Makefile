@@ -12,6 +12,16 @@ test:
 	$(SNAKEMAKE)
 
 
+.PHONY test-mtime:
+test-mtime:
+	$(SNAKEMAKE) --rerun-triggers mtime
+
+
+.PHONY debug:
+debug:
+	$(SNAKEMAKE) --debug
+
+
 .PHONY style:
 style:
 	snakefmt .

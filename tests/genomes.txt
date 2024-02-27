@@ -1,5 +1,3 @@
 GCF_000699465.1 # Reference: Bacillus subtilils JH462
 GCF_900112495.1 # With pair
 GCF_014250435.1 # With pair
-GCA_026795785.1 # With single, GeneBank
-GCF_002570305.1 # With none
