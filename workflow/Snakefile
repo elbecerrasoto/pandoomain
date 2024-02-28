@@ -126,15 +126,15 @@ rule bind_blasts:
         """
 
 
-# rule get_proteins:
-#     input:
-#         rules.bind_blasts.output,
-#     output:
-#         f"{RESULTS}/{BLASTS_FAA}",
-#     params:
-#         width="80",
-#     shell:
-#         """
-#         workflow/scripts/blast2faa.R {input} 2> /dev/null > /dev/stdout | fasta_unique | fasta_pretty -w={params.width} > {output}
-#         """
-#     default_target: True
+rule get_proteins:
+    input:
+        rules.bind_blasts.output,
+    output:
+        f"{RESULTS}/{BLASTS_FAA}",
+    params:
+        width="80",
+    default_target: True
+    shell:
+        """
+        workflow/scripts/blast2faa.R {input} 2> /dev/null > /dev/stdout | fasta_unique | fasta_pretty -w={params.width} > {output}
+        """
