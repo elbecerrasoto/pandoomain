@@ -1,15 +1,13 @@
-OUT <- "blasts.faa"
-FAA_FORMAT <- 80 # NCBI
-
-
-IN <- "blast_YwqJdomain.tsv"
-
-library(seqinr)
+#!/usr/bin/Rscript
 library(tidyverse)
 
-x <- read_tsv(IN)
+args <- commandArgs(trailingOnly = TRUE)
 
-write.fasta(as.list(x$full_sseq),
-  file.out = OUT,
-  names = x$stitle, nbchar = FAA_FORMAT
-)
+IN <- args[[1]] # "tests/results/blasts.tsv"
+blasts <- read_tsv(IN)
+headers <- blasts$stitle
+seqs <- blasts$full_sseq
+
+for (i in seq_along(headers)) {
+  cat(">", headers[[i]], "\n", seqs[[i]], "\n", sep = "")
+}

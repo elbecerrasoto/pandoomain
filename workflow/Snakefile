@@ -56,34 +56,17 @@ def FALL_BLASTS() -> list[str]:
     return tsv6s
 
 
-def FALL() -> list[str]:
-    return [f"{RESULTS}/all.tsv"]
+BLASTS_FAA = "blasts.faa"
+BLASTS_TSV = "blasts.tsv"
 
 
-ALL = FALL()
 ALL_BLASTS = FALL_BLASTS()
-
 BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
 BLAST_FORMAT = " ".join(BLAST_FIELDS)
 ALL_HEADER = "\t".join(["genome"] + BLAST_FIELDS)
 
 
-rule all:
-    input:
-        ALL,
-
-
-rule bind_blasts:
-    input:
-        ALL_BLASTS,
-    output:
-        ALL,
-    params:
-        header=ALL_HEADER,
-    shell:
-        """
-        cat - {input} > {output} <<< '{params.header}'
-        """
+# Default rule at the end of file
 
 
 rule download_genome:
@@ -128,3 +111,30 @@ rule blastp:
             --query {input.query}
         perl -i -ne 'print "{wildcards.genome}\\t" . "$_"' {output.tsv6}
         """
+
+
+rule bind_blasts:
+    input:
+        ALL_BLASTS,
+    output:
+        f"{RESULTS}/{BLASTS_TSV}",
+    params:
+        header=ALL_HEADER,
+    shell:
+        """
+        cat - {input} > {output} <<< '{params.header}'
+        """
+
+
+# rule get_proteins:
+#     input:
+#         rules.bind_blasts.output,
+#     output:
+#         f"{RESULTS}/{BLASTS_FAA}",
+#     params:
+#         width="80",
+#     shell:
+#         """
+#         workflow/scripts/blast2faa.R {input} 2> /dev/null > /dev/stdout | fasta_unique | fasta_pretty -w={params.width} > {output}
+#         """
+#     default_target: True
