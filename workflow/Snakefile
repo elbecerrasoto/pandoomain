@@ -25,7 +25,7 @@ wildcard_constraints:
 
 def sort_filter_genomes(path, filter_regex) -> list:
     # read, trim trailing white space and comments
-    df = pd.read_table(path, names=("genome",), sep="\s+", comment="#")
+    df = pd.read_table(path, names=("genome",), sep=r"\s+", comment="#")
     # filter and sort
     genome_matches = [bool(re.match(filter_regex, g)) for g in df.genome]
     df = df.loc[genome_matches, :].sort_values("genome")
@@ -56,8 +56,8 @@ def FALL_BLASTS() -> list[str]:
     return tsv6s
 
 
-BLASTS_FAA = "blasts.faa"
-BLASTS_TSV = "blasts.tsv"
+BLASTS_FAA = Path("blasts.faa")
+BLASTS_TSV = Path("blasts.tsv")
 
 
 ALL_BLASTS = FALL_BLASTS()
@@ -133,8 +133,25 @@ rule get_proteins:
         f"{RESULTS}/{BLASTS_FAA}",
     params:
         width="80",
-    default_target: True
     shell:
         """
         workflow/scripts/blast2faa.R {input} 2> /dev/null > /dev/stdout | fasta_unique | fasta_pretty -w={params.width} > {output}
+        """
+
+
+rule interproscan:
+    input:
+        faa=rules.get_proteins.output,
+    output:
+        f"{RESULTS}/{BLASTS_FAA.stem}.iscan.tsv",
+    threads: workflow.cores
+    default_target: True
+    shell:
+        """
+        interproscan.sh --formats TSV \
+                        --input {input} \
+                        --outfile {output} \
+                        --cpu {threads} \
+                        --disable-precalc
+        rm -r temp
         """
