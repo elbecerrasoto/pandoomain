@@ -12,7 +12,12 @@ test:
 	$(SNAKEMAKE)
 
 
+.PHONY test-fast:
+test-fast:
+	$(SNAKEMAKE) -- tests/results/blasts.faa
 .PHONY test-mtime:
+
+
 test-mtime:
 	$(SNAKEMAKE) --rerun-triggers mtime
 
