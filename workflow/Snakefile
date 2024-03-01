@@ -139,19 +139,31 @@ rule get_proteins:
         """
 
 
-rule interproscan:
+rule interproscan_xml:
     input:
         faa=rules.get_proteins.output,
     output:
-        f"{RESULTS}/{BLASTS_FAA.stem}.iscan.tsv",
+        xml=f"{RESULTS}/{BLASTS_FAA.stem}.iscan.xml",
     threads: workflow.cores
+    shell:
+        """
+        interproscan.sh --formats XML\
+                        --input {input.faa} \
+                        --outfile {output.xml} \
+                        --cpu {threads}
+        """
+
+
+rule interproscan_tsv:
+    input:
+        xml=rules.interproscan_xml.output.xml,
+    output:
+        tsv=f"{RESULTS}/{BLASTS_FAA.stem}.iscan.tsv",
     default_target: True
     shell:
         """
-        interproscan.sh --formats TSV \
-                        --input {input} \
-                        --outfile {output} \
-                        --cpu {threads} \
-                        --disable-precalc
-        rm -r temp
+        interproscan.sh --mode convert \
+                        --formats TSV \
+                        --input {input.xml} \
+                        --outfile {output.tsv} \
         """
