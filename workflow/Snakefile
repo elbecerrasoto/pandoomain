@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess as sp
 from pathlib import Path
@@ -144,6 +145,7 @@ rule interproscan_xml:
         faa=rules.get_proteins.output,
     output:
         xml=f"{RESULTS}/{BLASTS_FAA.stem}.iscan.xml",
+        temp=temp(directory(f"{os.getcwd()}/temp")),
     threads: workflow.cores
     shell:
         """
