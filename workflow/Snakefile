@@ -76,6 +76,8 @@ ISCAN_HEADER_L = [
 ]
 ISCAN_HEADER = "\t".join(ISCAN_HEADER_L)
 
+ISCAN_XML = Path("iscan.xml")
+ISCAN_TSV = Path("iscan.tsv")
 
 BLASTS_FAA = Path("blasts.faa")
 BLASTS_TSV = Path("blasts.tsv")
@@ -164,7 +166,7 @@ rule interproscan_xml:
     input:
         faa=rules.get_proteins.output,
     output:
-        xml=f"{RESULTS}/{BLASTS_FAA.stem}.iscan.xml",
+        xml=f"{RESULTS}/{ISCAN_XML}",
     params:
         temp="/tmp",
     threads: workflow.cores
@@ -183,7 +185,7 @@ rule interproscan_tsv:
     input:
         xml=rules.interproscan_xml.output.xml,
     output:
-        tsv=f"{RESULTS}/{BLASTS_FAA.stem}.iscan.tsv",
+        tsv=f"{RESULTS}/{ISCAN_TSV}",
     params:
         header=ISCAN_HEADER,
     default_target: True
