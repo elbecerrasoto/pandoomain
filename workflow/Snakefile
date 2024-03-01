@@ -57,6 +57,26 @@ def FALL_BLASTS() -> list[str]:
     return tsv6s
 
 
+ISCAN_HEADER_L = [
+    "protein",
+    "md5",
+    "length",
+    "analysis",
+    "memberDB",
+    "memberDB_txt",
+    "start",
+    "end",
+    "score",
+    "recommended",
+    "date",
+    "interpro",
+    "interpro_txt",
+    "GO",
+    "residue",
+]
+ISCAN_HEADER = "\t".join(ISCAN_HEADER_L)
+
+
 BLASTS_FAA = Path("blasts.faa")
 BLASTS_TSV = Path("blasts.tsv")
 
@@ -164,13 +184,19 @@ rule interproscan_tsv:
         xml=rules.interproscan_xml.output.xml,
     output:
         tsv=f"{RESULTS}/{BLASTS_FAA.stem}.iscan.tsv",
+    params:
+        header=ISCAN_HEADER,
     default_target: True
     shell:
         """
         interproscan.sh --mode convert \
                         --formats TSV \
                         --input {input.xml} \
-                        --outfile {output.tsv} \
+                        --outfile {output.tsv}.temp \
                         --goterms \
                         --enable-tsv-residue-annot
+
+        cat - {output.tsv}.temp > {output.tsv} <<< '{params.header}'
+
+        rm {output.tsv}.temp
         """
