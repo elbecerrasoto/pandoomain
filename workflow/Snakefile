@@ -145,14 +145,17 @@ rule interproscan_xml:
         faa=rules.get_proteins.output,
     output:
         xml=f"{RESULTS}/{BLASTS_FAA.stem}.iscan.xml",
-        temp=temp(directory(f"{os.getcwd()}/temp")),
+    params:
+        temp="/tmp",
     threads: workflow.cores
     shell:
         """
         interproscan.sh --formats XML\
                         --input {input.faa} \
                         --outfile {output.xml} \
-                        --cpu {threads}
+                        --cpu {threads} \
+                        --tempdir {params.temp} \
+                        --goterms
         """
 
 
