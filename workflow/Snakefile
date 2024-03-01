@@ -171,4 +171,6 @@ rule interproscan_tsv:
                         --formats TSV \
                         --input {input.xml} \
                         --outfile {output.tsv} \
+                        --goterms \
+                        --enable-tsv-residue-annot
         """
