@@ -2,10 +2,7 @@ genomes:
   "genomes.txt"
 
 queries:
-  "queries"
+  "queries.faa"
 
 results:
   "results"
-
-threads:
-  8
