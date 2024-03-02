@@ -5,6 +5,9 @@ from pathlib import Path
 
 import pandas as pd
 
+configfile: "config/config.yaml"
+
+
 IN_GENOMES = Path(config["genomes"])
 IN_QUERIES = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
