@@ -101,6 +101,7 @@ rule download_genome:
         gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
     params:
         include="protein gff3",
+    retries: 3
     shell:
         """
         workflow/scripts/download_genome.py --include {params.include} --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
