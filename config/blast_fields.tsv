@@ -15,7 +15,7 @@ qseq	Aligned part of query sequence	c
 sseq	Aligned part of subject sequence	c
 full_sseq	Full subject sequence	c
 evalue	Expect value	d
-bitscore	Bit score	i
+bitscore	Bit score	d
 score	Raw score	i
 length	Alignment length	i
 pident	Percentage of identical matches	d
@@ -26,7 +26,7 @@ gapopen	Number of gap openings	i
 gaps	Total number of gaps	i
 ppos	Percentage of positive - scoring matches	d
 qframe	Query frame	i
-btop	Blast traceback operations(BTOP)	i
+btop	Blast traceback operations(BTOP)	c
 cigar	CIGAR string	c
 stitle	Subject Title	c
 qcovhsp	Query Coverage Per HSP	d
