@@ -1,3 +1,7 @@
 GCF_000699465.1 # Reference: Bacillus subtilils JH462
 GCF_900112495.1 # With pair
+GCF_900112495.1 # Repetition, made up ID, must be removed
 GCF_014250435.1 # With pair
+GCF_014250435.1 # Repetition, made up ID, must be removed
+Non sense, line, must be removed
+# Comment
