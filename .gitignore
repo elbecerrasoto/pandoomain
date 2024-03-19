@@ -1,5 +1,6 @@
 results
 tests/results
+tests/genomes.txt
 dag.svg
 filegraph.svg
 rulegraph.svg

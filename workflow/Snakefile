@@ -77,7 +77,7 @@ ISCAN_TSV = Path("iscan.tsv")
 
 BLASTS_FAA = Path("blasts.faa")
 BLASTS_TSV = Path("blasts.tsv")
-
+BLASTS_PID = Path("blasts_pids.txt")
 
 ALL_BLASTS = FALL_BLASTS()
 BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
@@ -142,7 +142,7 @@ rule bind_blasts:
         header=ALL_HEADER,
     shell:
         """
-        cat - {input} > {output} <<< '{params.header}'
+        cat - {input} >| {output} <<< '{params.header}'
         """
 
 
@@ -155,7 +155,25 @@ rule get_proteins:
         width="80",
     shell:
         """
-        workflow/scripts/blast2faa.R {input} 2> /dev/null | fasta_unique | fasta_pretty -w={params.width} > {output}
+        workflow/scripts/blast2faa.R {input} 2> /dev/null | fasta_unique | fasta_pretty -w={params.width} >| {output}
+        """
+
+
+rule get_pids:
+    input:
+        rules.bind_blasts.output,
+    output:
+        f"{RESULTS}/{BLASTS_PID}",
+    params:
+        faa=rules.get_proteins.output,
+    shell:
+        """
+        sed '1d' {input} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
+
+        N_FAA=`grep -c '^>' {params.faa}`
+        N_PID=`grep -c '^'  {output}`
+
+        if [[ "$N_FAA" -ne "$N_PID" ]]; then exit 1; fi
         """
 
 
@@ -192,12 +210,11 @@ rule interproscan_tsv:
         interproscan.sh --mode convert \
                         --formats TSV \
                         --input {input.xml} \
-                        --outfile {output.tsv} \
-                        --tempdir {params.temp} \
+                        --outfile {output.tsv}.temp \
                         --goterms \
                         --enable-tsv-residue-annot
 
-        cat - {output.tsv}.temp > {output.tsv} <<< '{params.header}'
+        cat - {output.tsv}.temp >| {output.tsv} <<< '{params.header}'
 
         rm {output.tsv}.temp
         """
