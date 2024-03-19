@@ -6,7 +6,7 @@ rulegraph.svg
 
 .snakemake
 
-.Rproj
+*.Rproj
 .Rproj.user
 .Rhistory
 .RData
