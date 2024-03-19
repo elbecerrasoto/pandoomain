@@ -1,24 +1,28 @@
 CONFIG=tests/config.yaml
+GENOMES=tests/genomes.txt
 SNAKEMAKE=snakemake --cores all --configfile $(CONFIG)
 
-
 .PHONY test-dry:
-test-dry:
+test-dry: $(GENOMES)
 	$(SNAKEMAKE) -np
 
 
+$(GENOMES): tests/genomes_messy.txt
+	utils/deduplicate_accessions.R $< 2> /dev/null > $@
+
+
 .PHONY test:
-test:
+test: $(GENOMES)
 	$(SNAKEMAKE)
 
 
 .PHONY test-fast:
-test-fast:
+test-fast: $(GENOMES)
 	$(SNAKEMAKE) -- tests/results/blasts.faa
 .PHONY test-mtime:
 
 
-test-mtime:
+test-mtime: $(GENOMES)
 	$(SNAKEMAKE) --rerun-triggers mtime
 
 
@@ -32,7 +36,7 @@ style:
 
 
 .PHONY dag:
-dag:
+dag: $(GENOMES)
 	$(SNAKEMAKE) --forceall --dag | dot -Tsvg > dag.svg
 	$(SNAKEMAKE) --rulegraph      | dot -Tsvg > rulegraph.svg
 	$(SNAKEMAKE) --filegraph      | dot -Tsvg > filegraph.svg
@@ -43,3 +47,4 @@ clean:
 	rm -rf tests/results/
 	rm -rf .snakemake/
 	rm -rf dag.svg rulegraph.svg filegraph.svg
+	rm -rf tests/genomes.txt
