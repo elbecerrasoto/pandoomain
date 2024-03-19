@@ -1,6 +1,6 @@
 CONFIG=tests/config.yaml
-SNAKEMAKE=snakemake --cores all --configfile $(CONFIG)
 GENOMES=tests/genomes.txt
+SNAKEMAKE=snakemake --cores all --configfile $(CONFIG)
 
 .PHONY test-dry:
 test-dry: $(GENOMES)
