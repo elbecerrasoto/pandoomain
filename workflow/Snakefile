@@ -47,13 +47,6 @@ def get_blast_fields(path) -> str:
     return list(df.field)
 
 
-def FALL_GENOMES() -> list[str]:
-    genomes = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
-    faas = [str(RESULTS_GENOMES / f"{genome}" / f"{genome}.faa") for genome in genomes]
-    gffs = [str(RESULTS_GENOMES / f"{genome}" / f"{genome}.gff") for genome in genomes]
-    return faas + gffs
-
-
 def FALL_BLASTS() -> list[str]:
     genomes = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
     tsv6s = [str(RESULTS_GENOMES / f"{genome}" / f"{genome}.tsv") for genome in genomes]
@@ -162,7 +155,7 @@ rule get_proteins:
         width="80",
     shell:
         """
-        workflow/scripts/blast2faa.R {input} 2> /dev/null > /dev/stdout | fasta_unique | fasta_pretty -w={params.width} > {output}
+        workflow/scripts/blast2faa.R {input} 2> /dev/null | fasta_unique | fasta_pretty -w={params.width} > {output}
         """
 
 
@@ -192,13 +185,15 @@ rule interproscan_tsv:
         tsv=f"{RESULTS}/{ISCAN_TSV}",
     params:
         header=ISCAN_HEADER,
+        temp="/tmp",
     default_target: True
     shell:
         """
         interproscan.sh --mode convert \
                         --formats TSV \
                         --input {input.xml} \
-                        --outfile {output.tsv}.temp \
+                        --outfile {output.tsv} \
+                        --tempdir {params.temp} \
                         --goterms \
                         --enable-tsv-residue-annot
 
