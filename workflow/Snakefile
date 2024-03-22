@@ -59,13 +59,7 @@ def get_blast_fields(path) -> str:
     return list(df.field)
 
 
-def FALL_BLASTS() -> list[str]:
-    genomes = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
-    tsv6s = [
-        str(RESULTS_GENOMES / f"{genome}" / f"{genome}_blast.tsv") for genome in genomes
-    ]
-    return tsv6s
-
+GENOMES = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
 
 ISCAN_HEADER_L = [
     "protein",
@@ -93,10 +87,17 @@ BLASTS_FAA = Path("blasts.faa")
 BLASTS_TSV = Path("blasts.tsv")
 BLASTS_PID = Path("blasts_pids.txt")
 
-ALL_BLASTS = FALL_BLASTS()
+ALL_BLASTS = [
+    str(RESULTS_GENOMES / f"{genome}" / f"{genome}_blast.tsv") for genome in GENOMES
+]
 BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
 BLAST_FORMAT = " ".join(BLAST_FIELDS)
 ALL_HEADER = "\t".join(["genome"] + BLAST_FIELDS)
+
+
+ALL_HITS = [
+    str(RESULTS_GENOMES / f"{genome}" / f"{genome}_hits.tsv") for genome in GENOMES
+]
 
 
 # Default rule at the end of file
@@ -243,4 +244,15 @@ rule hits_gff:
     shell:
         """
         workflow/scripts/hits_gff.R {input.pids} {input.gff} >| {output}
+        """
+
+
+rule bind_hits_gffs:
+    input:
+        ALL_HITS,
+    output:
+        f"{RESULTS}/hits_gffs.tsv",
+    shell:
+        """
+        workflow/scripts/bind_hits_gffs.R {input} >| {output}
         """
