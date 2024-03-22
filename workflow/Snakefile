@@ -234,13 +234,13 @@ rule get_pids:
         """
 
 
-# rule hits_gff:
-#     input:
-#         gff=rules.download_genome.output.gff,
-#         pids=rules.get_pids.output
-#     output:
-#         f"{RESULTS}/{{genome}}/{{genome}}_hits.tsv"
-#     shell:
-#         """
-#         workflow/scripts/hits_gff.R {input.pids} {input.gff} >| {output}
-#         """
+rule hits_gff:
+    input:
+        gff=rules.download_genome.output.gff,
+        pids=rules.get_pids.output,
+    output:
+        f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_hits.tsv",
+    shell:
+        """
+        workflow/scripts/hits_gff.R {input.pids} {input.gff} >| {output}
+        """
