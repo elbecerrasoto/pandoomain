@@ -14,14 +14,15 @@ $(GENOMES): tests/genomes_messy.txt
 .PHONY test:
 test: $(GENOMES)
 	$(SNAKEMAKE)
+	$(SNAKEMAKE) -- tests/results/hits_gffs.tsv	
 
 
 .PHONY test-fast:
 test-fast: $(GENOMES)
 	$(SNAKEMAKE) -- tests/results/blasts.faa
+
+
 .PHONY test-mtime:
-
-
 test-mtime: $(GENOMES)
 	$(SNAKEMAKE) --rerun-triggers mtime
 

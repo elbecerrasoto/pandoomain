@@ -80,12 +80,12 @@ ISCAN_HEADER_L = [
 ]
 ISCAN_HEADER = "\t".join(ISCAN_HEADER_L)
 
-ISCAN_XML = Path("iscan.xml")
+ISCAN_XML = Path(".iscan.xml")
 ISCAN_TSV = Path("iscan.tsv")
 
 BLASTS_FAA = Path("blasts.faa")
 BLASTS_TSV = Path("blasts.tsv")
-BLASTS_PID = Path("blasts_pids.txt")
+BLASTS_PID = Path(".blasts_pids.txt")
 
 ALL_BLASTS = [
     str(RESULTS_GENOMES / f"{genome}" / f"{genome}_blast.tsv") for genome in GENOMES
@@ -254,5 +254,5 @@ rule bind_hits_gffs:
         f"{RESULTS}/hits_gffs.tsv",
     shell:
         """
-        workflow/scripts/bind_hits_gffs.R {input} >| {output}
+        workflow/scripts/bind_hits_gffs.R 12 {input} >| {output}
         """
