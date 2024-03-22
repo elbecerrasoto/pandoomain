@@ -8,10 +8,22 @@ import pandas as pd
 configfile: "config/config.yaml"
 
 
+def is_internet_on():
+    # https://stackoverflow.com/questions/20913411/test-if-an-internet-connection-is-present-in-python
+    import socket
+
+    try:
+        socket.create_connection(("1.1.1.1", 53))
+        return True
+    except OSError:
+        return False
+
+
 IN_GENOMES = Path(config["genomes"])
 IN_QUERIES = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
+assert is_internet_on(), "No network connection."
 assert IN_GENOMES.exists(), "Input genome assembly list file not found."
 assert IN_QUERIES.exists(), "Input query directory not found."
 assert IN_BLAST_FIELDS.exists(), "Input blast fields file not found."
@@ -49,7 +61,9 @@ def get_blast_fields(path) -> str:
 
 def FALL_BLASTS() -> list[str]:
     genomes = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
-    tsv6s = [str(RESULTS_GENOMES / f"{genome}" / f"{genome}.tsv") for genome in genomes]
+    tsv6s = [
+        str(RESULTS_GENOMES / f"{genome}" / f"{genome}_blast.tsv") for genome in genomes
+    ]
     return tsv6s
 
 
@@ -119,7 +133,7 @@ rule blastp:
         query=IN_QUERIES,
         db=rules.makedb.output.db,
     output:
-        tsv6=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.tsv",
+        tsv6=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_blast.tsv",
     params:
         format=f"6 {BLAST_FORMAT}",  # Number 6 is for ncbi blast tabular format
         db=rules.makedb.params.db,
@@ -156,24 +170,6 @@ rule get_proteins:
     shell:
         """
         workflow/scripts/blast2faa.R {input} 2> /dev/null | fasta_unique | fasta_pretty -w={params.width} >| {output}
-        """
-
-
-rule get_pids:
-    input:
-        rules.bind_blasts.output,
-    output:
-        f"{RESULTS}/{BLASTS_PID}",
-    params:
-        faa=rules.get_proteins.output,
-    shell:
-        """
-        sed '1d' {input} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
-
-        N_FAA=`grep -c '^>' {params.faa}`
-        N_PID=`grep -c '^'  {output}`
-
-        if [[ "$N_FAA" -ne "$N_PID" ]]; then exit 1; fi
         """
 
 
@@ -218,3 +214,33 @@ rule interproscan_tsv:
 
         rm {output.tsv}.temp
         """
+
+
+rule get_pids:
+    input:
+        rules.bind_blasts.output,
+    output:
+        f"{RESULTS}/{BLASTS_PID}",
+    params:
+        faa=rules.get_proteins.output,
+    shell:
+        """
+        sed '1d' {input} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
+
+        N_FAA=`grep -c '^>' {params.faa}`
+        N_PID=`grep -c '^'  {output}`
+
+        if [[ "$N_FAA" -ne "$N_PID" ]]; then exit 1; fi
+        """
+
+
+# rule hits_gff:
+#     input:
+#         gff=rules.download_genome.output.gff,
+#         pids=rules.get_pids.output
+#     output:
+#         f"{RESULTS}/{{genome}}/{{genome}}_hits.tsv"
+#     shell:
+#         """
+#         workflow/scripts/hits_gff.R {input.pids} {input.gff} >| {output}
+#         """
