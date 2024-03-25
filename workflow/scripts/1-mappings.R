@@ -1,16 +1,12 @@
 #!/usr/bin/Rscript
-library(tidyverse)
+
+sM <- suppressMessages
+sM(library(tidyverse))
+
 args <- commandArgs(trailingOnly = TRUE)
 
-
-# Globals -----------------------------------------------------------------
-
-
-OUT <- "mappings.tsv"
-
-# Filter blasts by domain
-BLASTS <- "results/blasts.tsv"
-ISCAN <- "results/iscan.tsv"
+BLASTS <- "tests/results/blasts.tsv"
+ISCAN <- "tests/results/"
 
 QUERIES <- c("WP_003243987.1", "WP_003243213.1")
 QUERIES_ALIASES <- c("YwqJ", "YwqL") |>
@@ -45,6 +41,9 @@ switch_vectorized <- function(v_chr, switch_list) {
   map_chr(v_chr, f)
 }
 
+length(paste(letters))
+str_flatten(letters, collapse = ";")
+
 
 # Code --------------------------------------------------------------------
 
@@ -68,6 +67,17 @@ q2pids <- q2pids |>
     map(QUERIES_ALIASES, \(x) x)
   )) |>
   relocate(q_alias)
+
+
+q2pids
+
+blasts
+blasts |>
+  group_by(sseqid) |>
+  summarise(genomes = str_flatten(unique(genome), collapse = ";"))
+
+
+
 
 
 # Map each pid to domains (is a 1-to-many mapping)
