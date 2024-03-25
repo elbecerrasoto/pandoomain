@@ -1,3 +1,4 @@
+bsub_*
 results
 tests/results
 tests/genomes.txt
