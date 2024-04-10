@@ -4,5 +4,24 @@ genomes:
 queries:
   "queries.faa"
 
+neiborhood:
+  12 # both sides of each query
+
+# A pair of genes to calculate
+# a distance in between them
+pair:
+  - "WP_003243987.1" # YwqJ
+  - "WP_003243213.1" # YwqL
+
+# Only consider the blast hits containing
+# these InterPro ids
+# Any query no listed here
+filtering_domains:
+  WP_003243987.1:
+    - "IPR006829" # LXG
+    - "IPR025968" # YwqJ-like
+  WP_003243213.1:
+    - "IPR007581" # EndoV
+
 results:
   "results"
