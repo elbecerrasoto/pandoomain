@@ -50,4 +50,4 @@ stopifnot(n_ids == expected)
 best |>
   select(accession_best) |>
   format_tsv(col_names = FALSE) |>
-  writeLines(stdout())
+  writeLines(stdout(), sep = "")
