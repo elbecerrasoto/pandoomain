@@ -138,6 +138,17 @@ rule download_genome:
         """
 
 
+rule cds_gff:
+    input:
+        gff=rules.download_genome.output.gff,
+    output:
+        cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
+    shell:
+        """
+        workflow/scripts/reduce_gff2cds.R {input} >| {output}
+        """
+
+
 rule makedb:
     input:
         faa=rules.download_genome.output.faa,
@@ -223,7 +234,6 @@ rule interproscan_tsv:
     params:
         header=ISCAN_HEADER,
         temp="/tmp",
-    default_target: True
     shell:
         """
         interproscan.sh --mode convert \
@@ -260,9 +270,9 @@ rule get_pids:
         """
 
 
-rule hits_gff:
+rule hits_cds:
     input:
-        gff=rules.download_genome.output.gff,
+        cds=rules.cds_gff.output.cds,
         pids=rules.get_pids.output,
     output:
         f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_hits.tsv",
@@ -277,6 +287,7 @@ rule bind_hits_gffs:
         ALL_HITS,
     output:
         f"{RESULTS}/hits_gffs.tsv",
+    default_target: True
     shell:
         """
         workflow/scripts/bind_hits_gffs.R 12 {input} >| {output}
