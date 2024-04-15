@@ -2,29 +2,24 @@ CONFIG=tests/config.yaml
 GENOMES=tests/genomes.txt
 SNAKEMAKE=snakemake --cores all --configfile $(CONFIG)
 
+
 .PHONY test-dry:
 test-dry: $(GENOMES)
 	$(SNAKEMAKE) -np
 
 
-$(GENOMES): tests/genomes_messy.txt
-	utils/deduplicate_accessions.R $< 2> /dev/null > $@
-
-
 .PHONY test:
 test: $(GENOMES)
 	$(SNAKEMAKE)
-	$(SNAKEMAKE) -- tests/results/hits_gffs.tsv	
-
-
-.PHONY test-fast:
-test-fast: $(GENOMES)
-	$(SNAKEMAKE) -- tests/results/blasts.faa
 
 
 .PHONY test-mtime:
 test-mtime: $(GENOMES)
 	$(SNAKEMAKE) --rerun-triggers mtime
+
+
+$(GENOMES): tests/genomes_messy.txt
+	utils/deduplicate_accessions.R $< 2> /dev/null > $@
 
 
 .PHONY style:

@@ -84,7 +84,7 @@ def get_blast_fields(path) -> str:
 GENOMES = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
 
 ISCAN_HEADER_L = [
-    "protein",
+    "pid",
     "md5",
     "length",
     "analysis",
@@ -138,7 +138,7 @@ rule download_genome:
         """
 
 
-rule cds_gff:
+rule cds:
     input:
         gff=rules.download_genome.output.gff,
     output:
@@ -194,7 +194,7 @@ rule bind_blasts:
         """
 
 
-rule get_proteins:
+rule all_proteins:
     input:
         rules.bind_blasts.output,
     output:
@@ -209,7 +209,7 @@ rule get_proteins:
 
 rule interproscan_xml:
     input:
-        faa=rules.get_proteins.output,
+        faa=rules.all_proteins.output,
     output:
         xml=f"{RESULTS}/{ISCAN_XML}",
     params:
@@ -249,46 +249,47 @@ rule interproscan_tsv:
         """
 
 
-rule get_pids:
+rule pids:
     input:
-        rules.bind_blasts.output,
+        tsv=rules.bind_blasts.output,
+        faa=rules.all_proteins.output,
     output:
         f"{RESULTS}/{BLASTS_PID}",
-    params:
-        faa=rules.get_proteins.output,
+    default_target: True
     shell:
         """
-        sed '1d' {input} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
+        sed '1d' {input.tsv} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
 
-        N_FAA=`grep -c '^>' {params.faa}`
-        N_PID=`grep -c '^'  {output}` # wc -l clutters the output
+        N_FAA=`grep -c '^>' {input.faa}`
+        N_PID=`grep -c '^'  {input.tsv}` # wc -l clutters the output, so equality (==) fails
 
         # Sanity check, N == M
         # N unique faas
         # M unique pids
-        if [[ "$N_FAA" -ne "$N_PID" ]]; then printf "Fatal Error:\nN unique fasta entries differ from\nM unique protein ids.\n" && exit 1; fi
+        # if [[ "$N_FAA" -ne "$N_PID" ]]; then printf "Fatal Error:\\nN unique fasta entries differ from\\nM unique protein ids.\\n" && exit 1; fi
         """
 
 
-rule hits_cds:
+# TODO fix this rule
+rule hits:
     input:
-        cds=rules.cds_gff.output.cds,
-        pids=rules.get_pids.output,
+        cds=rules.cds.output.cds,
+        pids=rules.pids.output,
     output:
         f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_hits.tsv",
     shell:
         """
-        workflow/scripts/hits_gff.R {input.pids} {input.gff} >| {output}
+        workflow/scripts/cds2hits.R {input.pids} {input.cds} >| {output}
         """
 
 
-rule bind_hits_gffs:
+rule bind_hits:
     input:
         ALL_HITS,
     output:
-        f"{RESULTS}/hits_gffs.tsv",
-    default_target: True
+        f"{RESULTS}/hits.tsv",
+    threads: workflow.cores
     shell:
         """
-        workflow/scripts/bind_hits_gffs.R 12 {input} >| {output}
+        workflow/scripts/bind_hits.R {threads} {input} >| {output}
         """
