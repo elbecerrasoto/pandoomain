@@ -8,6 +8,18 @@ import pandas as pd
 configfile: "config/config.yaml"
 
 
+def bold_red(msg: str) -> str:
+    # error format
+    # https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    # Black is introducing spaces why? what?
+    # fmt: off
+    return f"{FAIL} {BOLD} {msg} {ENDC}"
+    # fmt: on
+
+
 def is_internet_on():
     # https://stackoverflow.com/questions/20913411/test-if-an-internet-connection-is-present-in-python
     import socket
@@ -23,10 +35,20 @@ IN_GENOMES = Path(config["genomes"])
 IN_QUERIES = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
-assert is_internet_on(), "No network connection."
-assert IN_GENOMES.exists(), "Input genome assembly list file not found."
-assert IN_QUERIES.exists(), "Input query directory not found."
-assert IN_BLAST_FIELDS.exists(), "Input blast fields file not found."
+assert is_internet_on(), bold_red("No network connection.")
+assert IN_GENOMES.exists(), (
+    bold_red("Input genome assembly list file not found.")
+    + f"\nTried to look it up at: {IN_GENOMES}."
+)
+
+assert IN_QUERIES.exists(), (
+    bold_red("Input query file not found.") + f"\nTried to look it up at: {IN_QUERIES}."
+)
+assert IN_BLAST_FIELDS.exists(), (
+    bold_red("Input blast fields file not found.")
+    + f"\nTried to look it up at: {IN_BLAST_FIELDS}."
+)
+
 
 RESULTS = Path(config["results"])
 RESULTS_GENOMES = RESULTS / "genomes"
@@ -229,9 +251,12 @@ rule get_pids:
         sed '1d' {input} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
 
         N_FAA=`grep -c '^>' {params.faa}`
-        N_PID=`grep -c '^'  {output}`
+        N_PID=`grep -c '^'  {output}` # wc -l clutters the output
 
-        if [[ "$N_FAA" -ne "$N_PID" ]]; then exit 1; fi
+        # Sanity check, N == M
+        # N unique faas
+        # M unique pids
+        if [[ "$N_FAA" -ne "$N_PID" ]]; then printf "Fatal Error:\nN unique fasta entries differ from\nM unique protein ids.\n" && exit 1; fi
         """
 
 
