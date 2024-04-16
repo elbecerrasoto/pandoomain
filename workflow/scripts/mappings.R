@@ -1,28 +1,33 @@
-#!/usr/bin/Rscript
+library(yaml)
+library(tidyverse)
 
-sM <- suppressMessages
-sM(library(tidyverse))
+args <- commandArgs(trailingOnly = T)
 
-args <- commandArgs(trailingOnly = TRUE)
+# Globals ----
 
+CONFIG <- args[1]
+ISCAN <- args[2]
+BLASTS_PIDS <- args[3]
+
+CONFIG <- "tests/config.yaml"
+ISCAN <- "tests/results/iscan.tsv"
 BLASTS <- "tests/results/blasts.tsv"
-ISCAN <- "tests/results/"
 
-QUERIES <- c("WP_003243987.1", "WP_003243213.1")
-QUERIES_ALIASES <- c("YwqJ", "YwqL") |>
-  `names<-`(QUERIES)
+# Read ----
 
+config <- read_yaml(CONFIG)
 
-# Reading -----------------------------------------------------------------
+filters <- config$filtering_domains
+aliases <- config$query_aliases
 
+pids2filter <- names(filters)
+pids2alias <- names(aliases)
 
-blasts <- read_tsv(BLASTS)
 iscan <- read_tsv(ISCAN, na = c("-", "NA", ""))
 
+blasts <- read_tsv(BLASTS)
 
-# Helpers -----------------------------------------------------------------
-
-
+# Helpers ----
 
 is_tbl_NA_free <- function(tbl) {
   tbl |>
@@ -44,53 +49,54 @@ switch_vectorized <- function(v_chr, switch_list) {
 length(paste(letters))
 str_flatten(letters, collapse = ";")
 
-
-# Code --------------------------------------------------------------------
-
+# Main ----
 
 # Mappings
-# qs -> pids -> doms
+# queries 1->M pids M->M domains
+# queries 1->M pids M->M genomes
 
-
-# Map each query to pid (is a 1-to-many mapping)
+# queries 1->M pids
 q2pids <- blasts |>
-  group_by(qseqid) |>
-  reframe(pid = unique(sseqid)) |>
-  rename(query = qseqid)
+  rename(query = qseqid) |>
+  group_by(query) |>
+  reframe(pid = unique(sseqid))
 
 stopifnot(is_tbl_NA_free(q2pids))
 
-# Add the aliases
-q2pids <- q2pids |>
-  mutate(q_alias = switch_vectorized(
-    query,
-    map(QUERIES_ALIASES, \(x) x)
-  )) |>
-  relocate(q_alias)
+
+if (F) {
+  # Add the aliases
+  q2pids <- q2pids |>
+    mutate(q_alias = switch_vectorized(
+      query,
+      map(QUERIES_ALIASES, \(x) x)
+    )) |>
+    relocate(q_alias)
 
 
-q2pids
+  q2pids
 
-blasts
-blasts |>
-  group_by(sseqid) |>
-  summarise(genomes = str_flatten(unique(genome), collapse = ";"))
-
-
+  blasts
+  blasts |>
+    group_by(sseqid) |>
+    summarise(genomes = str_flatten(unique(genome), collapse = ";"))
 
 
 
-# Map each pid to domains (is a 1-to-many mapping)
-pid2doms <- iscan |>
-  group_by(protein) |>
-  reframe(domain = unique(interpro[!is.na(interpro)])) |>
-  rename(pid = protein)
-
-stopifnot(is_tbl_NA_free(pid2doms))
 
 
-# Join both tables
-q2pids2domains <- left_join(q2pids, pid2doms)
+  # Map each pid to domains (is a 1-to-many mapping)
+  pid2doms <- iscan |>
+    group_by(protein) |>
+    reframe(domain = unique(interpro[!is.na(interpro)])) |>
+    rename(pid = protein)
 
-q2pids2domains |>
-  write_tsv(OUT)
+  stopifnot(is_tbl_NA_free(pid2doms))
+
+
+  # Join both tables
+  q2pids2domains <- left_join(q2pids, pid2doms)
+
+  q2pids2domains |>
+    write_tsv(OUT)
+}
