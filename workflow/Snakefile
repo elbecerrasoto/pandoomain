@@ -255,7 +255,6 @@ rule pids:
         faa=rules.all_proteins.output,
     output:
         f"{RESULTS}/{BLASTS_PID}",
-    default_target: True
     shell:
         """
         sed '1d' {input.tsv} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
@@ -270,7 +269,6 @@ rule pids:
         """
 
 
-# TODO fix this rule
 rule hits:
     input:
         cds=rules.cds.output.cds,
@@ -289,6 +287,7 @@ rule bind_hits:
     output:
         f"{RESULTS}/hits.tsv",
     threads: workflow.cores
+    default_target: True
     shell:
         """
         workflow/scripts/bind_hits.R {threads} {input} >| {output}
