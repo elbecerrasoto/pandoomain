@@ -56,3 +56,4 @@ filtering_domains: # NO key error
 query_aliases: # NO key error
   WP_003243987.1: deam # YwqJ deaminase
   WP_003243213.1: endo # YwqL endonuclease
+  WP_090990460.1: poly # polymorphic toxin type 15
