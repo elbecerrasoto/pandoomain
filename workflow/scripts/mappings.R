@@ -42,12 +42,7 @@ aliasesL <- config$query_aliases
 
 iscan <- read_tsv(ISCAN, na = c("-", "NA", ""))
 
-blasts <- read_tsv(BLASTS) |>
-  rename(
-    query = qseqid,
-    pid = sseqid
-  )
-
+blasts <- read_tsv(BLASTS)
 
 # Mappings ----
 

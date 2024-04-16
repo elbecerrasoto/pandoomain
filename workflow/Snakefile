@@ -119,7 +119,12 @@ ALL_BLASTS = [
 ]
 BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
 BLAST_FORMAT = " ".join(BLAST_FIELDS)
-ALL_HEADER = "\t".join(["genome"] + BLAST_FIELDS)
+
+BLAST_FORMAT_RENAMES = {"qseqid": "query", "sseqid": "pid"}
+d = BLAST_FORMAT_RENAMES
+blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_FIELDS]
+
+BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
 
 
 ALL_HITS = [
@@ -194,7 +199,7 @@ rule bind_blasts:
     output:
         f"{RESULTS}/{BLASTS_TSV}",
     params:
-        header=ALL_HEADER,
+        header=BLAST_HEADER,
     shell:
         """
         cat - {input} >| {output} <<< '{params.header}'

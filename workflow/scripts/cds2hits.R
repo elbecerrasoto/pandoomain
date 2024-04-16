@@ -17,6 +17,6 @@ pids <- read_tsv(PIDS, col_names = "pid")
 cds <- read_tsv(CDS)
 
 cds |>
-  semi_join(pids) |>
+  semi_join(pids, join_by(pid)) |>
   format_tsv() |>
   writeLines(stdout(), sep = "")
