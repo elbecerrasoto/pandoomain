@@ -13,11 +13,11 @@ args <- commandArgs(trailingOnly = T)
 
 CONFIG <- args[1]
 ISCAN <- args[2]
-BLASTS_PIDS <- args[3]
+BLASTS <- args[3]
 
-CONFIG <- "tests/config.yaml"
-ISCAN <- "tests/results/iscan.tsv"
-BLASTS <- "tests/results/blasts.tsv"
+# CONFIG <- "tests/config.yaml"
+# ISCAN <- "tests/results/iscan.tsv"
+# BLASTS <- "tests/results/blasts.tsv"
 
 
 # Helpers ----

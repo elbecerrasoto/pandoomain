@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
+configfile: "config/config.yaml"
+
 
 def bold_red(msg: str) -> str:
     # error format
@@ -306,17 +308,21 @@ rule bind_hits:
         """
 
 
-# rule mappings:
-#     input:
-#         iscan=rules.interproscan_tsv.output
-#         blasts=rules.bind_blasts.output
-#     output:
-#         f"{RESULTS}/mappings_raw.tsv",
-#     default_target: True
-#     shell:
-#         """
-#         workflow/scripts/bind_hits.R {threads} {input} >| {output}
-#         """
+rule mappings:
+    input:
+        iscan=rules.interproscan_tsv.output,
+        blasts=rules.bind_blasts.output,
+    output:
+        f"{RESULTS}/mappings_raw.tsv",
+    params:
+        config=workflow.configfiles[0],
+    default_target: True
+    shell:
+        """
+        workflow/scripts/mappings.R {params.config} {input.iscan} {input.blasts} >| {output}
+        """
+
+
 # inputs_mappingsmappings_inputs = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
 # for input_map in inputs_mappings:
 #     rule:
