@@ -5,8 +5,6 @@ from pathlib import Path
 
 import pandas as pd
 
-configfile: "config/config.yaml"
-
 
 def bold_red(msg: str) -> str:
     # error format
@@ -35,6 +33,9 @@ IN_GENOMES = Path(config["genomes"])
 IN_QUERIES = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
+
+TAXID = config["taxid"]  # if not None
+
 assert is_internet_on(), bold_red("No network connection.")
 assert IN_GENOMES.exists(), (
     bold_red("Input genome assembly list file not found.")
@@ -59,6 +60,12 @@ GENOME_REGEX = r"GC[AF]_\d+\.\d"
 
 wildcard_constraints:
     genome=GENOME_REGEX,
+
+
+DIAMOND_ARGS = config["diamond_args"]  # if not None ?
+PAIR = config["pair"]  # if not None
+FILTERING_DOMS = config["filtering_domains"]
+QUERY_ALIASES = config["query_aliases"]
 
 
 def sort_filter_genomes(path, filter_regex) -> list:
@@ -171,12 +178,14 @@ rule blastp:
     params:
         format=f"6 {BLAST_FORMAT}",  # Number 6 is for ncbi blast tabular format
         db=rules.makedb.params.db,
+        extra_args=f"{DIAMOND_ARGS}",
     shell:
         """
         diamond blastp --outfmt {params.format}\
             --out   {output.tsv6}\
             --db    {params.db}\
-            --query {input.query}
+            --query {input.query}\
+            {params.extra_args}
         perl -i -ne 'print "{wildcards.genome}\\t" . "$_"' {output.tsv6}
         """
 
