@@ -12,10 +12,8 @@ def bold_red(msg: str) -> str:
     FAIL = "\033[91m"
     ENDC = "\033[0m"
     BOLD = "\033[1m"
-    # Black is introducing spaces why? what?
-    # fmt: off
-    return f"{FAIL} {BOLD} {msg} {ENDC}"
-    # fmt: on
+    # Can't use f"" format strings, cause the formater (snakefmt) introduces speces
+    return FAIL + BOLD + msg + ENDC
 
 
 def is_internet_on():
@@ -65,7 +63,7 @@ wildcard_constraints:
 DIAMOND_ARGS = config["diamond_args"]  # if not None ?
 PAIR = config["pair"]  # if not None
 FILTERING_DOMS = config["filtering_domains"]
-QUERY_ALIASES = config["query_aliases"]
+# QUERY_ALIASES = config["query_aliases"] # better that R reads this
 
 
 def sort_filter_genomes(path, filter_regex) -> list:
@@ -301,3 +299,23 @@ rule bind_hits:
         """
         workflow/scripts/bind_hits.R {threads} {input} >| {output}
         """
+
+
+# rule mappings:
+#     input:
+#         iscan=rules.interproscan_tsv.output
+#         blasts=rules.bind_blasts.output
+#     output:
+#         f"{RESULTS}/mappings_raw.tsv",
+#     default_target: True
+#     shell:
+#         """
+#         workflow/scripts/bind_hits.R {threads} {input} >| {output}
+#         """
+# inputs_mappingsmappings_inputs = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
+# for input_map in inputs_mappings:
+#     rule:
+#         name: f"{input_map.stem}_wide"
+#         input: f"{input_map}"
+#         output: f"{input_map.stem}_wide.tsv"
+#         shell: "workflow/scripts/make_wide.R {input} >| {output}"
