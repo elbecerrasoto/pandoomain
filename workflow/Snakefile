@@ -316,10 +316,24 @@ rule mappings:
         f"{RESULTS}/mappings_raw.tsv",
     params:
         config=workflow.configfiles[0],
-    default_target: True
+    # default_target: True
     shell:
         """
         workflow/scripts/mappings.R {params.config} {input.iscan} {input.blasts} >| {output}
+        """
+
+
+rule filter_mappings:
+    input:
+        raw=rules.mappings.output,
+    output:
+        filtered=f"{RESULTS}/mappings.tsv",
+    params:
+        config=workflow.configfiles[0],
+    default_target: True
+    shell:
+        """
+        workflow/scripts/filter_mappings.R {params} {input} >| {output}
         """
 
 

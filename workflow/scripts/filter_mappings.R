@@ -14,8 +14,8 @@ args <- commandArgs(trailingOnly = TRUE)
 CONFIG <- args[1]
 MAPPINGS <- args[2]
 
-CONFIG <- "tests/config.yaml"
-MAPPINGS <- "tests/results/mappings_raw.tsv"
+# CONFIG <- "tests/config.yaml"
+# MAPPINGS <- "tests/results/mappings_raw.tsv"
 
 
 FILTER <- read_yaml(CONFIG)$filtering_domains
@@ -62,12 +62,12 @@ mappings_filtered <- mappings |>
 
 
 # To 1st normal form and order cols
-mappings_filtered |>
+mappings_filtered <- mappings_filtered |>
   group_by(q_alias, query, pid, genome) |>
   reframe(domain = list_c(domains)) |>
   select(all_of(names(mappings)))
 
 
-mappings |>
+mappings_filtered |>
   format_tsv() |>
   writeLines(stdout(), sep = "")
