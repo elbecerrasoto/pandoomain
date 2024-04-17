@@ -5,7 +5,7 @@ library(magrittr)
 library(tidyverse)
 
 
-args <- commandArgs(trailingOnly = T)
+args <- commandArgs(trailingOnly = TRUE)
 
 
 # Globals ----

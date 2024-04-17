@@ -17,6 +17,7 @@ MAPPINGS <- args[2]
 CONFIG <- "tests/config.yaml"
 MAPPINGS <- "tests/results/mappings_raw.tsv"
 
+
 FILTER <- read_yaml(CONFIG)$filtering_domains
 
 mappings <- read_tsv(MAPPINGS)
@@ -34,15 +35,15 @@ check_domains <- function(query, domains, domains_to_check) {
 
   if (length(domains_to_check) == 0) {
     return(filter_lgl)
-  } else {
-    for (i in seq_along(domains)) {
-      for (Q in names(domains_to_check)) {
-        if (query[i] == Q) {
-          filter_lgl[i] <- domains_to_check[[Q]] %in% domains[[i]] |>
-            all()
+  }
 
-          break()
-        }
+  for (i in seq_along(domains)) {
+    for (Q in names(domains_to_check)) {
+      if (query[i] == Q) {
+        filter_lgl[i] <- domains_to_check[[Q]] %in% domains[[i]] |>
+          all()
+
+        break()
       }
     }
   }
@@ -59,4 +60,14 @@ mappings_filtered <- mappings |>
   summarise(domains = list(domain)) |>
   filter(check_domains(query, domains, FILTER))
 
-print(mappings_filtered)
+
+# To 1st normal form and order cols
+mappings_filtered |>
+  group_by(q_alias, query, pid, genome) |>
+  reframe(domain = list_c(domains)) |>
+  select(all_of(names(mappings)))
+
+
+mappings |>
+  format_tsv() |>
+  writeLines(stdout(), sep = "")
