@@ -36,8 +36,6 @@ stop_on_NA <- function(tbl) stopifnot(is_tbl_NA_free(tbl))
 
 
 config <- read_yaml(CONFIG)
-
-filtersL <- config$filtering_domains
 aliasesL <- config$query_aliases
 
 iscan <- read_tsv(ISCAN, na = c("-", "NA", ""))

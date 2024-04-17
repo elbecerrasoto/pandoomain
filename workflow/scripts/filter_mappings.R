@@ -1,53 +1,34 @@
 #!/usr/bin/Rscript
+
+# Filter blasts by absence/presence of interpro domains
+
+library(yaml)
 library(tidyverse)
-library(stringr)
+
 args <- commandArgs(trailingOnly = TRUE)
 
 
-# Globals -----------------------------------------------------------------
+# Globals ----
 
 
-OUT_BLASTS <- "blasts_filtered.tsv"
-OUT_MAPPINGS <- "mappings_filtered.tsv"
+CONFIG <- args[1]
+MAPPINGS <- args[2]
 
-# Filter blasts by domain
-BLASTS <- "results/blasts.tsv"
-MAPPINGS <- "mappings.tsv"
+CONFIG <- "tests/config.yaml"
+MAPPINGS <- "tests/results/mappings_raw.tsv"
 
-# YwqJ
-# LXG - IPR006829 TO_SEARCH
-# PT-TG - IPR027797
-# YwqJ-like - IPR025968 TO_SEARCH
+FILTER <- read_yaml(CONFIG)$filtering_domains
 
-# YwqL
-# Endonuclease-V - IPR007581 TO_SEARCH
-
-FILTER <- list(
-  WP_003243987.1 = c("IPR006829", "IPR025968"),
-  WP_003243213.1 = c("IPR007581")
-)
+mappings <- read_tsv(MAPPINGS)
 
 
-# Reading Data ------------------------------------------------------------
-
-
-blasts <- read_tsv(BLASTS) # only to filter it
-mappings <- read_tsv(MAPPINGS) # operate on this table
-
-# Helpers -----------------------------------------------------------------
-
-
-
-
-# vectorized boolean function
-# to be used on dplyr::filter steps
-# tbl var | l = n | query: chr
-# tbl var | l = n | domains: list chr
-# domains_to_check: list chr
-# OUT | l = n | lgl
+# Helpers ----
 
 
 check_domains <- function(query, domains, domains_to_check) {
+  # Returns a boolean per query
+  # TRUE if it is to kept, FALSE otherwise
+  # to be used inside a tidyverse filter()
   n <- length(domains)
   filter_lgl <- rep(TRUE, n) # default value
 
@@ -69,32 +50,13 @@ check_domains <- function(query, domains, domains_to_check) {
 }
 
 
-# Policy ------------------------------------------------------------------
+# Main ----
+
 
 # Filter mappings
 mappings_filtered <- mappings |>
-  group_by(q_alias, query, pid) |>
+  group_by(q_alias, query, pid, genome) |>
   summarise(domains = list(domain)) |>
   filter(check_domains(query, domains, FILTER))
 
-
-# TODO: Use a single string with a sep like ";"
-# instead of a list
-
-mappings_filtered |>
-  group_by(q_alias, query, pid) |>
-  reframe(domain = unlist(domains)) |>
-  arrange(query, pid, domain) |>
-  group_by(q_alias, query, pid) |>
-  summarise(domains = str_flatten(domain, collapse = ";")) |>
-  write_tsv(OUT_MAPPINGS)
-
-
-# Filter blasts
-blasts_filtered <- semi_join(
-  blasts, mappings_filtered,
-  join_by(sseqid == pid)
-)
-
-blasts_filtered |>
-  write_tsv(OUT_BLASTS)
+print(mappings_filtered)
