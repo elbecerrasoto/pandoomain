@@ -1,47 +1,33 @@
 #!/usr/bin/Rscript
 
-library(glue)
+library(yaml)
+library(rlang)
 library(stringr)
 library(tidyverse)
 
 args <- commandArgs(trailingOnly = TRUE)
 
-# Globals -----------------------------------------------------------------
 
-# Two genes
-TARGETS <- c("WP_003243987.1", "WP_003243213.1")
+# Globals ----
 
-# A distance is between 2 things
-stopifnot(length(TARGETS) == 2)
 
-# Input
 CONFIG <- args[1]
-HITS <- args[1]
+HITS <- args[2]
+MAPPINGS <- args[3]
+OUT <- "pairs.tsv"
 
 CONFIG <- "tests/config.yaml"
 HITS <- "tests/results/hits.tsv"
+MAPPINGS <- "tests/results/mappings.tsv"
 
-get_genome <- function(path) {
-  str_extract(path, "GC[FA]_[0-9]+\\.[0-9]")
-}
+TARGETS <- read_yaml(CONFIG)$pair
 
-GENOME <- get_genome(HITS)
-
-# Output
-BASE <- "pairs"
-OUT <- glue("{GENOME}_{BASE}.tsv")
-
-graceful_exit <- function(assertion) {
-  if (!assertion) {
-    # write_tsv(tibble(), OUT)
-    quit(status = 0)
-  }
-}
+# A distance is between 2 things
+stopifnot("A distance is between 2 things. Ill-formed pair." = length(TARGETS) == 2)
 
 
-# Read the data
-suppressMessages(hits <- read_tsv(HITS))
-graceful_exit(nrow(hits) > 0)
+hits <- read_tsv(HITS)
+mappings <- read_tsv(MAPPINGS)
 
 
 # Calc --------------------------------------------------------------------
@@ -60,7 +46,7 @@ calc <- function(gene1, gene2) {
   genes_inbet <- second$order - first$order
 
   tibble(
-    genome = GENOME,
+    genome = first$genome,
     distance = distance,
     genes_inbet = genes_inbet,
     contig = first$contig,
@@ -84,66 +70,91 @@ calc <- function(gene1, gene2) {
 
 # Main --------------------------------------------------------------------
 
+# Group by genome
+# to apply the step below
+# pid 1->1 query should be 1on1
+# currently is 1-M
+query2pid <- mappings |>
+  distinct(q_alias, query, pid)
 
-hits <- hits |>
+# Filter to pair hits
+hits_filtered <- hits |>
+  left_join(query2pid, join_by(pid == pid)) |>
   filter(query %in% TARGETS)
+stopifnot("Not enough hits to find pairs." = nrow(hits) > 1)
 
 # Query to factor
 # Used on counting pairs
-hits <- hits |>
+hits_filtered <- hits_filtered |>
   mutate(
     query = as_factor(query),
     query = `levels<-`(query, TARGETS)
   )
 
-CONTIGS <- hits |>
-  pull(contig) |>
-  unique()
 
-# Calculate the number of distance operations
-count_pairs <- function(hits) {
-  n <- 0
 
-  contig_query <- hits |>
-    count(contig, query, .drop = FALSE)
+find_pairs_per_genome <- function(hits) {
+  CONTIGS <- hits |>
+    pull(contig) |>
+    unique()
 
-  for (contig in CONTIGS) {
-    x <- contig_query |>
-      filter(contig == {{ contig }}) |>
-      pull(n) |>
-      reduce(`*`)
-    n <- n + x
+  # Calculate the number of distance operations
+  count_pairs <- function(hits) {
+    n <- 0
+
+    contig_query <- hits |>
+      count(contig, query, .drop = FALSE)
+
+    for (contig in CONTIGS) {
+      x <- contig_query |>
+        filter(contig == {{ contig }}) |>
+        pull(n) |>
+        reduce(`*`)
+      n <- n + x
+    }
+    n
   }
-  n
-}
 
-N_PAIRS <- count_pairs(hits)
-graceful_exit(N_PAIRS > 0)
+  N_PAIRS <- count_pairs(hits)
+  if (N_PAIRS == 0) {
+    return(tibble())
+  }
 
-results <- vector(mode = "list", length = N_PAIRS)
+  results <- vector(mode = "list", length = N_PAIRS)
 
-i <- 0
-for (contig in CONTIGS) {
-  same_contig <- hits |>
-    filter(contig == {{ contig }}) %>%
-    split(.$query)
+  i <- 0
+  for (contig in CONTIGS) {
+    same_contig <- hits |>
+      filter(contig == {{ contig }}) %>%
+      split(.$query)
 
-  if (length(same_contig) != 2) next
+    if (length(same_contig) != 2) next
 
-  genes_q1 <- same_contig[[1]]
-  genes_q2 <- same_contig[[2]]
+    genes_q1 <- same_contig[[1]]
+    genes_q2 <- same_contig[[2]]
 
-  for (g1_idx in seq_len(nrow(genes_q1))) {
-    for (g2_idx in seq_len(nrow(genes_q2))) {
-      i <- i + 1
-      gene1 <- genes_q1[g1_idx, ]
-      gene2 <- genes_q2[g2_idx, ]
-      results[[i]] <- calc(gene1, gene2)
+    for (g1_idx in seq_len(nrow(genes_q1))) {
+      for (g2_idx in seq_len(nrow(genes_q2))) {
+        i <- i + 1
+        gene1 <- genes_q1[g1_idx, ]
+        gene2 <- genes_q2[g2_idx, ]
+        results[[i]] <- calc(gene1, gene2)
+      }
     }
   }
+
+  stopifnot(N_PAIRS == i)
+
+  do.call(bind_rows, results)
 }
 
-stopifnot(N_PAIRS == i)
 
-do.call(bind_rows, results) |>
-  write_tsv(OUT)
+pairs <- hits_filtered |>
+  group_by(genome) |>
+  group_split() |>
+  map(find_pairs_per_genome) |>
+  do.call(bind_rows, args = _)
+
+pairs |>
+  format_tsv() |>
+  writeLines(stdout(), sep = "")
