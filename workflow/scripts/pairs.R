@@ -1,9 +1,8 @@
 #!/usr/bin/Rscript
-# TODO: change name to pairs
 
 library(glue)
 library(stringr)
-suppressMessages(library(tidyverse))
+library(tidyverse)
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -16,7 +15,11 @@ TARGETS <- c("WP_003243987.1", "WP_003243213.1")
 stopifnot(length(TARGETS) == 2)
 
 # Input
-HITS <- args[[1]] # "GCF_000699465.1_hits.tsv"
+CONFIG <- args[1]
+HITS <- args[1]
+
+CONFIG <- "tests/config.yaml"
+HITS <- "tests/results/hits.tsv"
 
 get_genome <- function(path) {
   str_extract(path, "GC[FA]_[0-9]+\\.[0-9]")

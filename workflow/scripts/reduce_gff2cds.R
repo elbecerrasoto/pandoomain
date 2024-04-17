@@ -1,7 +1,7 @@
 #!/usr/bin/Rscript
 
-# print to stdout the result of the program
-# sink everything else
+# Result to stdout
+# everything else to stderr
 sink(stderr(), type = "output")
 
 library(tidyverse)
@@ -14,9 +14,8 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # Globals ----
 
-
-# GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
 GFF <- args[1]
+# GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
 
 OUT_COLS <- c(
   "genome",
@@ -49,7 +48,6 @@ read_gff <- function(path) {
     select_if({
       \(x) !(all(is.na(x)) | all(x == ""))
     }) # exclude empty cols
-  sink(stderr(), type = "output")
 
   # Remove pseudogenes
   if ("pseudo" %in% names(gff)) {
@@ -66,8 +64,7 @@ read_gff <- function(path) {
     relocate(order) |>
     ungroup()
 
-  # sort to spot patterns
-  # contig then order inside contig
+  # Sort to spot patterns
   gff <- gff |>
     arrange(seqname, order)
 
