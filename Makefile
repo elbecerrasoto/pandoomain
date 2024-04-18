@@ -10,7 +10,14 @@ test-dry: $(GENOMES)
 
 
 .PHONY test:
-test: $(GENOMES)
+test: $(GENOMES) $(GFFs) $(FAAs)
+	make clean
+	$(SNAKEMAKE)
+
+
+.PHONY test-slow:
+test-slow: $(GENOMES)
+	make clean
 	$(SNAKEMAKE)
 
 
@@ -21,6 +28,14 @@ test-mtime: $(GENOMES)
 
 $(GENOMES): $(GENOMES_MESSY)
 	utils/deduplicate_accessions.R $< 2> /dev/null > $@
+
+
+$(GFFs) $(FAAs): $(CACHE_GFFs) $(CACHE_FAAs)
+	generate_test_genomes
+
+
+$(CACHE_GFFs) $(CACHE_FAAs):
+	generate_cache_genomes
 
 
 .PHONY style:
@@ -46,4 +61,4 @@ clean:
 	rm -rf dag.svg rulegraph.svg filegraph.svg
 	rm -rf tests/genomes.txt
 	git clean -d -n
-	printf "\n\nTo remove untracked files run:\ngit clean -d -f\n"
+	printf "\nTo remove untracked files run:\ngit clean -d -f\n"
