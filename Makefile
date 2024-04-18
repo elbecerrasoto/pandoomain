@@ -1,5 +1,6 @@
 CONFIG=tests/config.yaml
 GENOMES=tests/genomes.txt
+GENOMES_MESSY=tests/genomes_messy.txt
 SNAKEMAKE=snakemake --cores all --configfile $(CONFIG)
 
 
@@ -18,7 +19,7 @@ test-mtime: $(GENOMES)
 	$(SNAKEMAKE) --rerun-triggers mtime
 
 
-$(GENOMES): tests/genomes_messy.txt
+$(GENOMES): $(GENOMES_MESSY)
 	utils/deduplicate_accessions.R $< 2> /dev/null > $@
 
 
@@ -44,3 +45,5 @@ clean:
 	rm -rf .snakemake/
 	rm -rf dag.svg rulegraph.svg filegraph.svg
 	rm -rf tests/genomes.txt
+	git clean -d -n
+	printf "\n\nTo remove untracked files run:\ngit clean -d -f\n"
