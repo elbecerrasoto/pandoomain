@@ -1,6 +1,7 @@
 bsub_*
 results
 tests/results
+tests/data
 tests/genomes.txt
 dag.svg
 filegraph.svg
