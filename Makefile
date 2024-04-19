@@ -1,7 +1,22 @@
-CONFIG=tests/config.yaml
-GENOMES=tests/genomes.txt
-GENOMES_MESSY=tests/genomes_messy.txt
-SNAKEMAKE=snakemake --cores all --configfile $(CONFIG)
+CONFIG = tests/config.yaml
+SNAKEMAKE = snakemake --cores all --configfile $(CONFIG)
+
+GENOMES = tests/genomes.txt
+GENOMES_MESSY = tests/genomes_messy.txt
+
+GENOMES_OUT_DIR = tests/results/genomes
+GENOMES_CACHE = tests/data
+
+GENOMES_IDS = GCF_001286845.1 GCF_001286885.1
+
+PIDs = WP_072173795.1 WP_072173796.1
+
+C_GREP = 24
+
+CLEAN = /tests/results .snakemake $(GENOMES)
+
+SENTINEL_CACHE = $(GENOMES_CACHE)/.sentinel_cache
+SENTINEL_LINK_CACHE = $(GENOMES_OUT_DIR)/.sentinel_link
 
 
 .PHONY test-dry:
@@ -10,7 +25,7 @@ test-dry: $(GENOMES)
 
 
 .PHONY test:
-test: $(GENOMES) $(GFFs) $(FAAs)
+test: $(GENOMES) $(SENTINEL_LINK)
 	make clean
 	$(SNAKEMAKE)
 
@@ -30,12 +45,12 @@ $(GENOMES): $(GENOMES_MESSY)
 	utils/deduplicate_accessions.R $< 2> /dev/null > $@
 
 
-$(GFFs) $(FAAs): $(CACHE_GFFs) $(CACHE_FAAs)
-	generate_test_genomes
+$(SENTINEL_LINK): $(SENTINEL_CACHE)
+	utils/generate_test_genomes.py -- $(CACHE_GFFs) $(CACHE_FAAs)
 
 
-$(CACHE_GFFs) $(CACHE_FAAs):
-	generate_cache_genomes
+$(SENTINEL_CACHE):
+	utils/generate_cache_genomes.py --C-grep $(C_GREP) --gffs $(GFFs) --faas $(FAAs) --pids $(PIDs)
 
 
 .PHONY style:
@@ -56,9 +71,6 @@ dag: $(GENOMES)
 
 .PHONY clean:
 clean:
-	rm -rf tests/results/
-	rm -rf .snakemake/
-	rm -rf dag.svg rulegraph.svg filegraph.svg
-	rm -rf tests/genomes.txt
+	rm -rf $(CLEAN)
 	git clean -d -n
 	printf "\nTo remove untracked files run:\ngit clean -d -f\n"
