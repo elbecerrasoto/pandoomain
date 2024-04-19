@@ -1,10 +1,15 @@
 CONFIG = tests/config.yaml
+CONFIG_SLOW = tests/config-slow.yaml
+
 SNAKEMAKE = snakemake --cores all --configfile $(CONFIG)
+SNAKEMAKE_SLOW = snakemake --cores all --configfile $(CONFIG_SLOW)
+
+RESULTS_DIR = tests/results
 
 GENOMES = tests/genomes.txt
 GENOMES_MESSY = tests/genomes_messy.txt
 
-GENOMES_OUT_DIR = tests/results/genomes
+GENOMES_OUT_DIR = $(RESULTS_DIR)/genomes
 GENOMES_CACHE = tests/data
 
 GENOMES_IDS = GCF_001286845.1 GCF_001286885.1
@@ -13,32 +18,32 @@ PIDs = WP_072173795.1 WP_072173796.1
 
 C_GREP = 24
 
-CLEAN = /tests/results .snakemake $(GENOMES)
+CLEAN = .snakemake $(RESULTS_DIR) $(GENOMES)
 
 SENTINEL_CACHE = $(GENOMES_CACHE)/.sentinel_cache
 SENTINEL_LINK_CACHE = $(GENOMES_OUT_DIR)/.sentinel_link
 
 
 .PHONY test-dry:
-test-dry: $(GENOMES)
+test-dry: $(GENOMES) $(SENTINEL_LINK) $(CONFIG)
+	make rm-setup-test
 	$(SNAKEMAKE) -np
 
 
 .PHONY test:
-test: $(GENOMES) $(SENTINEL_LINK)
-	make clean
+test: $(GENOMES) $(SENTINEL_LINK) $(CONFIG)
+	make rm-setup-test
 	$(SNAKEMAKE)
 
 
 .PHONY test-slow:
-test-slow: $(GENOMES)
-	make clean
-	$(SNAKEMAKE)
+test-slow: $(GENOMES) $(CONFIG_SLOW)
+	$(SNAKEMAKE_SLOW) --forceall
 
 
 .PHONY test-mtime:
-test-mtime: $(GENOMES)
-	$(SNAKEMAKE) --rerun-triggers mtime
+test-mtime: $(GENOMES) $(CONFIG_SLOW)
+	$(SNAKEMAKE_SLOW) --rerun-triggers mtime
 
 
 $(GENOMES): $(GENOMES_MESSY)
@@ -67,6 +72,11 @@ dag: $(GENOMES)
 	$(SNAKEMAKE) --forceall --dag | dot -Tsvg > dag.svg
 	$(SNAKEMAKE) --rulegraph      | dot -Tsvg > rulegraph.svg
 	$(SNAKEMAKE) --filegraph      | dot -Tsvg > filegraph.svg
+
+
+.PHONY rm-setup-test:
+rm-setup-test:
+	fd -HI -t f --exclude "*.1.{faa,gff}" '.' $(RESULTS_DIR) --exec rm
 
 
 .PHONY clean:

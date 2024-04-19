@@ -8,6 +8,18 @@ import pandas as pd
 configfile: "config/config.yaml"
 
 
+TEST_MODE = config["test_mode"]
+OFFLINE_MODE = True if TEST_MODE else config["offline_mode"]
+
+ISCAN_ARGS = "--disable-precalc --appl Pfam" if TEST_MODE else config["iscan_args"]
+ISCAN_ARGS = ISCAN_ARGS + " --disable-precalc" if OFFLINE_MODE else ISCAN_ARGS
+
+if OFFLINE_MODE:
+
+    OFFLINE_MODE = True
+    ISCAN_ARGS = "--disable-precalc --appl Pfam"
+
+
 def bold_red(msg: str) -> str:
     # error format
     # https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal
@@ -36,7 +48,9 @@ IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
 TAXID = config["taxid"]  # if not None
 
-assert is_internet_on(), bold_red("No network connection.")
+if not OFFLINE_MODE:
+    assert is_internet_on(), bold_red("No network connection.")
+
 assert IN_GENOMES.exists(), (
     bold_red("Input genome assembly list file not found.")
     + f"\nTried to look it up at: {IN_GENOMES}."
@@ -228,6 +242,7 @@ rule interproscan_xml:
         xml=f"{RESULTS}/{ISCAN_XML}",
     params:
         temp="/tmp",
+        extra_args=ISCAN_ARGS,
     threads: workflow.cores
     shell:
         """
@@ -236,7 +251,8 @@ rule interproscan_xml:
                         --outfile {output.xml} \
                         --cpu {threads} \
                         --tempdir {params.temp} \
-                        --goterms
+                        --goterms\
+                        {params.extra_args}
         """
 
 

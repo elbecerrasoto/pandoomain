@@ -34,7 +34,7 @@ iscan_args:
 
 # Go as fast as possible on test data.
 test_mode:
-  true
+  false
 
 # Do not trigger a fatal error
 # when there is no network access.
@@ -43,7 +43,7 @@ test_mode:
 # has already downloaded the target genomes
 # from previous runs.
 offline_mode:
-  true
+  false
 
 # The following fields
 # are optional and are
