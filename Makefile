@@ -46,6 +46,11 @@ test-mtime: $(GENOMES) $(CONFIG_SLOW)
 	$(SNAKEMAKE_SLOW) --rerun-triggers mtime
 
 
+.PHONY tree-results:
+tree-results: $(GENOMES) $(CONFIG_SLOW)
+	tree -a $(RESULTS_DIR)
+
+
 $(GENOMES): $(GENOMES_MESSY)
 	utils/deduplicate_accessions.R $< 2> /dev/null > $@
 
