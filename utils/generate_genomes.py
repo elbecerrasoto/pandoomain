@@ -1,35 +1,68 @@
-#!/usr/bin/bash
+#!/usr/bin/env python3
+
+from argparse import ArgumentParser
+from pathlib import Path
+
+parser = ArgumentParser(
+    description="Link the cached data to the corresponding snakemake results directory."
+)
+
+parser.add_argument(
+    "--cache-dir",
+    type=Path,
+    help="directory to generate the reduced files.",
+    required=True,
+)
+parser.add_argument(
+    "--link-dir",
+    type=Path,
+    help="directory to link the cache data.",
+    required=True,
+)
+
+parser.add_argument(
+    "--genomes",
+    nargs="+",
+    help="genome list, assembly accessions, e.g. GCF_001286845.1",
+    required=True,
+)
+
+args = parser.parse_args()
+
+CACHE_DIR = Path(args.cache_dir)
+LINK_DIR = Path(args.link_dir)
+
+GENOMES = args.genomes
 
 
-readonly OUT_DIR='test/data'
-readonly GENOMES_DIR='tests/results/genomes'
-readonly CONFIG='test/config.yaml'
-readonly N_GFF_NEIGHBORS=24
-
-declare -a\
-    GENOMES=( 'GCF_001286845.1' 'GCF_001286885.1' )
-
-declare -a\
-    PIDs=( 'WP_072173795\\.1' 'WP_072173796\\.1' )
+def genomes2ext_targets(ext: str) -> list:
+    return [Path(f"{CACHE_DIR}/{genome}{ext}") for genome in GENOMES]
 
 
-usr/bin/bash $IFS='|' && printf "%s\n" "${PIDs[$@]}"
-
-# for genome in ((i=0; n < ${GENOMES[#]}; ++i ))
-# do
-#     FAA[i] =
-#     GFFs[i] =
-# done
+def genomes2ext_links(ext: str) -> list:
+    return [Path(f"{LINK_DIR}/{genome}/{genome}{ext}") for genome in GENOMES]
 
 
-# FAAs="$(fd -I $RE_GENOME.faa$ $GENOMES_DIR)"
-# GFFs="$(fd -I $RE_GENOME.gff$ $GENOMES_DIR)"
+GFFs_targets = genomes2ext_targets(".gff")
+FAAs_targets = genomes2ext_targets(".faa")
 
-# REDUCE_FAA="fasta_extract $PIDs    < {1} > $OUT_DIR/{/}"
-# REDUCE_GFF="grep -C $N_GFF_NEIGHBORS < {1} > $OUT_DIR/{/}"
+GFFs_links = genomes2ext_links(".gff")
+FAAs_links = genomes2ext_links(".faa")
 
-# mkdir -p "$OUT_DIR"
-# snakemake -c all --configfile "$CONFIG" -- "$FAAs" "$GFFs"
+if __name__ == "__main__":
+    for idx, genome in enumerate(GENOMES):
 
-# parallel --dry-run "$REDUCE_FAA" ::: "$FAAs"
-# parallel --dry-run "$REDUCE_GFF" ::: "$GFFs"
+        parent = GFFs_links[idx].parent
+        gff = GFFs_links[idx]
+        faa = FAAs_links[idx]
+
+        gff_T = GFFs_targets[idx]
+        faa_T = FAAs_targets[idx]
+
+        parent.mkdir(parents=True, exist_ok=True)
+
+        gff.unlink(missing_ok=True)
+        faa.unlink(missing_ok=True)
+
+        gff.symlink_to(gff_T.resolve())
+        faa.symlink_to(faa_T.resolve())

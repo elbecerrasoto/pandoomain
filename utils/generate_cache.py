@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
+from argparse import ArgumentParser
 from pathlib import Path
 from typing import Union
-from argparse import ArgumentParser
 
 
 def run(
