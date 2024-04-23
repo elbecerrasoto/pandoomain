@@ -353,10 +353,10 @@ rule filter_mappings:
         """
 
 
-# inputs_mappingsmappings_inputs = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
-# for input_map in inputs_mappings:
+# mappings = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
+# for map in mappings:
 #     rule:
-#         name: f"{input_map.stem}_wide"
-#         input: f"{input_map}"
-#         output: f"{input_map.stem}_wide.tsv"
-#         shell: "workflow/scripts/make_wide.R {input} >| {output}"
+#         name: f"{map.stem}_wide"
+#         input: f"{map}"
+#         output: f"{map.stem}_wide.tsv"
+#         shell: "workflow/scripts/maps2wide.R {input} >| {output}"

@@ -1,9 +1,11 @@
 #!/usr/bin/Rscript
+suppressPackageStartupMessages({
+  library(yaml)
+  library(rlang)
+  library(stringr)
+  library(tidyverse)
+})
 
-library(yaml)
-library(rlang)
-library(stringr)
-library(tidyverse)
 
 args <- commandArgs(trailingOnly = TRUE)
 

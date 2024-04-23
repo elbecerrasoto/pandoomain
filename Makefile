@@ -9,12 +9,12 @@ RESULTS_DIR = tests/results
 GENOMES = tests/genomes.txt
 GENOMES_MESSY = tests/genomes_messy.txt
 
-GENOMES_OUT_DIR = $(RESULTS_DIR)/genomes
 GENOMES_CACHE = tests/data
+GENOMES_OUT_DIR = $(RESULTS_DIR)/genomes
 
 GENOMES_IDS = GCF_001286845.1 GCF_001286885.1
 
-PIDs = WP_072173795.1 WP_072173796.1
+PIDS = WP_072173795.1 WP_072173796.1
 
 C_GREP = 24
 
@@ -22,7 +22,7 @@ SVGS = dag.svg filegraph.svg rulegraph.svg
 CLEAN = .snakemake $(SVGS) $(RESULTS_DIR) $(GENOMES)
 
 SENTINEL_CACHE = $(GENOMES_CACHE)/.sentinel_cache
-SENTINEL_LINK_CACHE = $(GENOMES_OUT_DIR)/.sentinel_link
+SENTINEL_LINK = $(GENOMES_OUT_DIR)/.sentinel_link
 
 
 .PHONY test-dry:
@@ -57,11 +57,22 @@ $(GENOMES): $(GENOMES_MESSY)
 
 
 $(SENTINEL_LINK): $(SENTINEL_CACHE)
-	utils/generate_test_genomes.py -- $(CACHE_GFFs) $(CACHE_FAAs)
+	utils/generate_genomes.py \
+							--cache-dir $(GENOMES_CACHE) \
+							--link-dir $(GENOMES_OUT_DIR) \
+							--genomes $(GENOMES_IDS)
+	touch $(SENTINEL_LINK)
 
 
 $(SENTINEL_CACHE):
-	utils/generate_cache_genomes.py --C-grep $(C_GREP) --gffs $(GFFs) --faas $(FAAs) --pids $(PIDs)
+	utils/generate_cache.py \
+							--C-grep $(C_GREP) \
+							--config $(CONFIG_SLOW) \
+							--cache-dir $(GENOMES_CACHE) \
+							--genomes-dir $(GENOMES_OUT_DIR) \
+							--genomes $(GENOMES_IDS) \
+							--pids $(PIDS)
+	touch $(SENTINEL_CACHE)
 
 
 .PHONY style:
@@ -82,11 +93,13 @@ dag: $(GENOMES)
 
 .PHONY rm-setup-test:
 rm-setup-test:
-	fd -HI -t f --exclude "*.1.{faa,gff}" '.' $(RESULTS_DIR) --exec rm
-
+	@if [[ -d $(RESULTS_DIR) ]]; then \
+		fd -HI -t f --exclude "*.1.{faa,gff}" '.' $(RESULTS_DIR) --exec rm; \
+	fi
 
 .PHONY clean:
 clean:
-	rm -rf $(CLEAN)
+	@rm -rf $(CLEAN)
 	git clean -d -n
-	printf "\nTo remove untracked files run:\ngit clean -d -f\n"
+	@printf "\nTo remove untracked files run:\ngit clean -d -f\n"
+	@printf "tests/data has to be deleted manually:\nrm -r tests/data"
