@@ -150,8 +150,9 @@ ALL_HITS = [
 
 rule all:
     input:
-        "tests/results/mappings_wide.tsv",
-        "tests/results/mappings_raw_wide.tsv",
+        f"{RESULTS}/pairs.tsv",
+        f"{RESULTS}/mappings_wide.tsv",
+        f"{RESULTS}/mappings_raw_wide.tsv",
 
 
 rule download_genome:
@@ -320,7 +321,6 @@ rule bind_hits:
     output:
         f"{RESULTS}/hits.tsv",
     threads: workflow.cores
-    default_target: True
     shell:
         """
         workflow/scripts/bind_hits.R {threads} {input} >| {output}
@@ -335,7 +335,6 @@ rule mappings:
         f"{RESULTS}/mappings_raw.tsv",
     params:
         config=workflow.configfiles[0],
-    default_target: True
     shell:
         """
         workflow/scripts/mappings.R {params.config} {input.iscan} {input.blasts} >| {output}
@@ -367,3 +366,17 @@ for maps in mappings:
             f"{RESULTS}/{maps.stem}_wide.tsv",
         shell:
             "workflow/scripts/maps2wide.R {input} >| {output}"
+
+
+rule pairs:
+    input:
+        hits=rules.bind_hits.output,
+        maps=rules.filter_mappings.output,
+    output:
+        f"{RESULTS}/pairs.tsv",
+    params:
+        config=workflow.configfiles[0],
+    shell:
+        """
+        workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} {output}
+        """
