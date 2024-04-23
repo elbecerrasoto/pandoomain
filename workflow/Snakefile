@@ -148,7 +148,10 @@ ALL_HITS = [
 ]
 
 
-# Default rule at the end of file
+rule all:
+    input:
+        "tests/results/mappings_wide.tsv",
+        "tests/results/mappings_raw_wide.tsv",
 
 
 rule download_genome:
@@ -231,7 +234,7 @@ rule all_proteins:
         width="80",
     shell:
         """
-        workflow/scripts/blast2faa.R {input} 2> /dev/null | fasta_unique | fasta_pretty -w={params.width} >| {output}
+        workflow/scripts/blast2faa.R {input} | fasta_unique | fasta_pretty -w={params.width} >| {output}
         """
 
 
@@ -346,17 +349,21 @@ rule filter_mappings:
         filtered=f"{RESULTS}/mappings.tsv",
     params:
         config=workflow.configfiles[0],
-    default_target: True
     shell:
         """
         workflow/scripts/filter_mappings.R {params} {input} >| {output}
         """
 
 
-# mappings = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
-# for map in mappings:
-#     rule:
-#         name: f"{map.stem}_wide"
-#         input: f"{map}"
-#         output: f"{map.stem}_wide.tsv"
-#         shell: "workflow/scripts/maps2wide.R {input} >| {output}"
+mappings = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
+for maps in mappings:
+
+    rule:
+        name:
+            f"{maps.stem}_wide"
+        input:
+            f"{maps}",
+        output:
+            f"{RESULTS}/{maps.stem}_wide.tsv",
+        shell:
+            "workflow/scripts/maps2wide.R {input} >| {output}"
