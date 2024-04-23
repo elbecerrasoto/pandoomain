@@ -18,7 +18,8 @@ PIDs = WP_072173795.1 WP_072173796.1
 
 C_GREP = 24
 
-CLEAN = .snakemake $(RESULTS_DIR) $(GENOMES)
+SVGS = dag.svg filegraph.svg rulegraph.svg
+CLEAN = .snakemake $(SVGS) $(RESULTS_DIR) $(GENOMES)
 
 SENTINEL_CACHE = $(GENOMES_CACHE)/.sentinel_cache
 SENTINEL_LINK_CACHE = $(GENOMES_OUT_DIR)/.sentinel_link
