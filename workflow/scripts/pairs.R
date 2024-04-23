@@ -1,4 +1,5 @@
 #!/usr/bin/Rscript
+
 suppressPackageStartupMessages({
   library(yaml)
   library(rlang)
