@@ -1,7 +1,7 @@
 CONFIG = tests/config.yaml
 CONFIG_SLOW = tests/config-slow.yaml
 
-SNAKEMAKE = snakemake --cores all --configfile $(CONFIG)
+SNAKEMAKE = snakemake --cores all --configfile $(CONFIG) --rerun-triggers mtime
 SNAKEMAKE_SLOW = snakemake --cores all --configfile $(CONFIG_SLOW)
 
 RESULTS_DIR = tests/results
@@ -24,15 +24,17 @@ CLEAN = .snakemake $(SVGS) $(RESULTS_DIR) $(GENOMES)
 SENTINEL_CACHE = $(GENOMES_CACHE)/.sentinel_cache
 SENTINEL_LINK = $(GENOMES_OUT_DIR)/.sentinel_link
 
+ISCAN_CACHE = $(GENOMES_CACHE)/iscan.tsv
+ISCAN_LINK = $(RESULTS_DIR)/iscan.tsv
 
 .PHONY test-dry:
-test-dry: $(GENOMES) $(SENTINEL_LINK) $(CONFIG)
+test-dry: $(GENOMES) $(SENTINEL_LINK) $(CONFIG) $(ISCAN_LINK)
 	make rm-setup-test
 	$(SNAKEMAKE) -np
 
 
 .PHONY test:
-test: $(GENOMES) $(SENTINEL_LINK) $(CONFIG)
+test: $(GENOMES) $(SENTINEL_LINK) $(CONFIG) $(ISCAN_LINK)
 	make rm-setup-test
 	$(SNAKEMAKE)
 
@@ -75,6 +77,19 @@ $(SENTINEL_CACHE):
 	touch $(SENTINEL_CACHE)
 
 
+$(SEN_ISCAN_CACHE): $(SENTINEL_LINK) $(GENOMES)
+	$(SNAKEMAKE) -- $(ISCAN_LINK)
+	mv $(ISCAN_LINK) $(GENOMES_CACHE)
+	$(SEN_ISCAN_CACHE)
+
+
+$(SEN_ISCAN_LINK): $(SEN_ISCAN_CACHE)
+	rm $(ISCAN_LINK)
+	mkdir -p $(RESULTS_DIR)
+	ln -s `readlink -n -f $(SEN_ISCAN_CACHE)` $(RESULTS_DIR)
+	touch $(SEN_ISCAN_LINK)
+
+
 .PHONY style:
 style:
 	snakefmt .
@@ -94,8 +109,9 @@ dag: $(GENOMES)
 .PHONY rm-setup-test:
 rm-setup-test:
 	@if [[ -d $(RESULTS_DIR) ]]; then \
-		fd -HI -t f --exclude "*.1.{faa,gff}" '.' $(RESULTS_DIR) --exec rm; \
+		fd -HI -t f --exclude "{*.1.faa,*.1.gff,iscan.tsv}" '.' $(RESULTS_DIR) --exec rm; \
 	fi
+
 
 .PHONY clean:
 clean:
