@@ -1,8 +1,10 @@
 #!/usr/bin/Rscript
 
-library(yaml)
-library(magrittr)
-library(tidyverse)
+suppressPackageStartupMessages({
+  library(yaml)
+  library(magrittr)
+  library(tidyverse)
+})
 
 
 args <- commandArgs(trailingOnly = TRUE)
