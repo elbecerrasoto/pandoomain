@@ -2,8 +2,11 @@
 
 # Filter blasts by absence/presence of interpro domains
 
-library(yaml)
-library(tidyverse)
+suppressPackageStartupMessages({
+  library(yaml)
+  library(tidyverse)
+})
+
 
 args <- commandArgs(trailingOnly = TRUE)
 

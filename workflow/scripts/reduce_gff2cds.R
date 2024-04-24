@@ -4,10 +4,13 @@
 # everything else to stderr
 sink(stderr(), type = "output")
 
-library(tidyverse)
-library(rlang) # warnings utils
-library(segmenTools)
-library(glue)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(rlang) # warnings utils
+  library(segmenTools)
+  library(glue)
+})
+
 
 args <- commandArgs(trailingOnly = TRUE)
 

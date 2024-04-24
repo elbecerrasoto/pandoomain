@@ -1,6 +1,9 @@
 #!/usr/bin/Rscript
 
-library(tidyverse)
+suppressPackageStartupMessages({
+  library(tidyverse)
+})
+
 args <- commandArgs(trailingOnly = TRUE)
 
 # Globals ----

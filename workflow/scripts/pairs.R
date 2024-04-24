@@ -1,9 +1,12 @@
 #!/usr/bin/Rscript
 
-library(yaml)
-library(rlang)
-library(stringr)
-library(tidyverse)
+suppressPackageStartupMessages({
+  library(yaml)
+  library(rlang)
+  library(stringr)
+  library(tidyverse)
+})
+
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -14,11 +17,12 @@ args <- commandArgs(trailingOnly = TRUE)
 CONFIG <- args[1]
 HITS <- args[2]
 MAPPINGS <- args[3]
-OUT <- "pairs.tsv"
+OUT <- args[4]
 
-CONFIG <- "tests/config.yaml"
-HITS <- "tests/results/hits.tsv"
-MAPPINGS <- "tests/results/mappings.tsv"
+# CONFIG <- "tests/config.yaml"
+# HITS <- "tests/results/hits.tsv"
+# MAPPINGS <- "tests/results/mappings.tsv"
+# OUT <- "tests/results/pairs.tsv"
 
 TARGETS <- read_yaml(CONFIG)$pair
 
@@ -30,7 +34,7 @@ hits <- read_tsv(HITS)
 mappings <- read_tsv(MAPPINGS)
 
 
-# Calc --------------------------------------------------------------------
+# Calc ----
 
 
 calc <- function(gene1, gene2) {
@@ -68,7 +72,8 @@ calc <- function(gene1, gene2) {
 }
 
 
-# Main --------------------------------------------------------------------
+# Main ----
+
 
 # Group by genome
 # to apply the step below
@@ -156,5 +161,4 @@ pairs <- hits_filtered |>
   do.call(bind_rows, args = _)
 
 pairs |>
-  format_tsv() |>
-  writeLines(stdout(), sep = "")
+  write_tsv(OUT)

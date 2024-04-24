@@ -8,6 +8,10 @@ import pandas as pd
 configfile: "config/config.yaml"
 
 
+envvars:
+    "SNAKEMAKE_OUTPUT_CACHE",
+
+
 TEST_MODE = config["test_mode"]
 OFFLINE_MODE = True if TEST_MODE else config["offline_mode"]
 
@@ -148,7 +152,11 @@ ALL_HITS = [
 ]
 
 
-# Default rule at the end of file
+rule all:
+    input:
+        f"{RESULTS}/pairs.tsv",
+        f"{RESULTS}/mappings_wide.tsv",
+        f"{RESULTS}/mappings_raw_wide.tsv",
 
 
 rule download_genome:
@@ -231,7 +239,7 @@ rule all_proteins:
         width="80",
     shell:
         """
-        workflow/scripts/blast2faa.R {input} 2> /dev/null | fasta_unique | fasta_pretty -w={params.width} >| {output}
+        workflow/scripts/blast2faa.R {input} | fasta_unique | fasta_pretty -w={params.width} >| {output}
         """
 
 
@@ -317,7 +325,6 @@ rule bind_hits:
     output:
         f"{RESULTS}/hits.tsv",
     threads: workflow.cores
-    default_target: True
     shell:
         """
         workflow/scripts/bind_hits.R {threads} {input} >| {output}
@@ -332,7 +339,6 @@ rule mappings:
         f"{RESULTS}/mappings_raw.tsv",
     params:
         config=workflow.configfiles[0],
-    default_target: True
     shell:
         """
         workflow/scripts/mappings.R {params.config} {input.iscan} {input.blasts} >| {output}
@@ -346,17 +352,35 @@ rule filter_mappings:
         filtered=f"{RESULTS}/mappings.tsv",
     params:
         config=workflow.configfiles[0],
-    default_target: True
     shell:
         """
         workflow/scripts/filter_mappings.R {params} {input} >| {output}
         """
 
 
-# inputs_mappingsmappings_inputs = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
-# for input_map in inputs_mappings:
-#     rule:
-#         name: f"{input_map.stem}_wide"
-#         input: f"{input_map}"
-#         output: f"{input_map.stem}_wide.tsv"
-#         shell: "workflow/scripts/make_wide.R {input} >| {output}"
+mappings = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
+for maps in mappings:
+
+    rule:
+        name:
+            f"{maps.stem}_wide"
+        input:
+            f"{maps}",
+        output:
+            f"{RESULTS}/{maps.stem}_wide.tsv",
+        shell:
+            "workflow/scripts/maps2wide.R {input} >| {output}"
+
+
+rule pairs:
+    input:
+        hits=rules.bind_hits.output,
+        maps=rules.filter_mappings.output,
+    output:
+        f"{RESULTS}/pairs.tsv",
+    params:
+        config=workflow.configfiles[0],
+    shell:
+        """
+        workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} {output}
+        """

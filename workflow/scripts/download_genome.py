@@ -4,6 +4,24 @@
 # Install with
 # mamba install -y -c conda-forge ncbi-datasets-cli
 
+
+def is_internet_on():
+    # https://stackoverflow.com/questions/20913411/test-if-an-internet-connection-is-present-in-python
+    import socket
+
+    try:
+        socket.create_connection(("1.1.1.1", 53))
+        return True
+    except OSError:
+        return False
+
+
+import sys
+
+if not is_internet_on():
+    print("No network connection.\nShutting down execution.")
+    sys.exit(1)
+
 import argparse
 import os
 import re

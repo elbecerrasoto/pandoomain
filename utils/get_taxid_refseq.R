@@ -1,9 +1,10 @@
 #!/usr/bin/Rscript
 
-sM <- suppressMessages
-sM(library(tidyverse))
-library(stringr)
-library(glue)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(stringr)
+  library(glue)
+})
 
 args <- commandArgs(trailingOnly = TRUE)
 TAXID <- args[1]
