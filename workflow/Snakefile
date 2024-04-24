@@ -8,6 +8,10 @@ import pandas as pd
 configfile: "config/config.yaml"
 
 
+envvars:
+    "SNAKEMAKE_OUTPUT_CACHE",
+
+
 TEST_MODE = config["test_mode"]
 OFFLINE_MODE = True if TEST_MODE else config["offline_mode"]
 
