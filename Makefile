@@ -30,6 +30,12 @@ tree-results: $(GENOMES) $(CONFIG)
 	tree -a $(RESULTS)
 
 
+.PHONY install-iscan:
+install-iscan: utils/install_iscan.py
+	@printf "To install remove --dry-run option from script.\n\n"
+	$< --target 5.67-99.0 --data ~/.local/share --bin ~/.local/bin/interproscan.sh --dry-run
+
+
 $(GENOMES): $(GENOMES_MESSY)
 	utils/deduplicate_accessions.R $< 2> /dev/null > $@
 
