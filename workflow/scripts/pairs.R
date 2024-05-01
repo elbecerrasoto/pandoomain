@@ -60,14 +60,14 @@ calc <- function(gene1, gene2) {
     start_1 = first$start,
     end_1 = first$end,
     strand_1 = first$strand,
-    # locustag_1 = first$locus_tag,
+    locustag_1 = first$locus_tag,
     query_2 = second$q_alias,
     pid_2 = second$pid,
     order_2 = second$order,
     start_2 = second$start,
     end_2 = second$end,
     strand_2 = second$strand,
-    # locustag_2 = second$locus_tag,
+    locustag_2 = second$locus_tag,
   )
 }
 
