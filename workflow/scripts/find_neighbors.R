@@ -31,6 +31,18 @@ extract_genome <- function(path) {
 
 GENOME <- extract_genome(CDS)
 
+
+neighbor_seq <- function(down, up) {
+  downS <- ifelse(down > 0, list(-seq(down, 1, -1)), NULL)
+  midS <- list(0)
+  upS <- ifelse(up > 0, list(seq(1, up, 1)), NULL)
+  unlist(c(downS, midS, upS))
+}
+
+
+# Code ----
+
+
 mappings <- read_tsv(MAPPINGS)
 cds <- read_tsv(CDS)
 
@@ -68,7 +80,7 @@ for (row in 1:nrow(hits)) {
   # neighborhoods <- neighborhoods
 
   # Vars Definition, Field Extraction
-  hpid <- hit$pid
+  hlocus <- hit$locus_tag
   horder <- hit$order
 
   hrow <- hit$row
@@ -87,21 +99,33 @@ for (row in 1:nrow(hits)) {
   d2low <- abs(horder - low)
   d2high <- abs(high - horder)
 
-  row_down <- ifelse(horder - N >= low, hrow - N, hrow - d2low)
-  row_up <- ifelse(horder + N <= high, hrow + N, hrow + d2high)
+  on_range_low <- horder - N >= low
+  on_range_high <- horder + N <= high
 
-  neighborhood_id <- glue("{genome}_{hpid}_{N}")
+  row_down <- ifelse(on_range_low, hrow - N, hrow - d2low)
+  row_up <- ifelse(on_range_high, hrow + N, hrow + d2high)
+
+  # TODO: neighbor seq
+  down <- ifelse(on_range_low, N, d2low)
+  up <- ifelse(on_range_high, N, d2high)
+
+  nseq <- neighbor_seq(down, up)
+
+  neighborhood_id <- glue("{genome}_{hlocus}_{N}")
 
   x <- cds[row_down:row_up, ] |>
     mutate(
       Nid = neighborhood_id,
+      Nseq = nseq,
       q_alias = q_alias,
       query = query
     ) |>
-    relocate(Nid, q_alias, query)
+    relocate(Nid, Nseq, q_alias, query)
 
   neighborhoods[[row]] <- x
 }
 
 
-do.call(bind_rows, neighborhoods)
+OUT <- do.call(bind_rows, neighborhoods)
+
+view(OUT)
