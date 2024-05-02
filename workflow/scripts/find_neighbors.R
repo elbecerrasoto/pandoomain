@@ -67,6 +67,7 @@ contigs <- cds |>
   ) |>
   ungroup()
 
+
 contigs <- contigs |>
   mutate(cumg = cumsum(endo))
 
@@ -105,7 +106,6 @@ for (row in 1:nrow(hits)) {
   row_down <- ifelse(on_range_low, hrow - N, hrow - d2low)
   row_up <- ifelse(on_range_high, hrow + N, hrow + d2high)
 
-  # TODO: neighbor seq
   down <- ifelse(on_range_low, N, d2low)
   up <- ifelse(on_range_high, N, d2high)
 
@@ -125,7 +125,7 @@ for (row in 1:nrow(hits)) {
   neighborhoods[[row]] <- x
 }
 
-
-OUT <- do.call(bind_rows, neighborhoods)
-
-view(OUT)
+# Output to stdout
+do.call(bind_rows, neighborhoods) |>
+  format_tsv() |>
+  writeLines(stdout(), sep = "")
