@@ -33,12 +33,22 @@ GENOME <- extract_genome(CDS)
 
 
 neighbor_seq <- function(down, up) {
-  downS <- ifelse(down > 0, list(-seq(down, 1, -1)), NULL)
-  midS <- list(0)
-  upS <- ifelse(up > 0, list(seq(1, up, 1)), NULL)
-  unlist(c(downS, midS, upS))
-}
+  if (down > 0) {
+    downS <- -seq(down, 1, -1)
+  } else {
+    downS <- NULL
+  }
 
+  midS <- 0
+
+  if (up > 0) {
+    upS <- seq(1, up, 1)
+  } else {
+    upS <- NULL
+  }
+
+  c(downS, midS, upS)
+}
 
 # Code ----
 
