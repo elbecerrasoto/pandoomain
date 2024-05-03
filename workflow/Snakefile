@@ -50,7 +50,9 @@ IN_QUERIES = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
 
-TAXID = config["taxid"]  # if not None
+# To implement
+TAXID = config["taxid"]  # if not None, logic
+N = config["neighborhood"]
 
 if not OFFLINE_MODE:
     assert is_internet_on(), bold_red("No network connection.")
@@ -384,3 +386,31 @@ rule pairs:
         """
         workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} {output}
         """
+
+
+rule neighbors:
+    input:
+        mappings=rules.filter_mappings.output,
+        cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
+    output:
+        f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_neighborhoods.tsv",
+    params:
+        N=N,
+    shell:
+        """
+        workflow/scripts/find_neighbors.R {input.mappings} {params.N} {input.cds} >| {output}
+        """
+
+
+# rule bind_neighbors:
+#     input:
+#         hits=rules.bind_hits.output,
+#         maps=rules.filter_mappings.output,
+#     output:
+#         f"{RESULTS}/pairs.tsv",
+#     params:
+#         config=workflow.configfiles[0],
+#     shell:
+#         """
+#         workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} {output}
+#         """
