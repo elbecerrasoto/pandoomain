@@ -17,9 +17,9 @@ MAPPINGS <- args[1]
 N <- args[2]
 CDS <- args[3]
 
-MAPPINGS <- "tests/results/mappings.tsv"
-N <- as.integer("12")
-CDS <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv"
+# MAPPINGS <- "tests/results/mappings.tsv"
+# N <- as.integer("12")
+# CDS <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv"
 
 
 
@@ -137,5 +137,5 @@ for (row in 1:nrow(hits)) {
 
 # Output to stdout
 do.call(bind_rows, neighborhoods) |>
-  format_tsv(col_names = FALSE) |>
+  format_tsv() |>
   writeLines(stdout(), sep = "")

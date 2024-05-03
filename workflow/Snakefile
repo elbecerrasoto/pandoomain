@@ -330,7 +330,7 @@ rule bind_hits:
     threads: workflow.cores
     shell:
         """
-        workflow/scripts/bind_hits.R {threads} {input} >| {output}
+        workflow/scripts/bind_tabs.R {threads} {input} >| {output}
         """
 
 
