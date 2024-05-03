@@ -14,7 +14,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 
 MAPPINGS <- args[1]
-N <- args[2]
+N <- as.integer(args[2])
 CDS <- args[3]
 
 # MAPPINGS <- "tests/results/mappings.tsv"

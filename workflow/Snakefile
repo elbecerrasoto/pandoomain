@@ -149,16 +149,23 @@ blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_FIELDS]
 BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
 
 
-ALL_HITS = [
-    str(RESULTS_GENOMES / f"{genome}" / f"{genome}_hits.tsv") for genome in GENOMES
-]
+# fmt: skip
+# smk formatter inserts a space, why?
+def for_all_genomes(mark: str) -> list[str]:
+    return [str(RESULTS_GENOMES / genome / (genome + mark)) for genome in GENOMES]
 
 
-rule all:
-    input:
-        f"{RESULTS}/pairs.tsv",
-        f"{RESULTS}/mappings_wide.tsv",
-        f"{RESULTS}/mappings_raw_wide.tsv",
+# fmt: skip
+
+ALL_HITS = for_all_genomes("_hits.tsv")
+ALL_HOODS = for_all_genomes("_neighborhoods.tsv")
+
+
+# rule all:
+#     input:
+#         f"{RESULTS}/pairs.tsv",
+#         f"{RESULTS}/mappings_wide.tsv",
+#         f"{RESULTS}/mappings_raw_wide.tsv",
 
 
 rule download_genome:
@@ -403,12 +410,14 @@ rule neighborhoods:
         """
 
 
-# rule bind_neighborhoods:
-#     input:
-#         ALL_HOODS,
-#     output:
-#         f"{RESULTS}/neighborhoods.tsv",
-#     shell:
-#         """
-#         workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} {output}
-#         """
+rule bind_neighborhoods:
+    input:
+        ALL_HOODS,
+    output:
+        f"{RESULTS}/neighborhoods.tsv",
+    threads: workflow.cores
+    default_target: True
+    shell:
+        """
+        workflow/scripts/bind_tabs.R {threads} {input} >| {output}
+        """
