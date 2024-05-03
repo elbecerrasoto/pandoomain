@@ -137,5 +137,5 @@ for (row in 1:nrow(hits)) {
 
 # Output to stdout
 do.call(bind_rows, neighborhoods) |>
-  format_tsv() |>
+  format_tsv(col_names = FALSE) |>
   writeLines(stdout(), sep = "")

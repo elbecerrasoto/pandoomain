@@ -283,6 +283,7 @@ rule interproscan_tsv:
                         --goterms \
                         --enable-tsv-residue-annot
 
+        # Annotate headers
         cat - {output.tsv}.temp >| {output.tsv} <<< '{params.header}'
 
         rm {output.tsv}.temp
@@ -388,7 +389,7 @@ rule pairs:
         """
 
 
-rule neighbors:
+rule neighborhoods:
     input:
         mappings=rules.filter_mappings.output,
         cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
@@ -402,14 +403,11 @@ rule neighbors:
         """
 
 
-# rule bind_neighbors:
+# rule bind_neighborhoods:
 #     input:
-#         hits=rules.bind_hits.output,
-#         maps=rules.filter_mappings.output,
+#         ALL_HOODS,
 #     output:
-#         f"{RESULTS}/pairs.tsv",
-#     params:
-#         config=workflow.configfiles[0],
+#         f"{RESULTS}/neighborhoods.tsv",
 #     shell:
 #         """
 #         workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} {output}
