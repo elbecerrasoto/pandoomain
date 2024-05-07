@@ -21,6 +21,9 @@ GENOMES_MESSY = tests/genomes_messy.txt
 SVGS = dag.svg filegraph.svg rulegraph.svg
 CLEAN = .snakemake $(SVGS) $(RESULTS) $(GENOMES)
 
+ISCAN_DATA = ~/.local/share
+ISCAN_BIN = ~/.local/bin/interproscan.sh
+
 
 .PHONY test-dry:
 test-dry: $(GENOMES) $(CONFIG)
@@ -57,7 +60,7 @@ clean-cache:
 .PHONY install-iscan:
 install-iscan: utils/install_iscan.py
 	@printf "To install remove --dry-run option from script.\n\n"
-	$< --target $(ISCAN_VERSION) --data ~/.local/share --bin ~/.local/bin/interproscan.sh --dry-run
+	$< --target $(ISCAN_VERSION) --data $(ISCAN_DATA) --bin $(ISCAN_BIN) --dry-run
 
 
 $(GENOMES): $(GENOMES_MESSY)
