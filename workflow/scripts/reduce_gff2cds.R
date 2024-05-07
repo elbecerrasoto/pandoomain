@@ -1,19 +1,24 @@
 #!/usr/bin/Rscript
 
-sM <- suppressMessages
+# Result to stdout
+# everything else to stderr
+sink(stderr(), type = "output")
 
-sM(library(tidyverse))
-sM(library(rlang))
-library(segmenTools)
-library(glue)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(rlang) # warnings utils
+  library(segmenTools)
+  library(glue)
+})
+
 
 args <- commandArgs(trailingOnly = TRUE)
 
 
 # Globals ----
 
-PIDS <- args[1] # "tests/results/blasts_pids.txt"
-GFF <- args[2] # "tests/results/genomes/GCF_000699465.1/GCF_000699465.1.gff"
+GFF <- args[1]
+# GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
 
 OUT_COLS <- c(
   "genome",
@@ -31,12 +36,16 @@ OUT_COLS <- c(
 GENOME_RE <- "GC[FA]_[0-9]+\\.[0-9]"
 GENOME <- str_extract(GFF, GENOME_RE)
 
+
 # Helpers ----
 
-read_gff <- function(path) {
-  sink(stderr(), type = "output")
 
-  gff <- segmenTools::gff2tab(GFF) |>
+read_gff <- function(path) {
+  # 1. Read
+  # 2. Remove pseudogenes
+  # 3. Add neighbors, order column
+
+  gff <- segmenTools::gff2tab(path) |>
     tibble() |>
     filter(feature == "CDS") |> # only CDS
     select_if({
@@ -55,29 +64,32 @@ read_gff <- function(path) {
     group_by(seqname) |>
     arrange(start) |>
     mutate(order = seq_along(start)) |>
-    relocate(order)
+    relocate(order) |>
+    ungroup()
 
-  sink()
+  # Sort to spot patterns
+  gff <- gff |>
+    arrange(seqname, order)
+
   gff
 }
 
 
 # Code ----
 
-pids <- sM(read_tsv(PIDS, col_names = "pid"))
-gff <- read_gff(GFF)
 
-hits <- inner_join(pids, gff, join_by(pid == protein_id)) |>
-  mutate(genome = GENOME, contig = seqname) |>
+gff <- read_gff(GFF) |>
+  mutate(genome = GENOME, pid = protein_id, contig = seqname) |>
   select(any_of(OUT_COLS))
 
-
-present <- OUT_COLS %in% names(hits)
+present <- OUT_COLS %in% names(gff)
 if (!all(present)) {
   absent <- OUT_COLS[!present]
-  warn(glue("The following columns were not present:\n{absent}"))
+  warn(glue("The following columns were not present:\n{absent}\nOn the file:\n{GFF}"))
 }
 
-hits |>
+sink()
+
+gff |>
   format_tsv() |>
-  writeLines(stdout())
+  writeLines(stdout(), sep = "")

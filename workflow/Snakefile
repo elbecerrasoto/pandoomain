@@ -8,6 +8,30 @@ import pandas as pd
 configfile: "config/config.yaml"
 
 
+envvars:
+    "SNAKEMAKE_OUTPUT_CACHE",
+
+
+GENOME_REGEX = r"GC[AF]_\d+\.\d"
+
+
+wildcard_constraints:
+    genome=GENOME_REGEX,
+
+
+OFFLINE_MODE = config["offline"]
+
+
+def bold_red(msg: str) -> str:
+    # error format
+    # https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    # Can't use f"" format strings, cause the formater (snakefmt) introduces speces
+    return FAIL + BOLD + msg + ENDC
+
+
 def is_internet_on():
     # https://stackoverflow.com/questions/20913411/test-if-an-internet-connection-is-present-in-python
     import socket
@@ -23,20 +47,35 @@ IN_GENOMES = Path(config["genomes"])
 IN_QUERIES = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
-assert is_internet_on(), "No network connection."
-assert IN_GENOMES.exists(), "Input genome assembly list file not found."
-assert IN_QUERIES.exists(), "Input query directory not found."
-assert IN_BLAST_FIELDS.exists(), "Input blast fields file not found."
+
+# To implement
+TAXID = config["taxid"]  # if not None, logic
+N = config["neighborhood"]
+
+if not OFFLINE_MODE:
+    assert is_internet_on(), bold_red("No network connection.")
+
+assert IN_GENOMES.exists(), (
+    bold_red("Input genome assembly list file not found.")
+    + f"\nTried to look it up at: {IN_GENOMES}."
+)
+
+assert IN_QUERIES.exists(), (
+    bold_red("Input query file not found.") + f"\nTried to look it up at: {IN_QUERIES}."
+)
+assert IN_BLAST_FIELDS.exists(), (
+    bold_red("Input blast fields file not found.")
+    + f"\nTried to look it up at: {IN_BLAST_FIELDS}."
+)
+
 
 RESULTS = Path(config["results"])
 RESULTS_GENOMES = RESULTS / "genomes"
 
 
-GENOME_REGEX = r"GC[AF]_\d+\.\d"
-
-
-wildcard_constraints:
-    genome=GENOME_REGEX,
+DIAMOND_ARGS = config["diamond_args"]  # if not None ?
+PAIR = config["pair"]  # if not None
+FILTERING_DOMS = config["filtering_domains"]
 
 
 def sort_filter_genomes(path, filter_regex) -> list:
@@ -62,7 +101,7 @@ def get_blast_fields(path) -> str:
 GENOMES = sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
 
 ISCAN_HEADER_L = [
-    "protein",
+    "pid",
     "md5",
     "length",
     "analysis",
@@ -92,33 +131,59 @@ ALL_BLASTS = [
 ]
 BLAST_FIELDS = get_blast_fields(IN_BLAST_FIELDS)
 BLAST_FORMAT = " ".join(BLAST_FIELDS)
-ALL_HEADER = "\t".join(["genome"] + BLAST_FIELDS)
+
+BLAST_FORMAT_RENAMES = {"qseqid": "query", "sseqid": "pid"}
+d = BLAST_FORMAT_RENAMES
+blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_FIELDS]
+
+BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
 
 
-ALL_HITS = [
-    str(RESULTS_GENOMES / f"{genome}" / f"{genome}_hits.tsv") for genome in GENOMES
-]
+# smk formatter inserts a space, why?
+# when in format string mode
+def for_all_genomes(mark: str) -> list[str]:
+    return [str(RESULTS_GENOMES / genome / (genome + mark)) for genome in GENOMES]
 
 
-# Default rule at the end of file
+ALL_HITS = for_all_genomes("_hits.tsv")
+ALL_HOODS = for_all_genomes("_neighborhoods.tsv")
+
+
+rule all:
+    input:
+        f"{RESULTS}/pairs.tsv",
+        f"{RESULTS}/neighborhoods.tsv",
+        f"{RESULTS}/mappings_wide.tsv",
+        f"{RESULTS}/mappings_raw_wide.tsv",
 
 
 rule download_genome:
     output:
-        faa=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.faa",
-        gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
+        multiext(f"{RESULTS_GENOMES}/{{genome}}/{{genome}}", ".gff", ".faa"),
     params:
         include="protein gff3",
     retries: 3
+    cache: "omit-software"
     shell:
         """
         workflow/scripts/download_genome.py --include {params.include} --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
         """
 
 
+rule cds:
+    input:
+        gff=rules.download_genome.output[0],
+    output:
+        cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
+    shell:
+        """
+        workflow/scripts/reduce_gff2cds.R {input} >| {output}
+        """
+
+
 rule makedb:
     input:
-        faa=rules.download_genome.output.faa,
+        faa=rules.download_genome.output[1],
     output:
         db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.dmnd",
     params:
@@ -138,12 +203,14 @@ rule blastp:
     params:
         format=f"6 {BLAST_FORMAT}",  # Number 6 is for ncbi blast tabular format
         db=rules.makedb.params.db,
+        extra_args=f"{DIAMOND_ARGS}",
     shell:
         """
         diamond blastp --outfmt {params.format}\
             --out   {output.tsv6}\
             --db    {params.db}\
-            --query {input.query}
+            --query {input.query}\
+            {params.extra_args}
         perl -i -ne 'print "{wildcards.genome}\\t" . "$_"' {output.tsv6}
         """
 
@@ -154,14 +221,14 @@ rule bind_blasts:
     output:
         f"{RESULTS}/{BLASTS_TSV}",
     params:
-        header=ALL_HEADER,
+        header=BLAST_HEADER,
     shell:
         """
         cat - {input} >| {output} <<< '{params.header}'
         """
 
 
-rule get_proteins:
+rule all_proteins:
     input:
         rules.bind_blasts.output,
     output:
@@ -170,18 +237,19 @@ rule get_proteins:
         width="80",
     shell:
         """
-        workflow/scripts/blast2faa.R {input} 2> /dev/null | fasta_unique | fasta_pretty -w={params.width} >| {output}
+        workflow/scripts/blast2faa.R {input} | fasta_unique | fasta_pretty -w={params.width} >| {output}
         """
 
 
 rule interproscan_xml:
     input:
-        faa=rules.get_proteins.output,
+        faa=rules.all_proteins.output,
     output:
         xml=f"{RESULTS}/{ISCAN_XML}",
     params:
         temp="/tmp",
     threads: workflow.cores
+    cache: "omit-software"
     shell:
         """
         interproscan.sh --formats XML\
@@ -201,7 +269,7 @@ rule interproscan_tsv:
     params:
         header=ISCAN_HEADER,
         temp="/tmp",
-    default_target: True
+    cache: "omit-software"
     shell:
         """
         interproscan.sh --mode convert \
@@ -211,48 +279,133 @@ rule interproscan_tsv:
                         --goterms \
                         --enable-tsv-residue-annot
 
+        # Annotate headers
         cat - {output.tsv}.temp >| {output.tsv} <<< '{params.header}'
 
         rm {output.tsv}.temp
         """
 
 
-rule get_pids:
+rule pids:
     input:
-        rules.bind_blasts.output,
+        tsv=rules.bind_blasts.output,
+        faa=rules.all_proteins.output,
     output:
         f"{RESULTS}/{BLASTS_PID}",
-    params:
-        faa=rules.get_proteins.output,
     shell:
         """
-        sed '1d' {input} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
+        sed '1d' {input.tsv} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
 
-        N_FAA=`grep -c '^>' {params.faa}`
-        N_PID=`grep -c '^'  {output}`
+        N_FAA=`grep -c '^>' {input.faa}`
+        N_PID=`grep -c '^'  {input.tsv}` # wc -l clutters the output, so equality (==) fails
 
-        if [[ "$N_FAA" -ne "$N_PID" ]]; then exit 1; fi
+        # Sanity check, N == M
+        # N unique faas
+        # M unique pids
+        # if [[ "$N_FAA" -ne "$N_PID" ]]; then printf "Fatal Error:\\nN unique fasta entries differ from\\nM unique protein ids.\\n" && exit 1; fi
         """
 
 
-rule hits_gff:
+rule hits:
     input:
-        gff=rules.download_genome.output.gff,
-        pids=rules.get_pids.output,
+        cds=rules.cds.output.cds,
+        pids=rules.pids.output,
     output:
         f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_hits.tsv",
     shell:
         """
-        workflow/scripts/hits_gff.R {input.pids} {input.gff} >| {output}
+        workflow/scripts/cds2hits.R {input.pids} {input.cds} >| {output}
         """
 
 
-rule bind_hits_gffs:
+rule bind_hits:
     input:
         ALL_HITS,
     output:
-        f"{RESULTS}/hits_gffs.tsv",
+        f"{RESULTS}/hits.tsv",
+    threads: workflow.cores
     shell:
         """
-        workflow/scripts/bind_hits_gffs.R 12 {input} >| {output}
+        workflow/scripts/bind_tabs.R {threads} {input} >| {output}
+        """
+
+
+rule mappings:
+    input:
+        iscan=rules.interproscan_tsv.output,
+        blasts=rules.bind_blasts.output,
+    output:
+        f"{RESULTS}/mappings_raw.tsv",
+    params:
+        config=workflow.configfiles[0],
+    shell:
+        """
+        workflow/scripts/mappings.R {params.config} {input.iscan} {input.blasts} >| {output}
+        """
+
+
+rule filter_mappings:
+    input:
+        raw=rules.mappings.output,
+    output:
+        filtered=f"{RESULTS}/mappings.tsv",
+    params:
+        config=workflow.configfiles[0],
+    shell:
+        """
+        workflow/scripts/filter_mappings.R {params} {input} >| {output}
+        """
+
+
+mappings = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
+for maps in mappings:
+
+    rule:
+        name:
+            f"{maps.stem}_wide"
+        input:
+            f"{maps}",
+        output:
+            f"{RESULTS}/{maps.stem}_wide.tsv",
+        shell:
+            "workflow/scripts/maps2wide.R {input} >| {output}"
+
+
+rule pairs:
+    input:
+        hits=rules.bind_hits.output,
+        maps=rules.filter_mappings.output,
+    output:
+        f"{RESULTS}/pairs.tsv",
+    params:
+        config=workflow.configfiles[0],
+    shell:
+        """
+        workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} {output}
+        """
+
+
+rule neighborhoods:
+    input:
+        mappings=rules.filter_mappings.output,
+        cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
+    output:
+        f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_neighborhoods.tsv",
+    params:
+        N=N,
+    shell:
+        """
+        workflow/scripts/find_neighbors.R {input.mappings} {params.N} {input.cds} >| {output}
+        """
+
+
+rule bind_neighborhoods:
+    input:
+        ALL_HOODS,
+    output:
+        f"{RESULTS}/neighborhoods.tsv",
+    threads: workflow.cores
+    shell:
+        """
+        workflow/scripts/bind_tabs.R {threads} {input} >| {output}
         """
