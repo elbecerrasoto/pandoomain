@@ -170,11 +170,11 @@ ALL_HOODS = for_all_genomes("_neighborhoods.tsv")
 
 rule download_genome:
     output:
-        faa=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.faa",
-        gff=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.gff",
+        multiext(f"{RESULTS_GENOMES}/{{genome}}/{{genome}}", ".gff", ".faa")
     params:
         include="protein gff3",
     retries: 3
+    cache: "omit-software"
     shell:
         """
         workflow/scripts/download_genome.py --include {params.include} --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
@@ -183,7 +183,7 @@ rule download_genome:
 
 rule cds:
     input:
-        gff=rules.download_genome.output.gff,
+        gff=rules.download_genome.output[0],
     output:
         cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
     shell:
@@ -194,7 +194,7 @@ rule cds:
 
 rule makedb:
     input:
-        faa=rules.download_genome.output.faa,
+        faa=rules.download_genome.output[1],
     output:
         db=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}.dmnd",
     params:
@@ -261,6 +261,7 @@ rule interproscan_xml:
         temp="/tmp",
         extra_args=ISCAN_ARGS,
     threads: workflow.cores
+    cache: "omit-software"
     shell:
         """
         interproscan.sh --formats XML\
@@ -281,6 +282,7 @@ rule interproscan_tsv:
     params:
         header=ISCAN_HEADER,
         temp="/tmp",
+    cache: "omit-software"
     shell:
         """
         interproscan.sh --mode convert \
