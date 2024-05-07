@@ -149,11 +149,12 @@ ALL_HITS = for_all_genomes("_hits.tsv")
 ALL_HOODS = for_all_genomes("_neighborhoods.tsv")
 
 
-# rule all:
-#     input:
-#         f"{RESULTS}/pairs.tsv",
-#         f"{RESULTS}/mappings_wide.tsv",
-#         f"{RESULTS}/mappings_raw_wide.tsv",
+rule all:
+    input:
+        f"{RESULTS}/pairs.tsv",
+        f"{RESULTS}/neighborhoods.tsv",
+        f"{RESULTS}/mappings_wide.tsv",
+        f"{RESULTS}/mappings_raw_wide.tsv",
 
 
 rule download_genome:
@@ -404,7 +405,6 @@ rule bind_neighborhoods:
     output:
         f"{RESULTS}/neighborhoods.tsv",
     threads: workflow.cores
-    default_target: True
     shell:
         """
         workflow/scripts/bind_tabs.R {threads} {input} >| {output}
