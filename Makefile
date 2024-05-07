@@ -1,6 +1,17 @@
-CONFIG = tests/config-slow.yaml
+SHELL = /usr/bin/bash
 
-SNAKEMAKE = snakemake --cores all --configfile $(CONFIG) --cache interproscan_tsv
+CORES = all
+CONFIG = tests/config.yaml
+ISCAN_VERSION = 5.67-99.0
+CACHE = ~/.local/snakemake
+
+SETUP_CACHE = mkdir -p $(CACHE) &&\
+              export SNAKEMAKE_OUTPUT_CACHE=$(CACHE)
+
+SNAKEMAKE = $(SETUP_CACHE) &&\
+            snakemake --cores $(CORES)\
+                      --configfile $(CONFIG)\
+                      --cache
 
 RESULTS = tests/results
 
@@ -10,7 +21,6 @@ GENOMES_MESSY = tests/genomes_messy.txt
 SVGS = dag.svg filegraph.svg rulegraph.svg
 CLEAN = .snakemake $(SVGS) $(RESULTS) $(GENOMES)
 
-ISCAN_VERSION = 5.67-99.0
 
 .PHONY test-dry:
 test-dry: $(GENOMES) $(CONFIG)
@@ -19,6 +29,7 @@ test-dry: $(GENOMES) $(CONFIG)
 
 .PHONY test:
 test: $(GENOMES) $(CONFIG)
+	rm -rf $(RESULTS)
 	$(SNAKEMAKE)
 
 
@@ -30,6 +41,11 @@ test-mtime: $(GENOMES) $(CONFIG)
 .PHONY tree-results:
 tree-results: $(GENOMES) $(CONFIG)
 	tree -a $(RESULTS)
+
+
+.PHONY clean-cache:
+clean-cache:
+	rm -rf $(CACHE)/*
 
 
 .PHONY install-iscan:

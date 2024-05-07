@@ -12,16 +12,14 @@ envvars:
     "SNAKEMAKE_OUTPUT_CACHE",
 
 
-TEST_MODE = config["test_mode"]
-OFFLINE_MODE = True if TEST_MODE else config["offline_mode"]
+GENOME_REGEX = r"GC[AF]_\d+\.\d"
 
-ISCAN_ARGS = "--disable-precalc --appl Pfam" if TEST_MODE else config["iscan_args"]
-ISCAN_ARGS = ISCAN_ARGS + " --disable-precalc" if OFFLINE_MODE else ISCAN_ARGS
 
-if OFFLINE_MODE:
+wildcard_constraints:
+    genome=GENOME_REGEX,
 
-    OFFLINE_MODE = True
-    ISCAN_ARGS = "--disable-precalc --appl Pfam"
+
+OFFLINE_MODE = config["offline_mode"]
 
 
 def bold_red(msg: str) -> str:
@@ -75,17 +73,9 @@ RESULTS = Path(config["results"])
 RESULTS_GENOMES = RESULTS / "genomes"
 
 
-GENOME_REGEX = r"GC[AF]_\d+\.\d"
-
-
-wildcard_constraints:
-    genome=GENOME_REGEX,
-
-
 DIAMOND_ARGS = config["diamond_args"]  # if not None ?
 PAIR = config["pair"]  # if not None
 FILTERING_DOMS = config["filtering_domains"]
-# QUERY_ALIASES = config["query_aliases"] # better that R reads this
 
 
 def sort_filter_genomes(path, filter_regex) -> list:
@@ -149,13 +139,11 @@ blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_FIELDS]
 BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
 
 
-# fmt: skip
 # smk formatter inserts a space, why?
+# when in format string mode
 def for_all_genomes(mark: str) -> list[str]:
     return [str(RESULTS_GENOMES / genome / (genome + mark)) for genome in GENOMES]
 
-
-# fmt: skip
 
 ALL_HITS = for_all_genomes("_hits.tsv")
 ALL_HOODS = for_all_genomes("_neighborhoods.tsv")
@@ -170,7 +158,7 @@ ALL_HOODS = for_all_genomes("_neighborhoods.tsv")
 
 rule download_genome:
     output:
-        multiext(f"{RESULTS_GENOMES}/{{genome}}/{{genome}}", ".gff", ".faa")
+        multiext(f"{RESULTS_GENOMES}/{{genome}}/{{genome}}", ".gff", ".faa"),
     params:
         include="protein gff3",
     retries: 3
@@ -259,7 +247,6 @@ rule interproscan_xml:
         xml=f"{RESULTS}/{ISCAN_XML}",
     params:
         temp="/tmp",
-        extra_args=ISCAN_ARGS,
     threads: workflow.cores
     cache: "omit-software"
     shell:
@@ -269,8 +256,7 @@ rule interproscan_xml:
                         --outfile {output.xml} \
                         --cpu {threads} \
                         --tempdir {params.temp} \
-                        --goterms\
-                        {params.extra_args}
+                        --goterms
         """
 
 

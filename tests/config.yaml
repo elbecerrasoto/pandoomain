@@ -28,22 +28,14 @@ neighborhood:
 diamond_args:
   --evalue 0.1 --ultra-sensitive
 
-# Extra args to interproscan.sh
-iscan_args:
-  ""
-
-# Go as fast as possible on test data.
-test_mode:
-  true
 
 # Do not trigger a fatal error
 # when there is no network access.
-# Mainly used for testing.
-# It would also work when the pipeline
-# has already downloaded the target genomes
-# from previous runs.
+# Used for testing.
+# It will work when the
+# genomes are already present.
 offline_mode:
-  true
+  false
 
 # The following fields
 # are optional and are
@@ -58,18 +50,17 @@ offline_mode:
 
 # If defined, the genomic
 # distances of the chosen pair
-# would be calculated.
+# will be calculated.
 pair:
   - WP_003243987.1 # YwqJ
   - WP_003243213.1 # YwqL
 
 # Filter the subjects.
 # (results from diamond sequence aligner (BLASTP-like)).
-# The subjects that would be kept are the ones that
-# its corresponding query contains the specified
+# Subjects to keep are the ones that
+# their corresponding query contains the specified
 # InterPro5 domains.
-# If a query is omitted no filter is performed on its
-# mapping subjects.
+# If a query is omitted no filter applied on the diamond results.
 filtering_domains:
   WP_003243987.1:
     - IPR006829 # LXG
