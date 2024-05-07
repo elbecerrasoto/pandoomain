@@ -10,6 +10,8 @@ GENOMES_MESSY = tests/genomes_messy.txt
 SVGS = dag.svg filegraph.svg rulegraph.svg
 CLEAN = .snakemake $(SVGS) $(RESULTS) $(GENOMES)
 
+ISCAN_VERSION = 5.67-99.0
+
 .PHONY test-dry:
 test-dry: $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) -np
@@ -33,7 +35,7 @@ tree-results: $(GENOMES) $(CONFIG)
 .PHONY install-iscan:
 install-iscan: utils/install_iscan.py
 	@printf "To install remove --dry-run option from script.\n\n"
-	$< --target 5.67-99.0 --data ~/.local/share --bin ~/.local/bin/interproscan.sh --dry-run
+	$< --target $(ISCAN_VERSION) --data ~/.local/share --bin ~/.local/bin/interproscan.sh --dry-run
 
 
 $(GENOMES): $(GENOMES_MESSY)
@@ -51,9 +53,9 @@ style:
 
 .PHONY dag:
 dag: $(GENOMES)
-	$(SNAKEMAKE) --dag | dot -Tsvg > dag.svg
-	$(SNAKEMAKE) --rulegraph      | dot -Tsvg > rulegraph.svg
-	$(SNAKEMAKE) --filegraph      | dot -Tsvg > filegraph.svg
+	$(SNAKEMAKE) --dag       | dot -Tsvg > dag.svg
+	$(SNAKEMAKE) --rulegraph | dot -Tsvg > rulegraph.svg
+	$(SNAKEMAKE) --filegraph | dot -Tsvg > filegraph.svg
 
 
 .PHONY clean:
