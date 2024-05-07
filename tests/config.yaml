@@ -34,7 +34,7 @@ diamond_args:
 # Used for testing.
 # It will work when the
 # genomes are already present.
-offline_mode:
+offline:
   false
 
 # The following fields

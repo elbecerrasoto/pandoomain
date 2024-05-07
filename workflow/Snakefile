@@ -19,7 +19,7 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
-OFFLINE_MODE = config["offline_mode"]
+OFFLINE_MODE = config["offline"]
 
 
 def bold_red(msg: str) -> str:

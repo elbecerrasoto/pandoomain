@@ -33,6 +33,12 @@ test: $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE)
 
 
+.PHONY test-offline:
+test-offline: $(GENOMES) $(CONFIG)
+	rm -rf $(RESULTS)
+	$(SNAKEMAKE) --config offline=true
+
+
 .PHONY test-mtime:
 test-mtime: $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --rerun-triggers mtime
