@@ -4,6 +4,10 @@ import subprocess as sp
 from pathlib import Path
 
 import pandas as pd
+from snakemake.utils import min_version
+
+min_version("8.5.3")
+
 
 configfile: "config/config.yaml"
 

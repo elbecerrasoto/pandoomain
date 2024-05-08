@@ -76,11 +76,14 @@ style:
 	isort workflow/Snakefile
 
 
-.PHONY dag:
-dag: $(GENOMES)
+$(SVGS): $(GENOMES)
 	$(SNAKEMAKE) --dag       | dot -Tsvg > dag.svg
 	$(SNAKEMAKE) --rulegraph | dot -Tsvg > rulegraph.svg
 	$(SNAKEMAKE) --filegraph | dot -Tsvg > filegraph.svg
+
+
+report.html: $(GENOMES) $(CONFIG)
+	$(SNAKEMAKE) --report
 
 
 .PHONY clean:
