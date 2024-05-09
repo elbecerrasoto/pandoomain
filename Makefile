@@ -52,6 +52,18 @@ tree-results: $(GENOMES) $(CONFIG)
 	tree -a $(RESULTS)
 
 
+.PHONY debug:
+debug: $(GENOMES) $(CONFIG)
+	$(SNAKEMAKE) -np --print-compilation > smkC.py 2> smkC.err
+	$(SNAKEMAKE) -np --cores 1 > debug.out 2> debug.err
+
+
+.PHONY debug-offline:
+debug-offline: $(GENOMES) $(CONFIG)
+	$(SNAKEMAKE) -np --print-compilation --config offline=true > smkC.py 2> smkC.err
+	$(SNAKEMAKE) -np --cores 1 --config offline=true > debug.out 2> debug.err
+
+
 .PHONY clean-cache:
 clean-cache:
 	rm -rf $(CACHE)/*
