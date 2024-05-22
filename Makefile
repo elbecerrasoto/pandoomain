@@ -84,8 +84,8 @@ style:
 	snakefmt .
 	black .
 	/usr/bin/Rscript -e 'styler::style_dir(".")'
-	isort .
-	isort workflow/Snakefile
+	isort              . workflow/Snakefile
+	isort --ext smk -- .
 
 
 $(SVGS): $(GENOMES)
