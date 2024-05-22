@@ -23,9 +23,6 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
-OFFLINE_MODE = config["offline"]
-
-
 def bold_red(msg: str) -> str:
     # error format
     # https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal
