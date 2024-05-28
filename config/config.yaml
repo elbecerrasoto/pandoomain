@@ -13,15 +13,15 @@ only_refseq:
 # one per line, it allows comments with '#'.
 # If provided, it overrides taxid.
 genomes:
-  tests/genomes_messy.txt
+  genomes.txt
 
 # Fasta amino acid of query proteins.
 queries:
-  tests/queries.faa
+  queries.faa
 
 # Directory where to store the results.
 results:
-  tests/results
+  results
 
 # Get neighbors for each query.
 # +n (neighbors upstream).
@@ -31,7 +31,7 @@ neighborhood:
 
 # Extra args to diamond.
 diamond_args:
-  --evalue 0.1 --ultra-sensitive
+  --evalue 0.1
 
 
 # Do not trigger a fatal error
@@ -79,67 +79,3 @@ filtering_domains:
 query_aliases:
   WP_003243987.1: deam # YwqJ deaminase.
   WP_003243213.1: endo # YwqL endonuclease.
-  WP_090990460.1: poly # polymorphic toxin type 15.
-
-
-
-
-# if specified
-# overides genomes
-# and goes and gets the specified taxid
-# getting only refseq
-# and current assembly
-taxid:
-  null
-
-genomes:
-  "genomes.txt"
-
-queries:
-  "queries.faa"
-
-results:
-  "results"
-
-
-# Get neibors for each query
-# n neibors upstream
-# n neibors downstream
-neiborhood:
-  12 # both sides of each query
-
-
-# extra args to
-# diamond
-diamond_args:
-  "--evalue 0.1 --ultra-sensitive"
-
-
-
-##### NO key errors
-
-
-# A pair of genes to calculate
-# a distance in between them
-pair: # NO key error
-  - "WP_003243987.1" # YwqJ
-  - "WP_003243213.1" # YwqL
-
-# Only consider the blast hits containing
-# these InterPro ids
-# Any query no listed here
-# Will be not filtered
-filtering_domains: # NO key error
-  WP_003243987.1:
-    - "IPR006829" # LXG
-    - "IPR025968" # YwqJ-like
-  WP_003243213.1:
-    - "IPR007581" # EndoV
-
-# mnemonics on the results tables
-# avoid spaces, as those are col names
-# queries aliases
-query_aliases: # NO key error
-  WP_003243987.1: deam # YwqJ deaminase
-  WP_003243213.1: endo # YwqL endonuclease
-  WP_090990460.1: poly # polymorphic toxin type 15
