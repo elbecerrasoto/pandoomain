@@ -27,10 +27,11 @@ IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
 
 TAXID = config["taxid"]
+ONLY_REFSEQ = config["only_refseq"]
 N = config["neighborhood"]
 
-
 RESULTS = Path(config["results"])
+USED_GENOMES = RESULTS / "genomes.tsv"
 RESULTS_GENOMES = RESULTS / "genomes"
 
 
@@ -38,8 +39,10 @@ DIAMOND_ARGS = config["diamond_args"]
 PAIR = config["pair"]
 FILTERING_DOMS = config["filtering_domains"]
 
-
-GENOMES = ut.sort_filter_genomes(IN_GENOMES, GENOME_REGEX)
+RESULTS.mkdir(
+    parents=True, exist_ok=True
+)  # Need it 'cause the output of sort_filter_genomes
+GENOMES = ut.sort_filter_genomes(IN_GENOMES, USED_GENOMES, ONLY_REFSEQ)
 
 ISCAN_HEADER_L = [
     "pid",
