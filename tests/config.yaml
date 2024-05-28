@@ -3,12 +3,17 @@
 taxid:
   null
 
+# Only use genomes
+# on RefSeq DB
+only_refseq:
+  true
+
 # Input genome list.
 # It contains NCBI assembly accessions,
 # one per line, it allows comments with '#'.
 # If provided, it overrides taxid.
 genomes:
-  tests/genomes.txt
+  tests/genomes_messy.txt
 
 # Fasta amino acid of query proteins.
 queries:

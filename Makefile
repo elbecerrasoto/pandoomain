@@ -15,41 +15,52 @@ SNAKEMAKE = $(SETUP_CACHE) &&\
 
 RESULTS = tests/results
 
-GENOMES = tests/genomes.txt
 GENOMES_MESSY = tests/genomes_messy.txt
 
 SVGS = dag.svg filegraph.svg rulegraph.svg
-CLEAN = .snakemake $(SVGS) $(RESULTS) $(GENOMES)
+CLEAN = .snakemake $(SVGS) $(RESULTS)
 
 ISCAN_DATA = ~/.local/share
 ISCAN_BIN = ~/.local/bin/interproscan.sh
 
 
 .PHONY test-dry:
-test-dry: $(GENOMES) $(CONFIG)
+test-dry: $(GENOMES_MESSY) $(CONFIG)
 	$(SNAKEMAKE) -np
 
 
 .PHONY test:
-test: $(GENOMES) $(CONFIG)
+test: $(GENOMES_MESSY) $(CONFIG)
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE)
 
 
 .PHONY test-offline:
-test-offline: $(GENOMES) $(CONFIG)
+test-offline: $(GENOMES_MESSY) $(CONFIG)
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --config offline=true
 
 
 .PHONY test-mtime:
-test-mtime: $(GENOMES) $(CONFIG)
+test-mtime: $(GENOMES_MESSY) $(CONFIG)
 	$(SNAKEMAKE) --rerun-triggers mtime
 
 
 .PHONY tree-results:
-tree-results: $(GENOMES) $(CONFIG)
+tree-results:
 	tree -a $(RESULTS)
+
+
+.PHONY debug:
+debug: $(GENOMES_MESSY) $(CONFIG)
+	$(SNAKEMAKE) -np --print-compilation > smkC.py 2> smkC.err
+	$(SNAKEMAKE) -np --cores 1 > debug.out 2> debug.err
+
+
+.PHONY debug-offline:
+debug-offline: $(GENOMES_MESSY) $(CONFIG)
+	$(SNAKEMAKE) -np --print-compilation --config offline=true > smkC.py 2> smkC.err
+	$(SNAKEMAKE) -np --cores 1 --config offline=true > debug.out 2> debug.err
 
 
 .PHONY clean-cache:
@@ -63,24 +74,23 @@ install-iscan: utils/install_iscan.py
 	$< --target $(ISCAN_VERSION) --data $(ISCAN_DATA) --bin $(ISCAN_BIN) --dry-run
 
 
-$(GENOMES): $(GENOMES_MESSY)
-	utils/deduplicate_accessions.R $< 2> /dev/null > $@
-
-
 .PHONY style:
 style:
 	snakefmt .
 	black .
 	/usr/bin/Rscript -e 'styler::style_dir(".")'
-	isort .
-	isort workflow/Snakefile
+	isort              . workflow/Snakefile
+	isort --ext smk -- .
 
 
-.PHONY dag:
-dag: $(GENOMES)
+$(SVGS): $(GENOMES_MESSY) $(CONFIG)
 	$(SNAKEMAKE) --dag       | dot -Tsvg > dag.svg
 	$(SNAKEMAKE) --rulegraph | dot -Tsvg > rulegraph.svg
 	$(SNAKEMAKE) --filegraph | dot -Tsvg > filegraph.svg
+
+
+report.html: $(GENOMES_MESSY) $(CONFIG)
+	$(SNAKEMAKE) --report
 
 
 .PHONY clean:
