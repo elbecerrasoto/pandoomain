@@ -1,3 +1,89 @@
+# Automatically generate a genome list
+# from a NCBI taxid.
+taxid:
+  null
+
+# Only use genomes
+# on RefSeq DB
+only_refseq:
+  true
+
+# Input genome list.
+# It contains NCBI assembly accessions,
+# one per line, it allows comments with '#'.
+# If provided, it overrides taxid.
+genomes:
+  tests/genomes_messy.txt
+
+# Fasta amino acid of query proteins.
+queries:
+  tests/queries.faa
+
+# Directory where to store the results.
+results:
+  tests/results
+
+# Get neighbors for each query.
+# +n (neighbors upstream).
+# -n (neighbors downstream).
+neighborhood:
+  12
+
+# Extra args to diamond.
+diamond_args:
+  --evalue 0.1 --ultra-sensitive
+
+
+# Do not trigger a fatal error
+# when there is no network access.
+# Used for testing.
+# It will work when the
+# genomes are already present.
+offline:
+  false
+
+# The following fields
+# are optional and are
+# dependant on the input queries.
+
+# On this sample file
+# three queries are used:
+
+# + WP_003243987.1 a YwqJ deaminase.
+# + WP_003243213.1 a YwqL endonuclease.
+# + WP_090990460.1 a polymorphic toxin type 15.
+
+# If defined, the genomic
+# distances of the chosen pair
+# will be calculated.
+pair:
+  - WP_003243987.1 # YwqJ
+  - WP_003243213.1 # YwqL
+
+# Filter the subjects.
+# (results from diamond sequence aligner (BLASTP-like)).
+# Subjects to keep are the ones that
+# their corresponding query contains the specified
+# InterPro5 domains.
+# If a query is omitted no filter applied on the diamond results.
+filtering_domains:
+  WP_003243987.1:
+    - IPR006829 # LXG
+    - IPR025968 # YwqJ-like
+  WP_003243213.1:
+    - IPR007581 # EndoV
+
+# Define aliases to the queries.
+# The aliases appear on
+# an extra q_alias column on the output tables.
+query_aliases:
+  WP_003243987.1: deam # YwqJ deaminase.
+  WP_003243213.1: endo # YwqL endonuclease.
+  WP_090990460.1: poly # polymorphic toxin type 15.
+
+
+
+
 # if specified
 # overides genomes
 # and goes and gets the specified taxid
