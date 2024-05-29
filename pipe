@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# feed the word "run" into "$1" to get real the deal
+
 # nohup \
 #     /usr/bin/time --verbose \
 #     ./pipe >| \
@@ -23,15 +25,20 @@ function run_snakemake
 {
     mkdir -p "$CACHE"
     export SNAKEMAKE_OUTPUT_CACHE="$CACHE"
-    snakemake --cores all --cache -np
+    if [[ "$1" != "run" ]]
+    then
+        snakemake --cores all --cache -np
+    else
+        snakemake --cores all --cache
+    fi
 }
 
 
 function main
 {
     generate_ingenomes
-    run_snakemake
+    run_snakemake "$1"
 }
 
 
-main
+main "$1"
