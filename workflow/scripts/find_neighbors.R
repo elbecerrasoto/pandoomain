@@ -83,7 +83,7 @@ contigs <- contigs |>
 
 
 neighborhoods <- vector(mode = "list", length = nrow(hits))
-for (row in 1:nrow(hits)) {
+for (row in seq_len(nrow(hits))) {
   # Globals
   hit <- hits[row, ]
   # N <- N
