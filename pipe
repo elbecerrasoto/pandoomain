@@ -16,6 +16,10 @@ CORES="$3" # e.g. bsub "1423"
 OUT="genomes.txt"
 CACHE=~/.local/snakemake
 
+if [[ ! -f queries.faa ]]
+then
+    cp tests/queries.faa .
+fi
 
 function generate_ingenomes #TAXID
 {
