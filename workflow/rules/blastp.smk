@@ -1,4 +1,4 @@
-include: "globals.smk"
+# include: "globals.smk"
 
 
 rule makedb:
