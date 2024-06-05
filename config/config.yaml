@@ -27,7 +27,7 @@ results:
 # +n (neighbors upstream).
 # -n (neighbors downstream).
 neighborhood:
-  12
+  24
 
 # Extra args to diamond.
 diamond_args:

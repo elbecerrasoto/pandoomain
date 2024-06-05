@@ -2,6 +2,7 @@
 
 # nohup \
 #     /usr/bin/time --verbose \
+
 #     ./pipe dry 1423 >| \
 #     sm.out 2>| \
 #     sm.err &
@@ -9,6 +10,7 @@
 
 DRY="$1" # Only the word "run" works, any other one, triggers dry-run
 TAXID="$2" # e.g. bsub "1423"
+CORES="$3" # e.g. bsub "1423"
 
 # Snakemake prerequisites
 OUT="genomes.txt"
@@ -18,21 +20,28 @@ CACHE=~/.local/snakemake
 function generate_ingenomes #TAXID
 {
     TAXID="$1"
-    utils/get_taxid_refseq.R "$TAXID"
-    cut -f1 -d$'\t' "${TAXID}_refseq" | sed '1d' >| "$OUT"
+    FILE="${TAXID}_refseq.tsv"
+    if [[ ! -f "$FILE" ]]
+    then
+        utils/get_taxid_refseq.R "$TAXID"
+    fi
+    cut -f1 -d$'\t' "$FILE" | sed '1d' >| "$OUT"
 }
 
 
 function run_snakemake # DRY
 {
     DRY="$1"
+    CORES="$2"
     mkdir -p "$CACHE"
     export SNAKEMAKE_OUTPUT_CACHE="$CACHE"
     if [[ "$DRY" != "run" ]]
     then
-        snakemake --cores all --cache -np
+        echo "snakemake --cores "$CORES" --cache -np --use-conda"
+        snakemake --cores "$CORES" --cache -np --use-conda
     else
-        snakemake --cores all --cache
+        echo "snakemake --cores "$CORES" --cache --use-conda"
+        snakemake --cores "$CORES" --cache --use-conda
     fi
 }
 
@@ -42,7 +51,7 @@ function main # DRY TAXID
     DRY="$1"
     TAXID="$2"
     generate_ingenomes "$TAXID"
-    run_snakemake "$DRY"
+    run_snakemake "$DRY" "$CORES"
 }
 
 
