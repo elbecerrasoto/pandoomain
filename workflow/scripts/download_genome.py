@@ -163,7 +163,7 @@ if __name__ == "__main__":
     ZIP = TMP_DIR / (GENOME + ".zip")
 
     DATASETS = split(
-        f"datasets download genome accession {GENOME} --filename {ZIP} --include {INCLUDE}"
+        f"datasets download genome accession {GENOME} --no-progressbar --filename {ZIP} --include {INCLUDE}"
     )
     UNZIP = split(f"unzip -nq {ZIP} -d {TMP_DIR}")
 

@@ -13,25 +13,25 @@ only_refseq:
 # one per line, it allows comments with '#'.
 # If provided, it overrides taxid.
 genomes:
-  tests/genomes_messy.txt
+  genomes.txt
 
 # Fasta amino acid of query proteins.
 queries:
-  tests/queries.faa
+  queries.faa
 
 # Directory where to store the results.
 results:
-  tests/results
+  results
 
 # Get neighbors for each query.
 # +n (neighbors upstream).
 # -n (neighbors downstream).
 neighborhood:
-  12
+  24
 
 # Extra args to diamond.
 diamond_args:
-  --evalue 0.1 --ultra-sensitive
+  --evalue 0.1
 
 
 # Do not trigger a fatal error
@@ -79,4 +79,3 @@ filtering_domains:
 query_aliases:
   WP_003243987.1: deam # YwqJ deaminase.
   WP_003243213.1: endo # YwqL endonuclease.
-  WP_090990460.1: poly # polymorphic toxin type 15.

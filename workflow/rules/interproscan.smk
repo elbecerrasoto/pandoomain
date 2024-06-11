@@ -1,5 +1,5 @@
-include: "globals.smk"
-include: "blastp.smk"
+# include: "globals.smk"
+# include: "blastp.smk"
 
 
 rule interproscan_xml:
