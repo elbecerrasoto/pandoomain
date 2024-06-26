@@ -17,7 +17,6 @@ args <- commandArgs(trailingOnly = TRUE)
 CONFIG <- args[1]
 HITS <- args[2]
 MAPPINGS <- args[3]
-OUT <- args[4]
 
 # CONFIG <- "tests/config.yaml"
 # HITS <- "tests/results/hits.tsv"
@@ -27,9 +26,12 @@ OUT <- args[4]
 # Returns NULL on missing
 TARGETS <- read_yaml(CONFIG)$pair
 
+
 if (is.null(TARGETS)) {
   tibble() |>
-    write_tsv(OUT)
+    format_tsv() |>
+    writeLines(stdout(), sep = "")
+
   quit(save = "no", status = 0)
 }
 
@@ -167,5 +169,6 @@ pairs <- hits_filtered |>
   map(find_pairs_per_genome) |>
   do.call(bind_rows, args = _)
 
-pairs |>
-  write_tsv(OUT)
+
+format_tsv() |>
+  writeLines(stdout(), sep = "")

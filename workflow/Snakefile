@@ -98,7 +98,7 @@ rule pairs:
         config=workflow.configfiles[0],
     shell:
         """
-        workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} {output}
+        workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} >| {output}
         """
 
 
