@@ -122,8 +122,9 @@ rule bind_neighborhoods:
         ALL_HOODS,
     output:
         f"{RESULTS}/neighborhoods.tsv",
-    threads: workflow.cores
+    params:
+        header=NEIGHS_HEADER,
     shell:
         """
-        workflow/scripts/bind_tabs.R {threads} {input} >| {output}
+        cat - {input} >| {output} <<< '{params.header}'
         """

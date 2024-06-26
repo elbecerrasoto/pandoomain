@@ -85,6 +85,24 @@ ISCAN_HEADER = "\t".join(ISCAN_HEADER_L)
 ISCAN_XML = Path(".iscan.xml")
 ISCAN_TSV = Path("iscan.tsv")
 
+NEIGHS_HEADER_L = [
+    "position",
+    "q_alias",
+    "query",
+    "row_cds",
+    "genome",
+    "pid",
+    "gene",
+    "order",
+    "start",
+    "end",
+    "contig",
+    "strand",
+    "locus_tag",
+    "product",
+]
+NEIGHS_HEADER = "\t".join(NEIGHS_HEADER_L)
+
 BLASTS_FAA = Path("blasts.faa")
 BLASTS_TSV = Path("blasts.tsv")
 BLASTS_PID = Path(".blasts_pids.txt")
