@@ -21,6 +21,9 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
+HEADERS = ut.read_yaml(Path("config/headers.yaml"))
+
+
 # Config dependant
 
 IN_GENOMES = Path(config["genomes"])
@@ -49,58 +52,16 @@ RESULTS.mkdir(
 )  # Need it 'cause the output of sort_filter_genomes
 GENOMES = ut.sort_filter_genomes(IN_GENOMES, USED_GENOMES, ONLY_REFSEQ)
 
-CDS_HEADER_L = [
-    "genome",
-    "pid",
-    "gene",
-    "order",
-    "start",
-    "end",
-    "contig",
-    "strand",
-    "locus_tag",
-    "product",
-]
+CDS_HEADER_L = HEADERS["CDS_HEADER"]
 CDS_HEADER = "\t".join(CDS_HEADER_L)
 
-ISCAN_HEADER_L = [
-    "pid",
-    "md5",
-    "length",
-    "analysis",
-    "memberDB",
-    "memberDB_txt",
-    "start",
-    "end",
-    "score",
-    "recommended",
-    "date",
-    "interpro",
-    "interpro_txt",
-    "GO",
-    "residue",
-]
+ISCAN_HEADER_L = HEADERS["ISCAN_HEADER"]
 ISCAN_HEADER = "\t".join(ISCAN_HEADER_L)
 
 ISCAN_XML = Path(".iscan.xml")
 ISCAN_TSV = Path("iscan.tsv")
 
-NEIGHS_HEADER_L = [
-    "position",
-    "q_alias",
-    "query",
-    "row_cds",
-    "genome",
-    "pid",
-    "gene",
-    "order",
-    "start",
-    "end",
-    "contig",
-    "strand",
-    "locus_tag",
-    "product",
-]
+NEIGHS_HEADER_L = HEADERS["NEIGHS_HEADER"]
 NEIGHS_HEADER = "\t".join(NEIGHS_HEADER_L)
 
 BLASTS_FAA = Path("blasts.faa")
