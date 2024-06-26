@@ -15,7 +15,6 @@ rule all:
 rule pids:
     input:
         tsv=rules.bind_blasts.output,
-        faa=rules.all_proteins.output,
     output:
         f"{RESULTS}/{BLASTS_PID}",
     shell:
