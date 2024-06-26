@@ -88,41 +88,44 @@ for maps in mappings:
             "workflow/scripts/maps2wide.R {input} >| {output}"
 
 
-rule pairs:
-    input:
-        hits=rules.bind_hits.output,
-        maps=rules.filter_mappings.output,
-    output:
-        f"{RESULTS}/pairs.tsv",
-    params:
-        config=workflow.configfiles[0],
-    shell:
-        """
-        workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} >| {output}
-        """
+if PAIR is not None:
+
+    rule pairs:
+        input:
+            hits=rules.bind_hits.output,
+            maps=rules.filter_mappings.output,
+        output:
+            f"{RESULTS}/pairs.tsv",
+        params:
+            config=workflow.configfiles[0],
+        shell:
+            """
+            workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} >| {output}
+            """
 
 
-rule neighborhoods:
-    input:
-        mappings=rules.filter_mappings.output,
-        cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
-    output:
-        f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_neighborhoods.tsv",
-    params:
-        N=N,
-    shell:
-        """
-        workflow/scripts/find_neighbors.R {input.mappings} {params.N} {input.cds} >| {output}
-        """
+if N > 0:
 
+    rule neighborhoods:
+        input:
+            mappings=rules.filter_mappings.output,
+            cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
+        output:
+            f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_neighborhoods.tsv",
+        params:
+            N=N,
+        shell:
+            """
+            workflow/scripts/find_neighbors.R {input.mappings} {params.N} {input.cds} >| {output}
+            """
 
-rule bind_neighborhoods:
-    input:
-        ALL_HOODS,
-    output:
-        f"{RESULTS}/neighborhoods.tsv",
-    threads: workflow.cores
-    shell:
-        """
-        workflow/scripts/bind_tabs.R {threads} {input} >| {output}
-        """
+    rule bind_neighborhoods:
+        input:
+            ALL_HOODS,
+        output:
+            f"{RESULTS}/neighborhoods.tsv",
+        threads: workflow.cores
+        shell:
+            """
+            workflow/scripts/bind_tabs.R {threads} {input} >| {output}
+            """

@@ -167,5 +167,6 @@ pairs <- hits_filtered |>
   do.call(bind_rows, args = _)
 
 
-format_tsv() |>
+pairs |>
+  format_tsv() |>
   writeLines(stdout(), sep = "")
