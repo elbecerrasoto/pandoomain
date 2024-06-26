@@ -6,11 +6,12 @@ rule download_genome:
         multiext(f"{RESULTS_GENOMES}/{{genome}}/{{genome}}", ".gff", ".faa"),
     params:
         include="protein gff3",
+        genome="{genome}",
     retries: 3
     cache: "omit-software"
     shell:
         """
-        workflow/scripts/download_genome.py --include {params.include} --out-dir {RESULTS_GENOMES}/{wildcards.genome} -- {wildcards.genome}
+        workflow/scripts/download_genome.py --include {params.include} --out-dir {RESULTS_GENOMES}/{params.genome} -- {params.genome}
         """
 
 
