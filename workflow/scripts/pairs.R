@@ -89,8 +89,12 @@ query2pid <- mappings |>
   distinct(q_alias, query, pid)
 
 # Filter to pair hits
+# Is many to many when some queries map to the same pids
+# Different blasts are finding the same hits
 hits_filtered <- hits |>
-  left_join(query2pid, join_by(pid == pid)) |>
+  left_join(query2pid, join_by(pid),
+    relationship = "many-to-many"
+  ) |>
   filter(query %in% TARGETS)
 stopifnot("Not enough hits to find pairs." = nrow(hits) > 1)
 
