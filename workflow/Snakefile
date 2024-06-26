@@ -21,14 +21,6 @@ rule pids:
     shell:
         """
         sed '1d' {input.tsv} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
-
-        N_FAA=`grep -c '^>' {input.faa}`
-        N_PID=`grep -c '^'  {input.tsv}` # wc -l clutters the output, so equality (==) fails
-
-        # Sanity check, N == M
-        # N unique faas
-        # M unique pids
-        # if [[ "$N_FAA" -ne "$N_PID" ]]; then printf "Fatal Error:\\nN unique fasta entries differ from\\nM unique protein ids.\\n" && exit 1; fi
         """
 
 
