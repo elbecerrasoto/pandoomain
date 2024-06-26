@@ -1,0 +1,39 @@
+# Only use genomes
+# on RefSeq DB
+only_refseq:
+  true
+
+# Input genome list.
+# It contains NCBI assembly accessions,
+# one per line, it allows comments with '#'.
+# If provided, it overrides taxid.
+genomes:
+  tests/genomes_messy.txt
+
+# Fasta amino acid of query proteins.
+queries:
+  tests/queries.faa
+
+# Directory where to store the results.
+results:
+  tests/results
+
+# Get neighbors for each query.
+# +n (neighbors upstream).
+# -n (neighbors downstream).
+neighborhood:
+  3
+
+# Extra args to diamond.
+diamond_args:
+  --evalue 0.1
+
+
+# Do not trigger a fatal error
+# when there is no network access.
+# Used for testing.
+# It will work when the
+# genomes are already present and
+# disables interproscan lookup service.
+offline:
+  false

@@ -24,7 +24,14 @@ OUT <- args[4]
 # MAPPINGS <- "tests/results/mappings.tsv"
 # OUT <- "tests/results/pairs.tsv"
 
+# Returns NULL on missing
 TARGETS <- read_yaml(CONFIG)$pair
+
+if (is.null(TARGETS)) {
+  tibble() |>
+    write_tsv(OUT)
+  quit(save = "no", status = 0)
+}
 
 # A distance is between 2 things
 stopifnot("A distance is between 2 things. Ill-formed pair." = length(TARGETS) == 2)

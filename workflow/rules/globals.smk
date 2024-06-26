@@ -26,9 +26,8 @@ IN_QUERIES = Path(config["queries"])
 IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
 
-TAXID = config["taxid"]
 ONLY_REFSEQ = config["only_refseq"]
-N = config["neighborhood"]
+N = config["neighborhood"]  # trigger a conditional rule
 
 RESULTS = Path(config["results"])
 USED_GENOMES = RESULTS / "genomes.tsv"
@@ -36,8 +35,8 @@ RESULTS_GENOMES = RESULTS / "genomes"
 
 
 DIAMOND_ARGS = config["diamond_args"]
-PAIR = config["pair"]
-FILTERING_DOMS = config["filtering_domains"]
+# PAIR = config["pair"] # trigger a conditional rule
+# FILTERING_DOMS = config["filtering_domains"] # trigger a conditional rule
 
 RESULTS.mkdir(
     parents=True, exist_ok=True
