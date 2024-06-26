@@ -1,5 +1,5 @@
 include: "rules/globals.smk"  # no rules only globals and asserts
-include: "rules/faa_cds.smk"
+include: "rules/download.smk"
 include: "rules/blastp.smk"
 include: "rules/interproscan.smk"
 
