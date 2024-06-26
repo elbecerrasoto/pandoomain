@@ -28,10 +28,7 @@ TARGETS <- read_yaml(CONFIG)$pair
 
 
 if (is.null(TARGETS)) {
-  tibble() |>
-    format_tsv() |>
-    writeLines(stdout(), sep = "")
-
+  writeLines("", stdout(), sep = "")
   quit(save = "no", status = 0)
 }
 

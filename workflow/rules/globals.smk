@@ -21,22 +21,28 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
+# Config dependant
+
 IN_GENOMES = Path(config["genomes"])
 IN_QUERIES = Path(config["queries"])
-IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 
-
-ONLY_REFSEQ = config["only_refseq"]
-N = config["neighborhood"]  # trigger a conditional rule
 
 RESULTS = Path(config["results"])
 USED_GENOMES = RESULTS / "genomes.tsv"
 RESULTS_GENOMES = RESULTS / "genomes"
 
 
-DIAMOND_ARGS = config["diamond_args"]
-# PAIR = config["pair"] # trigger a conditional rule
-# FILTERING_DOMS = config["filtering_domains"] # trigger a conditional rule
+# Optionals keys on YAML
+ONLY_REFSEQ = config.setdefault("only_refseq", False)
+N = int(config.setdefault("neighborhood", 0))
+
+DIAMOND_ARGS = config.setdefault("diamond_args", "")
+
+PAIR = config.setdefault("pair", None)
+FILTERING_DOMS = config.setdefault("filtering_doms", None)
+
+OFFLINE_MODE = config.setdefault("offline", False)
+
 
 RESULTS.mkdir(
     parents=True, exist_ok=True
@@ -70,6 +76,7 @@ BLASTS_TSV = Path("blasts.tsv")
 BLASTS_PID = Path(".blasts_pids.txt")
 
 
+IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
 BLAST_FIELDS = ut.get_blast_fields(IN_BLAST_FIELDS)
 BLAST_FORMAT = " ".join(BLAST_FIELDS)
 
@@ -79,7 +86,6 @@ blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_FIELDS]
 
 BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
 
-OFFLINE_MODE = config["offline"]
 
 ALL_BLASTS = ut.for_all_genomes("_blast.tsv", RESULTS_GENOMES, GENOMES)
 ALL_HITS = ut.for_all_genomes("_hits.tsv", RESULTS_GENOMES, GENOMES)

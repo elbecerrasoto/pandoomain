@@ -21,6 +21,10 @@ CDS <- args[3]
 # N <- as.integer("12")
 # CDS <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv"
 
+if (N < 1) {
+  writeLines("", stdout(), sep = "")
+  quit(save = "no", status = 0)
+}
 
 
 GENOME_RE <- "GC[AF]_[0-9]+"
