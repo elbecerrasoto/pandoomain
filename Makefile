@@ -98,4 +98,4 @@ clean:
 	@rm -rf $(CLEAN)
 	git clean -d -n
 	@printf "\nTo remove untracked files run:\ngit clean -d -f\n"
-	@printf "tests/data has to be deleted manually:\nrm -r $(CACHE)"
+	@printf "Cache data has to be deleted manually:\nrm -r $(CACHE)"
