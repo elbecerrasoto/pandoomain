@@ -21,13 +21,26 @@ wildcard_constraints:
     genome=GENOME_REGEX,
 
 
-HEADERS = ut.read_yaml(Path("config/headers.yaml"))
-
-
-# Config dependant
-
 IN_GENOMES = Path(config["genomes"])
+
+assert IN_GENOMES.exists(), (
+    ut.bold_red("Input genome assembly list file not found.")
+    + f"\nTried to look it up at: {IN_GENOMES}."
+)
+
 IN_QUERIES = Path(config["queries"])
+
+assert IN_QUERIES.exists(), (
+    ut.bold_red("Input query file not found.")
+    + f"\nTried to look it up at: {IN_QUERIES}."
+)
+
+IN_HEADERS = Path("config/headers.yaml")
+
+assert IN_HEADERS.exists(), (
+    ut.bold_red("Input blast fields file not found.")
+    + f"\nTried to look it up at: {IN_HEADERS}."
+)
 
 
 RESULTS = Path(config["results"])
@@ -45,12 +58,16 @@ PAIR = config.setdefault("pair", None)
 FILTERING_DOMS = config.setdefault("filtering_doms", None)
 
 OFFLINE_MODE = config.setdefault("offline", False)
-
+if not OFFLINE_MODE:
+    assert ut.is_internet_on(), ut.bold_red("No network connection.")
 
 RESULTS.mkdir(
     parents=True, exist_ok=True
 )  # Need it 'cause the output of sort_filter_genomes
 GENOMES = ut.sort_filter_genomes(IN_GENOMES, USED_GENOMES, ONLY_REFSEQ)
+
+
+HEADERS = ut.read_yaml(IN_HEADERS)
 
 CDS_HEADER_L = HEADERS["CDS_HEADER"]
 CDS_HEADER = "\t".join(CDS_HEADER_L)
@@ -69,39 +86,15 @@ BLASTS_TSV = Path("blasts.tsv")
 BLASTS_PID = Path(".blasts_pids.txt")
 
 
-IN_BLAST_FIELDS = Path("config/blast_fields.tsv")
-BLAST_FIELDS = ut.get_blast_fields(IN_BLAST_FIELDS)
-BLAST_FORMAT = " ".join(BLAST_FIELDS)
+BLAST_HEADER_L = HEADERS["BLAST_HEADER"]
+BLAST_FORMAT = " ".join(BLAST_HEADER_L)
 
 BLAST_FORMAT_RENAMES = {"qseqid": "query", "sseqid": "pid"}
 d = BLAST_FORMAT_RENAMES
-blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_FIELDS]
-
+blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_HEADER_L]
 BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
 
 
 ALL_BLASTS = ut.for_all_genomes("_blast.tsv", RESULTS_GENOMES, GENOMES)
 ALL_HITS = ut.for_all_genomes("_hits.tsv", RESULTS_GENOMES, GENOMES)
 ALL_HOODS = ut.for_all_genomes("_neighborhoods.tsv", RESULTS_GENOMES, GENOMES)
-
-
-def main():
-    if not OFFLINE_MODE:
-        assert ut.is_internet_on(), ut.bold_red("No network connection.")
-
-    assert IN_GENOMES.exists(), (
-        ut.bold_red("Input genome assembly list file not found.")
-        + f"\nTried to look it up at: {IN_GENOMES}."
-    )
-
-    assert IN_QUERIES.exists(), (
-        ut.bold_red("Input query file not found.")
-        + f"\nTried to look it up at: {IN_QUERIES}."
-    )
-    assert IN_BLAST_FIELDS.exists(), (
-        ut.bold_red("Input blast fields file not found.")
-        + f"\nTried to look it up at: {IN_BLAST_FIELDS}."
-    )
-
-
-main()
