@@ -17,14 +17,20 @@ args <- commandArgs(trailingOnly = TRUE)
 CONFIG <- args[1]
 HITS <- args[2]
 MAPPINGS <- args[3]
-OUT <- args[4]
 
 # CONFIG <- "tests/config.yaml"
 # HITS <- "tests/results/hits.tsv"
 # MAPPINGS <- "tests/results/mappings.tsv"
 # OUT <- "tests/results/pairs.tsv"
 
+# Returns NULL on missing
 TARGETS <- read_yaml(CONFIG)$pair
+
+
+if (is.null(TARGETS)) {
+  writeLines("", stdout(), sep = "")
+  quit(save = "no", status = 0)
+}
 
 # A distance is between 2 things
 stopifnot("A distance is between 2 things. Ill-formed pair." = length(TARGETS) == 2)
@@ -83,8 +89,12 @@ query2pid <- mappings |>
   distinct(q_alias, query, pid)
 
 # Filter to pair hits
+# Is many to many when some queries map to the same pids
+# Different blasts are finding the same hits
 hits_filtered <- hits |>
-  left_join(query2pid, join_by(pid == pid)) |>
+  left_join(query2pid, join_by(pid),
+    relationship = "many-to-many"
+  ) |>
   filter(query %in% TARGETS)
 stopifnot("Not enough hits to find pairs." = nrow(hits) > 1)
 
@@ -160,5 +170,7 @@ pairs <- hits_filtered |>
   map(find_pairs_per_genome) |>
   do.call(bind_rows, args = _)
 
+
 pairs |>
-  write_tsv(OUT)
+  format_tsv() |>
+  writeLines(stdout(), sep = "")

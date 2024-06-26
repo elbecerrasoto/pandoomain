@@ -14,9 +14,11 @@ INPUTS <- args[2:length(args)]
 
 plan(multisession, workers = CORES)
 
+read_typed <- partial(read_tsv, col_types = "ccciiicccc")
+
 
 all_L <- INPUTS |>
-  future_map(read_tsv)
+  future_map(read_typed)
 
 
 all <- do.call(bind_rows, all_L)

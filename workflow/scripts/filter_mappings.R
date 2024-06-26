@@ -21,6 +21,7 @@ MAPPINGS <- args[2]
 # MAPPINGS <- "tests/results/mappings_raw.tsv"
 
 
+# Returns NULL on missing
 FILTER <- read_yaml(CONFIG)$filtering_domains
 
 mappings <- read_tsv(MAPPINGS)
@@ -36,6 +37,7 @@ check_domains <- function(query, domains, domains_to_check) {
   n <- length(domains)
   filter_lgl <- rep(TRUE, n) # default value
 
+  # NULL length evaluates to 0
   if (length(domains_to_check) == 0) {
     return(filter_lgl)
   }

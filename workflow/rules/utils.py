@@ -4,6 +4,13 @@ from pathlib import Path
 import pandas as pd
 
 
+def read_yaml(y: Path) -> dict:
+    import yaml
+
+    with open(y, "r") as yfile:
+        return yaml.safe_load(yfile)
+
+
 def bold_red(msg: str) -> str:
     # error format
     # https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal
@@ -62,15 +69,6 @@ def sort_filter_genomes(inpath: Path, outpath: Path, only_refseq: bool) -> list[
     df.to_csv(outpath, sep="\t")
 
     return list(df.genome)
-
-
-def get_blast_fields(path) -> list[str]:
-    df = pd.read_table(
-        path,
-        sep="\t",
-        comment="#",
-    )
-    return list(df.field)
 
 
 def for_all_genomes(mark: str, results_genomes: Path, genomes: [str]) -> list[str]:

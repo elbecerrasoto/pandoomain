@@ -21,6 +21,10 @@ CDS <- args[3]
 # N <- as.integer("12")
 # CDS <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv"
 
+if (N < 1) {
+  writeLines("", stdout(), sep = "")
+  quit(save = "no", status = 0)
+}
 
 
 GENOME_RE <- "GC[AF]_[0-9]+"
@@ -121,21 +125,18 @@ for (row in seq_len(nrow(hits))) {
 
   nseq <- neighbor_seq(down, up)
 
-  neighborhood_id <- glue("{genome}_{hlocus}_{N}")
-
   x <- cds[row_down:row_up, ] |>
     mutate(
-      Nid = neighborhood_id,
-      Nseq = nseq,
+      position = nseq,
       q_alias = q_alias,
       query = query
     ) |>
-    relocate(Nid, Nseq, q_alias, query)
+    relocate(position, q_alias, query)
 
   neighborhoods[[row]] <- x
 }
 
 # Output to stdout
 do.call(bind_rows, neighborhoods) |>
-  format_tsv() |>
+  format_tsv(col_names = F) |>
   writeLines(stdout(), sep = "")

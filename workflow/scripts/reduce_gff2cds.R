@@ -1,7 +1,10 @@
 #!/usr/bin/Rscript
 
-# Result to stdout
-# everything else to stderr
+# Send all output to stderr
+# With exeption of last lines
+# segmenTools is not well behaved
+# so it sends messages to stdout
+# that should be on stderr
 sink(stderr(), type = "output")
 
 suppressPackageStartupMessages({
@@ -9,6 +12,7 @@ suppressPackageStartupMessages({
   library(rlang) # warnings utils
   library(segmenTools)
   library(glue)
+  library(yaml)
 })
 
 
@@ -17,21 +21,13 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # Globals ----
 
+HEADERS <- "config/headers.yaml"
 GFF <- args[1]
 # GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
 
-OUT_COLS <- c(
-  "genome",
-  "pid",
-  "gene",
-  "order",
-  "start",
-  "end",
-  "contig",
-  "strand",
-  "locus_tag",
-  "product"
-)
+
+OUT_COLS <- read_yaml(HEADERS)$CDS_HEADER
+
 
 GENOME_RE <- "GC[FA]_[0-9]+\\.[0-9]"
 GENOME <- str_extract(GFF, GENOME_RE)
@@ -77,19 +73,35 @@ read_gff <- function(path) {
 
 # Code ----
 
-
 gff <- read_gff(GFF) |>
-  mutate(genome = GENOME, pid = protein_id, contig = seqname) |>
-  select(any_of(OUT_COLS))
+  rename(pid = protein_id, contig = seqname) |>
+  mutate(genome = GENOME)
+
+
+# manual test of missing cols
+# gff <- gff |>
+#   select(-pid,
+#          -genome)
+
 
 present <- OUT_COLS %in% names(gff)
+absent <- OUT_COLS[!present]
+
+msg <- glue("The following columns were not present:\n{str_flatten(absent, collapse = ' ')}\nOn the file:\n{GFF}")
+
 if (!all(present)) {
-  absent <- OUT_COLS[!present]
-  warn(glue("The following columns were not present:\n{absent}\nOn the file:\n{GFF}"))
+  warn(msg)
 }
+
+# add missing features
+absent_defaults <- setNames(as.list(rep(NA, length(absent))), absent)
+add_absent <- partial(add_column, .data = gff)
+
+gff <- do.call(add_absent, absent_defaults)
 
 sink()
 
 gff |>
+  select(all_of(OUT_COLS)) |>
   format_tsv() |>
   writeLines(stdout(), sep = "")
