@@ -49,6 +49,20 @@ RESULTS.mkdir(
 )  # Need it 'cause the output of sort_filter_genomes
 GENOMES = ut.sort_filter_genomes(IN_GENOMES, USED_GENOMES, ONLY_REFSEQ)
 
+CDS_HEADER_L = [
+    "genome",
+    "pid",
+    "gene",
+    "order",
+    "start",
+    "end",
+    "contig",
+    "strand",
+    "locus_tag",
+    "product",
+]
+CDS_HEADER = "\t".join(CDS_HEADER_L)
+
 ISCAN_HEADER_L = [
     "pid",
     "md5",

@@ -11,8 +11,8 @@ args <- commandArgs(trailingOnly = TRUE)
 PIDS <- args[1]
 CDS <- args[2]
 
-## PIDS <- "tests/results/.blasts_pids.txt"
-## CDS <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv"
+PIDS <- "tests/results/.blasts_pids.txt"
+CDS <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv"
 
 
 # Code ----
@@ -22,5 +22,5 @@ cds <- read_tsv(CDS)
 
 cds |>
   semi_join(pids, join_by(pid)) |>
-  format_tsv() |>
+  format_tsv(col_names = F) |>
   writeLines(stdout(), sep = "")

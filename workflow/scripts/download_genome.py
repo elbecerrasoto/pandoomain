@@ -3,6 +3,16 @@
 # Depends on ncbi-datasets-cli
 # Install with
 # mamba install -y -c conda-forge ncbi-datasets-cli
+import argparse
+import os
+import re
+import shutil
+import subprocess as sp
+import sys
+from pathlib import Path
+from shlex import join, split
+
+from icecream import ic
 
 
 def is_internet_on():
@@ -16,21 +26,10 @@ def is_internet_on():
         return False
 
 
-import sys
-
 if not is_internet_on():
     print("No network connection.\nShutting down execution.")
     sys.exit(1)
 
-import argparse
-import os
-import re
-import shutil
-import subprocess as sp
-from pathlib import Path
-from shlex import join, split
-
-from icecream import ic
 
 DESCRIPTION = """Wrapper for ncbi-datasets-cli
 

@@ -79,9 +79,8 @@ style:
 	snakefmt .
 	black .
 	/usr/bin/Rscript -e 'styler::style_dir(".")'
-	isort              . workflow/Snakefile
-	isort --ext smk -- .
-
+	isort --float-to-top -- utils/ workflow/ workflow/Snakefile
+	isort --float-to-top --ext smk -- utils/ workflow/
 
 $(SVGS): $(GENOMES_MESSY) $(CONFIG)
 	$(SNAKEMAKE) --dag       | dot -Tsvg > dag.svg

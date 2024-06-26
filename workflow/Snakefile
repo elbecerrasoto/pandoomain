@@ -40,10 +40,11 @@ rule bind_hits:
         ALL_HITS,
     output:
         f"{RESULTS}/hits.tsv",
-    threads: workflow.cores
+    params:
+        header=CDS_HEADER,
     shell:
         """
-        workflow/scripts/bind_tabs.R {threads} {input} >| {output}
+        cat - {input} >| {output} <<< '{params.header}'
         """
 
 
