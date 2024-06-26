@@ -12,6 +12,7 @@ suppressPackageStartupMessages({
   library(rlang) # warnings utils
   library(segmenTools)
   library(glue)
+  library(yaml)
 })
 
 
@@ -20,21 +21,13 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # Globals ----
 
+HEADERS <- "config/headers.yaml"
 GFF <- args[1]
 # GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
 
-OUT_COLS <- c(
-  "genome",
-  "pid",
-  "gene",
-  "order",
-  "start",
-  "end",
-  "contig",
-  "strand",
-  "locus_tag",
-  "product"
-)
+
+OUT_COLS <- read_yaml(HEADERS)$CDS_HEADER
+
 
 GENOME_RE <- "GC[FA]_[0-9]+\\.[0-9]"
 GENOME <- str_extract(GFF, GENOME_RE)
