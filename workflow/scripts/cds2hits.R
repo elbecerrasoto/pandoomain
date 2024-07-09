@@ -11,8 +11,8 @@ args <- commandArgs(trailingOnly = TRUE)
 PIDS <- args[1]
 CDS <- args[2]
 
-PIDS <- "tests/results/.blasts_pids.txt"
-CDS <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv"
+# PIDS <- "tests/results/.blasts_pids.txt"
+# CDS <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv"
 
 
 # Code ----
