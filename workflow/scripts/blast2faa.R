@@ -11,7 +11,8 @@ IN <- args[1] # "tests/results/blasts.tsv"
 blasts <- read_tsv(IN)
 
 unique_proteins <- blasts |>
-  distinct(stitle, .keep_all = T)
+  distinct(pid, .keep_all = T) |>
+  arrange(pid)
 
 headers <- unique_proteins |> pull(stitle)
 seqs <- unique_proteins |> pull(full_sseq)
