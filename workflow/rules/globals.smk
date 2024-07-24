@@ -44,6 +44,7 @@ assert IN_HEADERS.exists(), (
 
 
 RESULTS = Path(config["results"])
+LOGS = RESULTS / "logs"
 USED_GENOMES = RESULTS / "genomes.tsv"
 RESULTS_GENOMES = RESULTS / "genomes"
 

@@ -55,7 +55,16 @@ rule all_proteins:
         f"{RESULTS}/{BLASTS_FAA}",
     params:
         width="80",
+    log:
+        f"{LOGS}/all_proteins.log",
     shell:
         """
         workflow/scripts/blast2faa.R {input} | fasta_pretty -w={params.width} >| {output}
+        fasta_unique {output} > /dev/null 2> {log}
+        if [[ ! -s {log} ]]
+        then
+            printf "Warning:\\nSome protein IDs map to the same sequence.\\n"
+            printf "You do not need to do anything, it just the way NCBI sequences are.\\n"
+            cat {log}
+        fi
         """

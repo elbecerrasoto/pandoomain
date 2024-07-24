@@ -43,6 +43,7 @@ test-offline: $(GENOMES_MESSY) $(CONFIG)
 
 .PHONY test-mtime:
 test-mtime: $(GENOMES_MESSY) $(CONFIG)
+	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --rerun-triggers mtime
 
 
