@@ -57,5 +57,5 @@ rule all_proteins:
         width="80",
     shell:
         """
-        workflow/scripts/blast2faa.R {input} | fasta_unique | fasta_pretty -w={params.width} >| {output}
+        workflow/scripts/blast2faa.R {input} | fasta_pretty -w={params.width} >| {output}
         """
