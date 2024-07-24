@@ -2,6 +2,7 @@ SHELL = /usr/bin/bash
 
 CORES = all
 CONFIG = tests/config.yaml
+CONFIG_OPTIONALS = tests/config_optionals.yaml
 ISCAN_VERSION = 5.68-100.0
 CACHE = ~/.local/snakemake
 
@@ -10,7 +11,6 @@ SETUP_CACHE = mkdir -p $(CACHE) &&\
 
 SNAKEMAKE = $(SETUP_CACHE) &&\
             snakemake --cores $(CORES)\
-                      --configfile $(CONFIG)\
                       --cache
 
 RESULTS = tests/results
@@ -32,19 +32,25 @@ test-dry: $(GENOMES_MESSY) $(CONFIG)
 .PHONY test:
 test: $(GENOMES_MESSY) $(CONFIG)
 	rm -rf $(RESULTS)
-	$(SNAKEMAKE)
+	$(SNAKEMAKE) --configfile $(CONFIG)
+
+
+.PHONY test-optionals:
+test-optionals: $(GENOMES_MESSY) $(CONFIG_OPTIONALS)
+	rm -rf $(RESULTS)
+	$(SNAKEMAKE) --configfile $(CONFIG_OPTIONALS)
 
 
 .PHONY test-offline:
 test-offline: $(GENOMES_MESSY) $(CONFIG)
 	rm -rf $(RESULTS)
-	$(SNAKEMAKE) --config offline=true
+	$(SNAKEMAKE) --config offline=true --configfile $(CONFIG)
 
 
 .PHONY test-mtime:
 test-mtime: $(GENOMES_MESSY) $(CONFIG)
 	rm -rf $(RESULTS)
-	$(SNAKEMAKE) --rerun-triggers mtime
+	$(SNAKEMAKE) --rerun-triggers mtime --configfile $(CONFIG)
 
 
 .PHONY tree-results:
