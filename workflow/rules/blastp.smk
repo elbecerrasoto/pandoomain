@@ -44,7 +44,7 @@ rule bind_blasts:
         header=BLAST_HEADER,
     run:
         with open(str(output), "w") as wfile:
-            wfile.write(params.header)
+            wfile.write(str(params.header) + "\n")
             for path in str(input).split(" "):
                 with open(path, "r") as rfile:
                     for line in rfile:
