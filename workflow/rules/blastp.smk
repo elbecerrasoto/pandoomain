@@ -42,10 +42,13 @@ rule bind_blasts:
         f"{RESULTS}/{BLASTS_TSV}",
     params:
         header=BLAST_HEADER,
-    shell:
-        """
-        cat - {input} >| {output} <<< '{params.header}'
-        """
+    run:
+        with open(str(output), "w") as wfile:
+            wfile.write(params.header)
+            for path in str(input).split(" "):
+                with open(path, "r") as rfile:
+                    for line in rfile:
+                        wfile.write(line)
 
 
 rule all_proteins:
