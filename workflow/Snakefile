@@ -10,6 +10,7 @@ rule all:
         f"{RESULTS}/neighborhoods.tsv",
         f"{RESULTS}/mappings_wide.tsv",
         f"{RESULTS}/mappings_raw_wide.tsv",
+        f"{RESULTS}/genomes_metadata.tsv",
 
 
 rule hits:
