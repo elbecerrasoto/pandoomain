@@ -39,7 +39,7 @@ rule bind_blasts:
     input:
         ALL_BLASTS,
     output:
-        f"{RESULTS}/{BLASTS_TSV}",
+        f"{RESULTS}/blasts.tsv",
     params:
         header=BLAST_HEADER,
     run:
@@ -55,7 +55,7 @@ rule all_proteins:
     input:
         rules.bind_blasts.output,
     output:
-        f"{RESULTS}/{BLASTS_FAA}",
+        f"{RESULTS}/blasts.faa",
     params:
         width="80",
     log:
@@ -70,4 +70,24 @@ rule all_proteins:
             printf "You do not need to do anything, it just the way NCBI sequences are.\\n"
             cat {log}
         fi
+        """
+
+
+rule pids:
+    input:
+        tsv=rules.bind_blasts.output,
+        faa=rules.all_proteins.output,
+    output:
+        f"{RESULTS}/.blasts_pids.txt",
+    shell:
+        """
+        sed '1d' {input.tsv} | perl -ape '$_ = $F[3] . "\\n"' | sort | uniq >| {output}
+
+        N_FAA=`grep -c '^>' {input.faa}`
+        N_PID=`grep -c '^'  {output}` # wc -l clutters the output, so equality (==) fails
+
+        # Sanity check, N == M
+        # N unique faas
+        # M unique pids
+        if [[ "$N_FAA" -ne "$N_PID" ]]; then printf "Fatal Error:\\nN unique fasta entries differ from\\nM unique protein ids.\\n" && exit 1; fi
         """

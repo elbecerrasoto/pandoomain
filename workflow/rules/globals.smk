@@ -73,18 +73,13 @@ HEADERS = ut.read_yaml(IN_HEADERS)
 CDS_HEADER_L = HEADERS["CDS_HEADER"]
 CDS_HEADER = "\t".join(CDS_HEADER_L)
 
+
 ISCAN_HEADER_L = HEADERS["ISCAN_HEADER"]
 ISCAN_HEADER = "\t".join(ISCAN_HEADER_L)
 
-ISCAN_XML = Path(".iscan.xml")
-ISCAN_TSV = Path("iscan.tsv")
 
 NEIGHS_HEADER_L = HEADERS["NEIGHS_HEADER"]
 NEIGHS_HEADER = "\t".join(NEIGHS_HEADER_L)
-
-BLASTS_FAA = Path("blasts.faa")
-BLASTS_TSV = Path("blasts.tsv")
-BLASTS_PID = Path(".blasts_pids.txt")
 
 
 BLAST_HEADER_L = HEADERS["BLAST_HEADER"]

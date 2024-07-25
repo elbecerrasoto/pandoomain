@@ -6,7 +6,7 @@ rule interproscan_xml:
     input:
         faa=rules.all_proteins.output,
     output:
-        xml=f"{RESULTS}/{ISCAN_XML}",
+        xml=f"{RESULTS}/.iscan.xml",
     params:
         temp="/tmp",
     threads: workflow.cores
@@ -26,7 +26,7 @@ rule interproscan_tsv:
     input:
         xml=rules.interproscan_xml.output.xml,
     output:
-        tsv=f"{RESULTS}/{ISCAN_TSV}",
+        tsv=f"{RESULTS}/iscan.tsv",
     params:
         header=ISCAN_HEADER,
         temp="/tmp",
