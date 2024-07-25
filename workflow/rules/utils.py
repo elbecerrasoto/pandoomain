@@ -73,3 +73,17 @@ def sort_filter_genomes(inpath: Path, outpath: Path, only_refseq: bool) -> list[
 
 def for_all_genomes(mark: str, results_genomes: Path, genomes: [str]) -> list[str]:
     return [str(results_genomes / genome / f"{genome}{mark}") for genome in genomes]
+
+
+def bind_files(sm_input, sm_output, header):
+
+    sm_input = str(sm_input)
+    sm_output = str(sm_output)
+    header = str(header)
+
+    with open(sm_output, "w") as wfile:
+        wfile.write(header + "\n")
+        for path in sm_input.split(" "):
+            with open(path, "r") as rfile:
+                for line in rfile:
+                    wfile.write(line)

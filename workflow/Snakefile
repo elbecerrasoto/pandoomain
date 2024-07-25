@@ -1,4 +1,4 @@
-include: "rules/globals.smk"  # no rules only globals and asserts
+include: "rules/globals.smk"  # no rules only globals, asserts, and utils
 include: "rules/download.smk"
 include: "rules/blastp.smk"
 include: "rules/interproscan.smk"
@@ -31,10 +31,8 @@ rule bind_hits:
         f"{RESULTS}/hits.tsv",
     params:
         header=CDS_HEADER,
-    shell:
-        """
-        cat - {input} >| {output} <<< '{params.header}'
-        """
+    run:
+        utils.bind_files(input, output, params.header)
 
 
 rule mappings:
@@ -114,9 +112,4 @@ rule bind_neighborhoods:
     params:
         header=NEIGHS_HEADER,
     run:
-        with open(str(output), "w") as wfile:
-            wfile.write(str(params.header) + "\n")
-            for path in str(input).split(" "):
-                with open(path, "r") as rfile:
-                    for line in rfile:
-                        wfile.write(line)
+        utils.bind_files(input, output, params.header)

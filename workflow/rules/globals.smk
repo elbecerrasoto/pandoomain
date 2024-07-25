@@ -2,7 +2,7 @@ from pathlib import Path
 
 from snakemake.utils import min_version
 
-import utils as ut
+import utils
 
 min_version("8.5.3")
 
@@ -24,21 +24,21 @@ wildcard_constraints:
 IN_GENOMES = Path(config["genomes"])
 
 assert IN_GENOMES.exists(), (
-    ut.bold_red("Input genome assembly list file not found.")
+    utils.bold_red("Input genome assembly list file not found.")
     + f"\nTried to look it up at: {IN_GENOMES}."
 )
 
 IN_QUERIES = Path(config["queries"])
 
 assert IN_QUERIES.exists(), (
-    ut.bold_red("Input query file not found.")
+    utils.bold_red("Input query file not found.")
     + f"\nTried to look it up at: {IN_QUERIES}."
 )
 
 IN_HEADERS = Path("config/headers.yaml")
 
 assert IN_HEADERS.exists(), (
-    ut.bold_red("Input blast fields file not found.")
+    utils.bold_red("Input blast fields file not found.")
     + f"\nTried to look it up at: {IN_HEADERS}."
 )
 
@@ -60,15 +60,15 @@ FILTERING_DOMS = config.setdefault("filtering_doms", None)
 
 OFFLINE_MODE = config.setdefault("offline", False)
 if not OFFLINE_MODE:
-    assert ut.is_internet_on(), ut.bold_red("No network connection.")
+    assert utils.is_internet_on(), utils.bold_red("No network connection.")
 
 RESULTS.mkdir(
     parents=True, exist_ok=True
 )  # Need it 'cause the output of sort_filter_genomes
-GENOMES = ut.sort_filter_genomes(IN_GENOMES, USED_GENOMES, ONLY_REFSEQ)
+GENOMES = utils.sort_filter_genomes(IN_GENOMES, USED_GENOMES, ONLY_REFSEQ)
 
 
-HEADERS = ut.read_yaml(IN_HEADERS)
+HEADERS = utils.read_yaml(IN_HEADERS)
 
 CDS_HEADER_L = HEADERS["CDS_HEADER"]
 CDS_HEADER = "\t".join(CDS_HEADER_L)
@@ -91,6 +91,6 @@ blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_HEADER_L]
 BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
 
 
-ALL_BLASTS = ut.for_all_genomes("_blast.tsv", RESULTS_GENOMES, GENOMES)
-ALL_HITS = ut.for_all_genomes("_hits.tsv", RESULTS_GENOMES, GENOMES)
-ALL_HOODS = ut.for_all_genomes("_neighborhoods.tsv", RESULTS_GENOMES, GENOMES)
+ALL_BLASTS = utils.for_all_genomes("_blast.tsv", RESULTS_GENOMES, GENOMES)
+ALL_HITS = utils.for_all_genomes("_hits.tsv", RESULTS_GENOMES, GENOMES)
+ALL_HOODS = utils.for_all_genomes("_neighborhoods.tsv", RESULTS_GENOMES, GENOMES)
