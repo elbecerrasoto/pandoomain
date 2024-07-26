@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-TAXID="$1" # e.g. bsub "1423"
-OUT="genomes.txt"
-
-utils/get_taxid_refseq.R "$TAXID"
-cut -f1 -d$'\t' "${TAXID}_refseq.tsv" | sed '1d' >| "$OUT"
