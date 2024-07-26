@@ -47,6 +47,14 @@ meta <- meta |>
     gc = assembly_stats_gc_percent
   )
 
+meta <- meta |>
+  mutate(
+    org = str_replace_all(org, "\\[|\\]", ""),
+    genus = str_extract(org, "^\\w+\\b")
+  ) |>
+  relocate(genus, .after = org) |>
+  arrange(org, genome)
+
 meta |>
   format_tsv() |>
   writeLines(stdout(), sep = "")
