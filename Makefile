@@ -9,9 +9,13 @@ CACHE = ~/.local/snakemake
 SETUP_CACHE = mkdir -p $(CACHE) &&\
               export SNAKEMAKE_OUTPUT_CACHE=$(CACHE)
 
-SNAKEMAKE = $(SETUP_CACHE) &&\
+SNAKEMAKE_TEST = $(SETUP_CACHE) &&\
             snakemake --cores $(CORES)\
-                      --cache
+                      --cache --configfile $(CONFIG)
+
+SNAKEMAKE_TEST_OPTIONALS = $(SETUP_CACHE) &&\
+            snakemake --cores $(CORES)\
+                      --cache --configfile $(CONFIG_OPTIONALS)
 
 RESULTS = tests/results
 
@@ -26,31 +30,31 @@ ISCAN_BIN = ~/.local/bin/interproscan.sh
 
 .PHONY test-dry:
 test-dry: $(GENOMES_MESSY) $(CONFIG)
-	$(SNAKEMAKE) -np
+	$(SNAKEMAKE_TEST) -np
 
 
 .PHONY test:
 test: $(GENOMES_MESSY) $(CONFIG)
 	rm -rf $(RESULTS)
-	$(SNAKEMAKE) --configfile $(CONFIG)
+	$(SNAKEMAKE_TEST)
 
 
 .PHONY test-optionals:
 test-optionals: $(GENOMES_MESSY) $(CONFIG_OPTIONALS)
 	rm -rf $(RESULTS)
-	$(SNAKEMAKE) --configfile $(CONFIG_OPTIONALS)
+	$(SNAKEMAKE_TEST_OPTIONALS)
 
 
 .PHONY test-offline:
 test-offline: $(GENOMES_MESSY) $(CONFIG)
 	rm -rf $(RESULTS)
-	$(SNAKEMAKE) --config offline=true --configfile $(CONFIG)
+	$(SNAKEMAKE_TEST) --config offline=true
 
 
 .PHONY test-mtime:
 test-mtime: $(GENOMES_MESSY) $(CONFIG)
 	rm -rf $(RESULTS)
-	$(SNAKEMAKE) --rerun-triggers mtime --configfile $(CONFIG)
+	$(SNAKEMAKE_TEST) --rerun-triggers mtime
 
 
 .PHONY tree-results:
@@ -89,14 +93,15 @@ style:
 	isort --float-to-top -- utils/ workflow/ workflow/Snakefile
 	isort --float-to-top --ext smk -- utils/ workflow/
 
+
 $(SVGS): $(GENOMES_MESSY) $(CONFIG)
-	$(SNAKEMAKE) --dag       | dot -Tsvg > dag.svg
-	$(SNAKEMAKE) --rulegraph | dot -Tsvg > rulegraph.svg
-	$(SNAKEMAKE) --filegraph | dot -Tsvg > filegraph.svg
+	$(SNAKEMAKE_TEST) --dag       | dot -Tsvg > dag.svg
+	$(SNAKEMAKE_TEST) --rulegraph | dot -Tsvg > rulegraph.svg
+	$(SNAKEMAKE_TEST) --filegraph | dot -Tsvg > filegraph.svg
 
 
 report.html: $(GENOMES_MESSY) $(CONFIG)
-	$(SNAKEMAKE) --report
+	$(SNAKEMAKE) --report --configfile $(CONFIG)
 
 
 .PHONY clean:
