@@ -3,7 +3,7 @@ SHELL = /usr/bin/bash
 CORES = all
 CONFIG = tests/config.yaml
 CONFIG_OPTIONALS = tests/config_optionals.yaml
-ISCAN_VERSION = 5.68-100.0
+ISCAN_VERSION = 5.69-101.0
 CACHE = ~/.local/snakemake
 
 SETUP_CACHE = mkdir -p $(CACHE) &&\
