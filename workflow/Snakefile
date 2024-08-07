@@ -10,6 +10,19 @@ rule all:
 
 
 SPLITS = f"{RESULTS}/splits_hmmer"
+HEADER_HMMER_L = [
+    "genome",
+    "pid",
+    "query",
+    "score",
+    "start",
+    "end",
+    "included",
+    "reported",
+    "pid_description",
+    "query_description",
+]
+HEADER_HMMER = "\t".join(HEADER_HMMER_L)
 
 
 rule hmmer:
@@ -22,12 +35,15 @@ rule hmmer:
         queries=IN_QUERIES,
         split_size=1024,
         parallel_str=f"{SPLITS}/hmmer_" + "{#}.tsv {}",
+        header=HEADER_HMMER,
+        tmp_header=f"{RESULTS}/hmmer_raw.tsv.tmp",
     shell:
         """
         mkdir -p {params.splits}
         parallel -N {params.split_size} 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}' ::: {input.faas}
-        fd -e tsv . {params.splits} | xargs cat > {output.tsv}
-        rm -r {params.splits}
+        fd -e tsv . {params.splits} | xargs cat >| {params.tmp_header}
+        printf "{HEADER_HMMER}\\n" | cat - {params.tmp_header} >| {output.tsv}
+        rm -r {params.splits} {params.tmp_header}
         """
 
 
