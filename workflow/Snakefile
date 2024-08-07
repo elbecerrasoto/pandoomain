@@ -1,7 +1,9 @@
 include: "rules/globals.smk"  # no rules only globals, asserts, and utils
 include: "rules/download.smk"
-include: "rules/blastp.smk"
-include: "rules/interproscan.smk"
+
+
+# include: "rules/blastp.smk"
+# include: "rules/interproscan.smk"
 
 
 rule all:
@@ -72,90 +74,15 @@ rule hits:
         """
 
 
-rule bind_hits:
-    output:
-        "test.txt",
-    shell:
-        """
-        touch {output}
-        """
-
-
-rule mappings:
-    input:
-        iscan=rules.interproscan_tsv.output,
-        blasts=rules.bind_blasts.output,
-    output:
-        f"{RESULTS}/mappings_raw.tsv",
-    params:
-        config=workflow.configfiles[0],
-    shell:
-        """
-        workflow/scripts/mappings.R {params.config} {input.iscan} {input.blasts} >| {output}
-        """
-
-
-rule filter_mappings:
-    input:
-        raw=rules.mappings.output,
-    output:
-        filtered=f"{RESULTS}/mappings.tsv",
-    params:
-        config=workflow.configfiles[0],
-    shell:
-        """
-        workflow/scripts/filter_mappings.R {params} {input} >| {output}
-        """
-
-
-mappings = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
-for maps in mappings:
-
-    rule:
-        name:
-            f"{maps.stem}_wide"
-        input:
-            f"{maps}",
-        output:
-            f"{RESULTS}/{maps.stem}_wide.tsv",
-        shell:
-            "workflow/scripts/maps2wide.R {input} >| {output}"
-
-
 rule pairs:
     input:
-        hits=rules.bind_hits.output,
-        maps=rules.filter_mappings.output,
+        hits=rules.hits.output,
+        GPQ=rules.hmmer_filter.output,
     output:
         f"{RESULTS}/pairs.tsv",
     params:
         config=workflow.configfiles[0],
     shell:
         """
-        workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} >| {output}
+        workflow/scripts/pairs.R {params.config} {input.hits} {input.GPQ} >| {output}
         """
-
-
-rule neighborhoods:
-    input:
-        mappings=rules.filter_mappings.output,
-        cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
-    output:
-        f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_neighborhoods.tsv",
-    params:
-        N=N,
-    shell:
-        """
-        workflow/scripts/find_neighbors.R {input.mappings} {params.N} {input.cds} >| {output}
-        """
-
-
-rule bind_neighborhoods:
-    input:
-        ALL_HOODS,
-    output:
-        f"{RESULTS}/neighborhoods.tsv",
-    params:
-        header=NEIGHS_HEADER,
-    run:
-        utils.bind_files(input, output, params.header)

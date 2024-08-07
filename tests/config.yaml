@@ -53,8 +53,8 @@ offline:
 # distances of the chosen pair
 # will be calculated.
 pair:
-  - WP_003243987.1 # YwqJ
-  - WP_003243213.1 # YwqL
+  - PF14431.11 # YwqJ
+  - PF04493.19 # YwqL
 
 # Filter the subjects.
 # (results from diamond sequence aligner (BLASTP-like)).

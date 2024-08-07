@@ -13,10 +13,9 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # Globals ----
 
-
-CONFIG <- args[1]
-HITS <- args[2]
-MAPPINGS <- args[3]
+CONFIG <- "tests/config.yaml"
+HITS <- "tests/results/hits.tsv"
+GPQ <- "tests/results/genome_pid_query.tsv"
 
 # CONFIG <- "tests/config.yaml"
 # HITS <- "tests/results/hits.tsv"
