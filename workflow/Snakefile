@@ -7,6 +7,7 @@ include: "rules/interproscan.smk"
 rule all:
     input:
         f"{RESULTS}/genome_pid_query.tsv",
+        f"{RESULTS}/hits.tsv",
 
 
 SPLITS = f"{RESULTS}/splits_hmmer"
@@ -60,25 +61,24 @@ rule hmmer_filter:
 
 rule hits:
     input:
-        cds=rules.cds.output.cds,
-        pids=rules.pids.output,
+        cds=ALL_CDS,
+        GPQ=rules.hmmer_filter.output,
     output:
-        f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_hits.tsv",
+        f"{RESULTS}/hits.tsv",
+    threads: workflow.cores
     shell:
         """
-        workflow/scripts/cds2hits.R {input.pids} {input.cds} >| {output}
+        workflow/scripts/cds2hits.R {input.GPQ} {threads} {input.cds} >| {output}
         """
 
 
 rule bind_hits:
-    input:
-        ALL_HITS,
     output:
-        f"{RESULTS}/hits.tsv",
-    params:
-        header=CDS_HEADER,
-    run:
-        utils.bind_files(input, output, params.header)
+        "test.txt",
+    shell:
+        """
+        touch {output}
+        """
 
 
 rule mappings:

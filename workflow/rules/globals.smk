@@ -92,6 +92,7 @@ blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_HEADER_L]
 BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
 
 
+ALL_CDS = utils.for_all_genomes("_cds.tsv", RESULTS_GENOMES, GENOMES)
 ALL_FAAS = utils.for_all_genomes(".faa", RESULTS_GENOMES, GENOMES)
 ALL_BLASTS = utils.for_all_genomes("_blast.tsv", RESULTS_GENOMES, GENOMES)
 ALL_HITS = utils.for_all_genomes("_hits.tsv", RESULTS_GENOMES, GENOMES)

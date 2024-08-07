@@ -2,25 +2,41 @@
 
 suppressPackageStartupMessages({
   library(tidyverse)
+  library(furrr)
 })
 
 args <- commandArgs(trailingOnly = TRUE)
 
 # Globals ----
 
-PIDS <- args[1]
-CDS <- args[2]
+GPQ <- args[1]
+CORES <- as.numeric(args[2])
+CDS <- args[3:length(args)]
 
-# PIDS <- "tests/results/.blasts_pids.txt"
-# CDS <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv"
+# GPQ <- read_tsv("tests/results/genome_pid_query.tsv")
+# CORES <- 12
+# CDS <- c("tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv",
+#          "tests/results/genomes/GCF_001286885.1/GCF_001286885.1_cds.tsv")
 
 
 # Code ----
 
-pids <- read_tsv(PIDS, col_names = "pid")
-cds <- read_tsv(CDS)
+plan(multisession, workers = CORES)
 
-cds |>
-  semi_join(pids, join_by(pid)) |>
-  format_tsv(col_names = F) |>
+
+process_cds <- function(cds_path) {
+  cds <- read_tsv(cds_path)
+  left_join(GPQ, cds, join_by(pid, genome))
+}
+
+
+process_cds <- possibly(
+  process_cds,
+  tibble()
+)
+
+OUT <- future_map(CDS, process_cds)
+
+do.call(bind_rows, OUT) |>
+  format_tsv() |>
   writeLines(stdout(), sep = "")
