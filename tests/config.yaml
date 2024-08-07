@@ -12,7 +12,7 @@ genomes:
 
 # Fasta amino acid of query proteins.
 queries:
-  tests/queries.faa
+  tests/queries
 
 # Directory where to store the results.
 results:

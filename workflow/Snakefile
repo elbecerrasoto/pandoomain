@@ -6,11 +6,29 @@ include: "rules/interproscan.smk"
 
 rule all:
     input:
-        f"{RESULTS}/pairs.tsv",
-        f"{RESULTS}/neighborhoods.tsv",
-        f"{RESULTS}/mappings_wide.tsv",
-        f"{RESULTS}/mappings_raw_wide.tsv",
-        f"{RESULTS}/genomes_metadata.tsv",
+        f"{RESULTS}/hmmer_raw.tsv",
+
+
+SPLITS = f"{RESULTS}/splits_hmmer"
+
+
+rule hmmer:
+    input:
+        faas=ALL_FAAS,
+    output:
+        tsv=f"{RESULTS}/hmmer_raw.tsv",
+    params:
+        splits=SPLITS,
+        queries=IN_QUERIES,
+        split_size=1024,
+        parallel_str=f"{SPLITS}/hmmer_" + "{#}.tsv {}",
+    shell:
+        """
+        mkdir -p {params.splits}
+        parallel -N {params.split_size} 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}' ::: {input.faas}
+        fd -e tsv . {params.splits} | xargs cat > {output.tsv}
+        rm -r {params.splits}
+        """
 
 
 rule hits:
