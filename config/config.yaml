@@ -12,7 +12,7 @@ genomes:
 
 # Fasta amino acid of query proteins.
 queries:
-  queries.faa
+  queries
 
 # Directory where to store the results.
 results:
@@ -53,8 +53,8 @@ offline:
 # distances of the chosen pair
 # will be calculated.
 pair:
-  - WP_003243987.1 # YwqJ
-  - WP_003243213.1 # YwqL
+  - PF14431.11 # YwqJ
+  - PF04493.19 # YwqL
 
 # Filter the subjects.
 # (results from diamond sequence aligner (BLASTP-like)).
@@ -75,3 +75,4 @@ filtering_domains:
 query_aliases:
   WP_003243987.1: deam # YwqJ deaminase.
   WP_003243213.1: endo # YwqL endonuclease.
+  WP_090990460.1: poly # polymorphic toxin type 15.
