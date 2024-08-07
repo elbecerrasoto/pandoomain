@@ -10,6 +10,7 @@ rule all:
     input:
         f"{RESULTS}/genome_pid_query.tsv",
         f"{RESULTS}/hits.tsv",
+        f"{RESULTS}/pairs.tsv",
 
 
 SPLITS = f"{RESULTS}/splits_hmmer"

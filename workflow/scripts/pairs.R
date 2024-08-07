@@ -13,14 +13,15 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # Globals ----
 
-CONFIG <- "tests/config.yaml"
-HITS <- "tests/results/hits.tsv"
-GPQ <- "tests/results/genome_pid_query.tsv"
+CONFIG <- args[1]
+HITS <- args[2]
+GPQ <- args[3]
+
 
 # CONFIG <- "tests/config.yaml"
 # HITS <- "tests/results/hits.tsv"
-# MAPPINGS <- "tests/results/mappings.tsv"
-# OUT <- "tests/results/pairs.tsv"
+# GPQ <- "tests/results/genome_pid_query.tsv"
+
 
 # Returns NULL on missing
 TARGETS <- read_yaml(CONFIG)$pair
@@ -59,14 +60,14 @@ calc <- function(gene1, gene2) {
     distance = distance,
     genes_inbet = genes_inbet,
     contig = first$contig,
-    query_1 = first$q_alias,
+    query_1 = first$query_description,
     pid_1 = first$pid,
     order_1 = first$order,
     start_1 = first$start,
     end_1 = first$end,
     strand_1 = first$strand,
     locustag_1 = first$locus_tag,
-    query_2 = second$q_alias,
+    query_2 = second$query_description,
     pid_2 = second$pid,
     order_2 = second$order,
     start_2 = second$start,
@@ -79,22 +80,10 @@ calc <- function(gene1, gene2) {
 
 # Main ----
 
-
-# Group by genome
-# to apply the step below
-# pid 1->1 query should be 1on1
-# currently is 1-M
-query2pid <- mappings |>
-  distinct(q_alias, query, pid)
-
-# Filter to pair hits
-# Is many to many when some queries map to the same pids
-# Different blasts are finding the same hits
+# Filter to pairs
 hits_filtered <- hits |>
-  left_join(query2pid, join_by(pid),
-    relationship = "many-to-many"
-  ) |>
   filter(query %in% TARGETS)
+
 stopifnot("Not enough hits to find pairs." = nrow(hits) > 1)
 
 # Query to factor
@@ -104,7 +93,6 @@ hits_filtered <- hits_filtered |>
     query = as_factor(query),
     query = `levels<-`(query, TARGETS)
   )
-
 
 
 find_pairs_per_genome <- function(hits) {
