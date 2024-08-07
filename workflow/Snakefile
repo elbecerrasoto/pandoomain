@@ -6,7 +6,7 @@ include: "rules/interproscan.smk"
 
 rule all:
     input:
-        f"{RESULTS}/hmmer_raw.tsv",
+        f"{RESULTS}/genome_pid_query.tsv",
 
 
 SPLITS = f"{RESULTS}/splits_hmmer"
@@ -44,6 +44,17 @@ rule hmmer:
         fd -e tsv . {params.splits} | xargs cat >| {params.tmp_header}
         printf "{HEADER_HMMER}\\n" | cat - {params.tmp_header} >| {output.tsv}
         rm -r {params.splits} {params.tmp_header}
+        """
+
+
+rule hmmer_filter:
+    input:
+        tsv=rules.hmmer.output.tsv,
+    output:
+        f"{RESULTS}/genome_pid_query.tsv",
+    shell:
+        """
+        workflow/scripts/genome_pid_query.R {input} >| {output}
         """
 
 
