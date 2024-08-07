@@ -36,7 +36,7 @@ stopifnot("A distance is between 2 things. Ill-formed pair." = length(TARGETS) =
 
 
 hits <- read_tsv(HITS)
-mappings <- read_tsv(MAPPINGS)
+gpq <- read_tsv(GPQ)
 
 
 # Calc ----

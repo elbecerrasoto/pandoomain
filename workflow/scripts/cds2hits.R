@@ -9,20 +9,22 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # Globals ----
 
-GPQ <- args[1]
+GPQ <- read_tsv(args[1])
 CORES <- as.numeric(args[2])
 CDS <- args[3:length(args)]
 
+
 # GPQ <- read_tsv("tests/results/genome_pid_query.tsv")
 # CORES <- 12
-# CDS <- c("tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv",
-#          "tests/results/genomes/GCF_001286885.1/GCF_001286885.1_cds.tsv")
+# CDS <- c(
+#   "tests/results/genomes/GCF_001286845.1/GCF_001286845.1_cds.tsv",
+#   "tests/results/genomes/GCF_001286885.1/GCF_001286885.1_cds.tsv"
+# )
 
 
 # Code ----
 
 plan(multisession, workers = CORES)
-
 
 process_cds <- function(cds_path) {
   cds <- read_tsv(cds_path)
