@@ -10,7 +10,7 @@ rule all:
     input:
         f"{RESULTS}/genome_pid_query.tsv",
         f"{RESULTS}/pids.txt",
-        # f"{RESULTS}/hits.tsv",
+        f"{RESULTS}/hits.tsv",
 
 
 SPLITS = f"{RESULTS}/splits_hmmer"
@@ -95,8 +95,6 @@ HITS_HEADER_L = [
     "strand",
     "locus_tag",
     "product",
-    "query",
-    "query_description",
 ]
 HEADER_HITS = "\t".join(HITS_HEADER_L)
 SPLITS_HITS = f"{RESULTS}/splits_hits"
@@ -106,7 +104,7 @@ rule pids:
     input:
         GPQ=rules.hmmer_filter.output,
     output:
-        f"{RESULTS}/pids.txt",
+        pids=f"{RESULTS}/pids.txt",
     shell:
         """
         perl -ane '$_ = "$F[1]\n"; print if $. != 1;' {input} | sort | uniq > {output}
@@ -116,21 +114,21 @@ rule pids:
 rule hits:
     input:
         cds=rules.hits_input.output,
-        GPQ=rules.hmmer_filter.output,
+        pids=rules.pids.output,
     output:
         f"{RESULTS}/hits.tsv",
-    threads: workflow.cores
     params:
         splits=SPLITS_HITS,
         split_size=4096,
         parallel_str=" {} " + " >| " + f" {SPLITS_HITS}/" + "{#}.tsv",
         tmp=f"{RESULTS}/hits.tsv.tmp",
+        hits_headers=HEADER_HITS,
     shell:
         """
         mkdir -p {params.splits}
-        parallel -N {params.split_size} 'workflow/scripts/cds2hits.R {input.GPQ} {threads} {params.parallel_str}' :::: {input.cds}
+        parallel -N {params.split_size} 'grep --fixed-string -f {input.pids} {params.parallel_str}' :::: {input.cds}
         fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
-        printf "{HEADER_HMMER}\\n" | cat - {params.tmp} >| {output}
+        printf "{HEADER_HITS}\\n" | cat - {params.tmp} >| {output}
         rm -r {params.splits} {params.tmp}
         """
 
