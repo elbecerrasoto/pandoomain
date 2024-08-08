@@ -89,9 +89,10 @@ install-iscan: utils/install_iscan.py
 style:
 	snakefmt .
 	black .
-	/usr/bin/Rscript -e 'styler::style_dir(".")'
-	isort --float-to-top -- utils/ workflow/ workflow/Snakefile
-	isort --float-to-top --ext smk -- utils/ workflow/
+	/usr/bin/Rscript -e 'styler::style_dir("workflow")'
+	/usr/bin/Rscript -e 'styler::style_dir("utils")'
+	isort --float-to-top -- utils workflow workflow/Snakefile
+	isort --float-to-top --ext smk -- utils workflow
 
 
 $(SVGS): $(GENOMES_MESSY) $(CONFIG)

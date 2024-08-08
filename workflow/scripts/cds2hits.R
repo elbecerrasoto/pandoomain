@@ -29,10 +29,12 @@ plan(multisession, workers = CORES)
 
 process_cds <- function(cds_path) {
   cds <- read_tsv(cds_path)
-  semi_join(cds, GPQ, join_by(pid)) |>
+  out <- semi_join(cds, GPQ, join_by(pid)) |>
     left_join(GPQ, join_by(genome, pid))
   # assert order, start, end, contig, strand, locus_tag, product query, query_description
   # cannot be all NA
+  remove(cds)
+  out
 }
 
 
