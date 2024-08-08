@@ -113,7 +113,6 @@ rule pids:
         """
 
 
-# grep returns exit status 1 on non-match
 rule hitsNH:
     input:
         cds=rules.hits_input.output,
@@ -126,7 +125,7 @@ rule hitsNH:
 
         parallel --progress 'grep --no-filename --fixed-string -f {input.pids} {{}}' :::: {input.cds} >| {output}
 
-        exit 0
+        exit 0 # grep returns exit status 1 on non-match
         """
 
 
