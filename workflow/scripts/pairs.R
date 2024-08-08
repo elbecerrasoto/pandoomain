@@ -19,10 +19,10 @@ GPQ <- args[3]
 HITS_QUERY <- args[4]
 
 
-CONFIG <- "tests/config.yaml"
-HITS <- "tests/results/hits.tsv"
-GPQ <- "tests/results/genome_pid_query.tsv"
-HITS_QUERY <- "tests/results/hits_query.tsv"
+## CONFIG <- "tests/config.yaml"
+## HITS <- "tests/results/hits.tsv"
+## GPQ <- "tests/results/genome_pid_query.tsv"
+## HITS_QUERY <- "tests/results/hits_query.tsv"
 
 # Returns NULL on missing
 TARGETS <- read_yaml(CONFIG)$pair
