@@ -69,7 +69,7 @@ rule hmmer_filter:
     output:
         f"{RESULTS}/genome_pid_query.tsv",
     shell:
-        """
+        r"""
         workflow/scripts/genome_pid_query.R {input} >| {output}
         """
 
@@ -107,7 +107,7 @@ rule pids:
     output:
         pids=f"{RESULTS}/pids.txt",
     shell:
-        """
+        r"""
         perl -ane '$_ = "$F[1]\n"; print if $. != 1;' {input} | sort | uniq > {output}
         """
 
@@ -119,18 +119,13 @@ rule hits:
     output:
         f"{RESULTS}/hits.tsv",
     params:
-        splits=SPLITS_HITS,
-        split_size=4096,
-        parallel_str=" {} " + " >| " + f" {SPLITS_HITS}/" + "{#}.tsv",
         tmp=f"{RESULTS}/hits.tsv.tmp",
-        hits_headers=HEADER_HITS,
+        brackets="{}",
     shell:
-        """
-        mkdir -p {params.splits}
-        parallel -N {params.split_size} 'grep --no-filename --fixed-string -f {input.pids} {params.parallel_str}' :::: {input.cds}
-        fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
-        printf "{HEADER_HITS}\\n" | cat - {params.tmp} >| {output}
-        rm -r {params.splits} {params.tmp}
+        r"""
+        parallel 'grep --no-filename --fixed-string -f {input.pids} {params.brackets}' :::: {input.cds} >| {params.tmp}
+        printf "{HEADER_HITS}\n" | cat - {params.tmp} >| {output}
+        rm -r {params.tmp}
         """
 
 
@@ -144,6 +139,6 @@ rule pairs:
     params:
         config=workflow.configfiles[0],
     shell:
-        """
+        r"""
         workflow/scripts/pairs.R {params.config} {input.hits} {input.GPQ} {output.hitsq} >| {output}
         """
