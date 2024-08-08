@@ -9,8 +9,8 @@ include: "rules/download.smk"
 rule all:
     input:
         f"{RESULTS}/genome_pid_query.tsv",
-        f"{RESULTS}/hits.tsv",
-        f"{RESULTS}/pairs.tsv",
+        f"{RESULTS}/pids.txt",
+        # f"{RESULTS}/hits.tsv",
 
 
 SPLITS = f"{RESULTS}/splits_hmmer"
@@ -100,6 +100,17 @@ HITS_HEADER_L = [
 ]
 HEADER_HITS = "\t".join(HITS_HEADER_L)
 SPLITS_HITS = f"{RESULTS}/splits_hits"
+
+
+rule pids:
+    input:
+        GPQ=rules.hmmer_filter.output,
+    output:
+        f"{RESULTS}/pids.txt",
+    shell:
+        """
+        perl -ane '$_ = "$F[1]\n"; print if $. != 1;' {input} | sort | uniq > {output}
+        """
 
 
 rule hits:
