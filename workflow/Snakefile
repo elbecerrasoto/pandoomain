@@ -112,21 +112,30 @@ rule pids:
         """
 
 
-rule hits:
+rule hitsNH:
     input:
         cds=rules.hits_input.output,
         pids=rules.pids.output,
     output:
+        f"{RESULTS}/.hitsNH.tsv",
+    params:
+        brackets="{}",
+    shell:
+        r"""
+        parallel --progress 'grep --no-filename --fixed-string -f {input.pids} {params}' :::: {input.cds} >| {output}
+        """
+
+
+rule hits:
+    input:
+        hitNH=rules.hits_input.output,
+    output:
         f"{RESULTS}/hits.tsv",
     params:
-        tmp=f"{RESULTS}/hits.tsv.tmp",
-        brackets="{}",
         header=HEADER_HITS,
     shell:
         r"""
-        parallel --progress 'grep --no-filename --fixed-string -f {input.pids} {params.brackets}' :::: {input.cds} >| {params.tmp}
-        printf "{HEADER_HITS}\n" | cat - {params.tmp} >| {output}
-        rm -r {params.tmp}
+        printf "{params}\n" | cat - {input} >| {output}
         """
 
 
