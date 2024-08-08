@@ -30,6 +30,8 @@ HEADER_HMMER = "\t".join(HEADER_HMMER_L)
 
 
 rule hmmer_input:
+    input:
+        ALL_FAAS,
     output:
         f"{RESULTS}/.input_faas.txt",
     run:
@@ -71,9 +73,20 @@ rule hmmer_filter:
         """
 
 
+rule hits_input:
+    input:
+        ALL_CDS,
+    output:
+        f"{RESULTS}/.input_cds.txt",
+    run:
+        with open(f"{output}", "w") as fh:
+            for cds in ALL_CDS:
+                fh.write(f"{cds}\n")
+
+
 rule hits:
     input:
-        cds=ALL_CDS,
+        cds=rules.hits_input.output,
         GPQ=rules.hmmer_filter.output,
     output:
         f"{RESULTS}/hits.tsv",

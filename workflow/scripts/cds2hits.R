@@ -11,7 +11,8 @@ args <- commandArgs(trailingOnly = TRUE)
 
 GPQ <- read_tsv(args[1])
 CORES <- as.numeric(args[2])
-CDS <- args[3:length(args)]
+
+CDS <- read_tsv(args[3], col_names = FALSE)[1]
 
 
 # GPQ <- read_tsv("tests/results/genome_pid_query.tsv")
