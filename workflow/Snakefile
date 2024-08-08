@@ -51,14 +51,14 @@ rule hmmer:
         split_size=1024,
         parallel_str=f"{SPLITS}/hmmer_" + "{#}.tsv {}",
         header=HEADER_HMMER,
-        tmp_header=f"{RESULTS}/hmmer_raw.tsv.tmp",
+        tmp=f"{RESULTS}/hmmer_raw.tsv.tmp",
     shell:
         """
         mkdir -p {params.splits}
         parallel -N {params.split_size} 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}' :::: {input}
-        fd -e tsv . {params.splits} | xargs cat >| {params.tmp_header}
-        printf "{HEADER_HMMER}\\n" | cat - {params.tmp_header} >| {output}
-        rm -r {params.splits} {params.tmp_header}
+        fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
+        printf "{HEADER_HMMER}\\n" | cat - {params.tmp} >| {output}
+        rm -r {params.splits} {params.tmp}
         """
 
 
@@ -84,6 +84,24 @@ rule hits_input:
                 fh.write(f"{cds}\n")
 
 
+HITS_HEADER_L = [
+    "genome",
+    "pid",
+    "gene",
+    "order",
+    "start",
+    "end",
+    "contig",
+    "strand",
+    "locus_tag",
+    "product",
+    "query",
+    "query_description",
+]
+HEADER_HITS = "\t".join(HITS_HEADER_L)
+SPLITS_HITS = f"{RESULTS}/splits_hits"
+
+
 rule hits:
     input:
         cds=rules.hits_input.output,
@@ -91,9 +109,18 @@ rule hits:
     output:
         f"{RESULTS}/hits.tsv",
     threads: workflow.cores
+    params:
+        splits=SPLITS_HITS,
+        split_size=4096,
+        parallel_str=" {} " + " >| " + f" {SPLITS_HITS}/" + "{#}.tsv",
+        tmp=f"{RESULTS}/hits.tsv.tmp",
     shell:
         """
-        workflow/scripts/cds2hits.R {input.GPQ} {threads} {input.cds} >| {output}
+        mkdir -p {params.splits}
+        parallel -N {params.split_size} 'workflow/scripts/cds2hits.R {input.GPQ} {threads} {params.parallel_str}' :::: {input.cds}
+        fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
+        printf "{HEADER_HMMER}\\n" | cat - {params.tmp} >| {output}
+        rm -r {params.splits} {params.tmp}
         """
 
 

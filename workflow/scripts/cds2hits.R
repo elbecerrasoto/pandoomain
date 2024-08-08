@@ -12,7 +12,7 @@ args <- commandArgs(trailingOnly = TRUE)
 GPQ <- read_tsv(args[1])
 CORES <- as.numeric(args[2])
 
-CDS <- read_tsv(args[3], col_names = FALSE)[[1]]
+CDS <- args[3:length(args)]
 
 
 # GPQ <- read_tsv("tests/results/genome_pid_query.tsv")
@@ -46,5 +46,5 @@ process_cds <- possibly(
 OUT <- future_map(CDS, process_cds)
 
 do.call(bind_rows, OUT) |>
-  format_tsv() |>
+  format_tsv(col_names = F) |>
   writeLines(stdout(), sep = "")
