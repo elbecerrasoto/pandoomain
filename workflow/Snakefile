@@ -11,6 +11,7 @@ rule all:
         f"{RESULTS}/genome_pid_query.tsv",
         f"{RESULTS}/pids.txt",
         f"{RESULTS}/hits.tsv",
+        f"{RESULTS}/pairs.tsv",
 
 
 SPLITS = f"{RESULTS}/splits_hmmer"
@@ -126,7 +127,7 @@ rule hits:
     shell:
         """
         mkdir -p {params.splits}
-        parallel -N {params.split_size} 'grep --fixed-string -f {input.pids} {params.parallel_str}' :::: {input.cds}
+        parallel -N {params.split_size} 'grep --no-filename --fixed-string -f {input.pids} {params.parallel_str}' :::: {input.cds}
         fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
         printf "{HEADER_HITS}\\n" | cat - {params.tmp} >| {output}
         rm -r {params.splits} {params.tmp}
@@ -138,10 +139,11 @@ rule pairs:
         hits=rules.hits.output,
         GPQ=rules.hmmer_filter.output,
     output:
-        f"{RESULTS}/pairs.tsv",
+        pairs=f"{RESULTS}/pairs.tsv",
+        hitsq=f"{RESULTS}/hits_query.tsv",
     params:
         config=workflow.configfiles[0],
     shell:
         """
-        workflow/scripts/pairs.R {params.config} {input.hits} {input.GPQ} >| {output}
+        workflow/scripts/pairs.R {params.config} {input.hits} {input.GPQ} {output.hitsq} >| {output}
         """

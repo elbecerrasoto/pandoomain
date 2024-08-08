@@ -16,12 +16,13 @@ args <- commandArgs(trailingOnly = TRUE)
 CONFIG <- args[1]
 HITS <- args[2]
 GPQ <- args[3]
+HITS_QUERY <- args[4]
 
 
-# CONFIG <- "tests/config.yaml"
-# HITS <- "tests/results/hits.tsv"
-# GPQ <- "tests/results/genome_pid_query.tsv"
-
+CONFIG <- "tests/config.yaml"
+HITS <- "tests/results/hits.tsv"
+GPQ <- "tests/results/genome_pid_query.tsv"
+HITS_QUERY <- "tests/results/hits_query.tsv"
 
 # Returns NULL on missing
 TARGETS <- read_yaml(CONFIG)$pair
@@ -79,6 +80,16 @@ calc <- function(gene1, gene2) {
 
 
 # Main ----
+
+# Add domain information
+hits <- hits |>
+  left_join(gpq, join_by(pid, genome))
+
+hits <- hits |>
+  relocate(query_description, .after = genome)
+
+hits |>
+  write_tsv(HITS_QUERY)
 
 # Filter to pairs
 hits_filtered <- hits |>
