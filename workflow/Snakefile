@@ -113,17 +113,20 @@ rule pids:
         """
 
 
+# grep returns exit status 1 on non-match
 rule hitsNH:
     input:
         cds=rules.hits_input.output,
         pids=rules.pids.output,
     output:
         f"{RESULTS}/.hitsNH.tsv",
-    params:
-        brackets="{}",
     shell:
         r"""
-        parallel --progress 'grep --no-filename --fixed-string -f {input.pids} {params}' :::: {input.cds} >| {output}
+        set +e
+
+        parallel --progress 'grep --no-filename --fixed-string -f {input.pids} {{}}' :::: {input.cds} >| {output}
+
+        exit 0
         """
 
 
