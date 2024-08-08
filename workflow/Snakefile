@@ -54,11 +54,11 @@ rule hmmer:
         header=HEADER_HMMER,
         tmp=f"{RESULTS}/hmmer_raw.tsv.tmp",
     shell:
-        """
+        r"""
         mkdir -p {params.splits}
         parallel -N {params.split_size} 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}' :::: {input}
         fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
-        printf "{HEADER_HMMER}\\n" | cat - {params.tmp} >| {output}
+        printf "{HEADER_HMMER}\n" | cat - {params.tmp} >| {output}
         rm -r {params.splits} {params.tmp}
         """
 
