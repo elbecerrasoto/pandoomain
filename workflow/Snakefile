@@ -146,9 +146,10 @@ rule pairs:
     output:
         pairs=f"{RESULTS}/pairs.tsv",
         hitsq=f"{RESULTS}/hits_query.tsv",
+    threads: workflow.cores
     params:
         config=workflow.configfiles[0],
     shell:
         r"""
-        workflow/scripts/pairs.R {params.config} {input.hits} {input.GPQ} {output.hitsq} >| {output}
+        workflow/scripts/pairs.R {params.config} {input.hits} {input.GPQ} {output.hitsq} {threads} >| {output}
         """

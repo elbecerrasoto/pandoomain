@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
   library(rlang)
   library(stringr)
   library(tidyverse)
+  library(furrr)
 })
 
 
@@ -13,11 +14,12 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # Globals ----
 
+
 CONFIG <- args[1]
 HITS <- args[2]
 GPQ <- args[3]
 HITS_QUERY <- args[4]
-
+CORES <- as.numeric(args[5])
 
 ## CONFIG <- "tests/config.yaml"
 ## HITS <- "tests/results/hits.tsv"
@@ -40,6 +42,7 @@ stopifnot("A distance is between 2 things. Ill-formed pair." = length(TARGETS) =
 hits <- read_tsv(HITS)
 gpq <- read_tsv(GPQ)
 
+plan(multisession, workers = CORES)
 
 # Calc ----
 
@@ -162,10 +165,15 @@ find_pairs_per_genome <- function(hits) {
 }
 
 
+find_pairs_per_genome <- possibly(
+  find_pairs_per_genome,
+  tibble()
+)
+
 pairs <- hits_filtered |>
   group_by(genome) |>
   group_split() |>
-  map(find_pairs_per_genome) |>
+  future_map(find_pairs_per_genome) |>
   do.call(bind_rows, args = _)
 
 
