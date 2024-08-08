@@ -29,9 +29,18 @@ HEADER_HMMER_L = [
 HEADER_HMMER = "\t".join(HEADER_HMMER_L)
 
 
+rule hmmer_input:
+    output:
+        f"{RESULTS}/.input_faas.txt",
+    run:
+        with open(f"{output}", "w") as fh:
+            for faa in ALL_FAAS:
+                fh.write(f"{faa}\n")
+
+
 rule hmmer:
     input:
-        faas=ALL_FAAS,
+        faas=rules.hmmer_input.output,
     output:
         tsv=f"{RESULTS}/hmmer_raw.tsv",
     params:
@@ -44,9 +53,9 @@ rule hmmer:
     shell:
         """
         mkdir -p {params.splits}
-        parallel -N {params.split_size} 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}' ::: {input.faas}
+        parallel -N {params.split_size} 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}' :::: {input}
         fd -e tsv . {params.splits} | xargs cat >| {params.tmp_header}
-        printf "{HEADER_HMMER}\\n" | cat - {params.tmp_header} >| {output.tsv}
+        printf "{HEADER_HMMER}\\n" | cat - {params.tmp_header} >| {output}
         rm -r {params.splits} {params.tmp_header}
         """
 
