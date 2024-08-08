@@ -22,7 +22,6 @@ CDS <- read_tsv(args[3], col_names = FALSE)[[1]]
 #   "tests/results/genomes/GCF_001286885.1/GCF_001286885.1_cds.tsv"
 # )
 
-
 # Code ----
 
 plan(multisession, workers = CORES)
@@ -34,6 +33,7 @@ process_cds <- function(cds_path) {
   # assert order, start, end, contig, strand, locus_tag, product query, query_description
   # cannot be all NA
   remove(cds)
+  gc()
   out
 }
 
