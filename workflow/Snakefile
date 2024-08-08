@@ -12,6 +12,7 @@ rule all:
         f"{RESULTS}/pids.txt",
         f"{RESULTS}/hits.tsv",
         f"{RESULTS}/pairs.tsv",
+        f"{RESULTS}/genomes_metadata.tsv",
 
 
 SPLITS = f"{RESULTS}/splits_hmmer"
