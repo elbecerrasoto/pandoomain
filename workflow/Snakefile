@@ -128,7 +128,7 @@ rule hitsNH:
 
 rule hits:
     input:
-        hitNH=rules.hits_input.output,
+        hitNH=rules.hitsNH.output,
     output:
         f"{RESULTS}/hits.tsv",
     params:
