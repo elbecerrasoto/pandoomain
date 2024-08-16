@@ -9,7 +9,7 @@ LINES="480"
 API_KEY="--api-key 80e90a387605463df09ac9121d0caa0b7108"
 INCLUDE="--include protein,gff3"
 
-MKDIR=' mkdir -p genomes/{#} '
+MKDIR=' mkdir -p '"$OUT"'/{#} '
 DATASETS=' datasets download genome accession {} --dehydrated --filename '"$OUT"'/{#}/{#}.zip '" $INCLUDE "" $API_KEY "
 UNZIP=' unzip '"$OUT"'/{#}/{#}.zip -d '"$OUT"'/{#} '
 REHYDRATE=' datasets rehydrate --directory '"$OUT"'/{#} '" $API_KEY "
