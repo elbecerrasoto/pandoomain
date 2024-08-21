@@ -50,6 +50,7 @@ rule hmmer:
     threads: workflow.cores * 4
     params:
         splits=SPLITS,
+        split_size=1024,
         queries=IN_QUERIES,
         parallel_str=f"{SPLITS}/hmmer_" + "{#}.tsv {}",
         header=HEADER_HMMER,
@@ -57,7 +58,7 @@ rule hmmer:
     shell:
         r"""
         mkdir -p {params.splits}
-        parallel --progress -j {threads} 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}' :::: {input}
+        parallel -N {params.split_size} --progress -j {threads} 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}' :::: {input}
         fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
         printf "{params.header}\n" | cat - {params.tmp} >| {output}
         rm -r {params.splits} {params.tmp}
