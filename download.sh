@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 
 IN="$1"
-DRY="$2"
-OUT="genomes"
+OUT="$2"
+DRY="$3"
 
 # Max number before URL error: 504!
 LINES="480"
@@ -20,13 +20,20 @@ PARALLEL_CMD="$MKDIR && $DATASETS && $UNZIP && $REHYDRATE"
 if [[ ! -e "$IN" ]]
 then
     printf "Please provide input genome list as 1st arg."
-    exit 0
+    exit 1
+fi
+
+if [[ -z "$OUT" ]]
+then
+    printf "Please provide output directory as 2nd arg."
+    exit 1
 fi
 
 if [[ "$DRY" == "GO" ]]
 then
     parallel -l "$LINES" "$PARALLEL_CMD" :::: "$IN"
 else
-    printf "Supply 2nd argument with the word GO to start.\n"
+    printf "Supply 3nd argument with the word GO to start.\n"
+    printf "Starting: dry run.\n"
     parallel -l "$LINES" --dry-run "$PARALLEL_CMD" :::: "$IN"
 fi

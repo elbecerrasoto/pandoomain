@@ -1,1 +1,1 @@
-bacillota.wflow.txt
+bacteria.txt

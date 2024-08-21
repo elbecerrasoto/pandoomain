@@ -47,10 +47,10 @@ rule hmmer:
         faas=rules.hmmer_input.output,
     output:
         tsv=f"{RESULTS}/hmmer_raw.tsv",
-    threads: workflow.cores * 4
     params:
+        jobs="800%",
         splits=SPLITS,
-        split_size=1024,
+        split_size=128,
         queries=IN_QUERIES,
         parallel_str=f"{SPLITS}/hmmer_" + "{#}.tsv {}",
         header=HEADER_HMMER,
@@ -58,7 +58,7 @@ rule hmmer:
     shell:
         r"""
         mkdir -p {params.splits}
-        parallel -N {params.split_size} --progress -j {threads} 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}' :::: {input}
+        cat {input} | parallel -j {params.jobs} -N {params.split_size} --progress 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}'
         fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
         printf "{params.header}\n" | cat - {params.tmp} >| {output}
         rm -r {params.splits} {params.tmp}
