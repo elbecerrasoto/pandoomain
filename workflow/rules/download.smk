@@ -6,6 +6,7 @@ rule get_metadata_raw:
         USED_GENOMES,
     output:
         f"{RESULTS}/genomes_metadata_raw.tsv",
+    priority: 1
     params:
         no_header=f"{RESULTS}/.genomes.txt",
     shell:
