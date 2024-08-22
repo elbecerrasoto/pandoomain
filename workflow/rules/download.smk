@@ -3,7 +3,7 @@
 
 rule get_metadata_raw:
     input:
-        USED_GENOMES,
+        ancient(USED_GENOMES),
     output:
         f"{RESULTS}/genomes_metadata_raw.tsv",
     priority: 1
