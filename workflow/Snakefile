@@ -2,16 +2,11 @@ include: "rules/globals.smk"  # no rules only globals, asserts, and utils
 include: "rules/download.smk"
 
 
-# include: "rules/blastp.smk"
-# include: "rules/interproscan.smk"
-
-
 rule all:
     input:
         f"{RESULTS}/genome_pid_query.tsv",
         f"{RESULTS}/pids.txt",
         f"{RESULTS}/hits.tsv",
-        f"{RESULTS}/pairs.tsv",
         f"{RESULTS}/genomes_metadata.tsv",
 
 
@@ -142,20 +137,4 @@ rule hits:
     shell:
         r"""
         printf "{params}\n" | cat - {input} >| {output}
-        """
-
-
-rule pairs:
-    input:
-        hits=rules.hits.output,
-        GPQ=rules.hmmer_filter.output,
-    output:
-        pairs=f"{RESULTS}/pairs.tsv",
-        hitsq=f"{RESULTS}/hits_query.tsv",
-    threads: workflow.cores
-    params:
-        config=workflow.configfiles[0],
-    shell:
-        r"""
-        workflow/scripts/pairs.R {params.config} {input.hits} {input.GPQ} {output.hitsq} {threads} >| {output}
         """
