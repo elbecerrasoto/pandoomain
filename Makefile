@@ -19,7 +19,7 @@ SNAKEMAKE_TEST_OPTIONALS = $(SETUP_CACHE) &&\
 
 RESULTS = tests/results
 
-GENOMES_MESSY = tests/genomes_messy.txt
+GENOMES_MESSY = tests/genomes.txt
 
 SVGS = dag.svg filegraph.svg rulegraph.svg
 CLEAN = .snakemake $(SVGS) $(RESULTS)
