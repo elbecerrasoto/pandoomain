@@ -15,7 +15,7 @@ results:
 # Only use genomes
 # from NCBI RefSeq assembly
 only_refseq:
-  true
+  false
 
 # DO NOT trigger a fatal error
 # on NO network access.
