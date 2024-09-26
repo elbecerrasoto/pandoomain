@@ -7,6 +7,7 @@ rule get_metadata_raw:
     output:
         f"{RESULTS}/genomes_metadata_raw.tsv",
     priority: 1
+    cache: "omit-software"
     params:
         no_header=f"{RESULTS}/.genomes.txt",
     shell:
