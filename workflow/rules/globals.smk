@@ -10,6 +10,7 @@ min_version("8.5.3")
 configfile: "config/config.yaml"
 
 
+# Caching used for testing
 envvars:
     "SNAKEMAKE_OUTPUT_CACHE",
 
@@ -31,7 +32,7 @@ assert IN_GENOMES.exists(), (
 IN_QUERIES = Path(config["queries"])
 
 assert IN_QUERIES.exists(), (
-    utils.bold_red("Input query file not found.")
+    utils.bold_red("Input query directory not found.")
     + f"\nTried to look it up at: {IN_QUERIES}."
 )
 
@@ -91,6 +92,8 @@ blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_HEADER_L]
 BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
 
 
+ALL_CDS = utils.for_all_genomes("_cds.tsv", RESULTS_GENOMES, GENOMES)
+ALL_FAAS = utils.for_all_genomes(".faa", RESULTS_GENOMES, GENOMES)
 ALL_BLASTS = utils.for_all_genomes("_blast.tsv", RESULTS_GENOMES, GENOMES)
 ALL_HITS = utils.for_all_genomes("_hits.tsv", RESULTS_GENOMES, GENOMES)
 ALL_HOODS = utils.for_all_genomes("_neighborhoods.tsv", RESULTS_GENOMES, GENOMES)

@@ -3,9 +3,11 @@
 
 rule get_metadata_raw:
     input:
-        USED_GENOMES,
+        ancient(USED_GENOMES),
     output:
         f"{RESULTS}/genomes_metadata_raw.tsv",
+    priority: 1
+    cache: "omit-software"
     params:
         no_header=f"{RESULTS}/.genomes.txt",
     shell:

@@ -1,4 +1,0 @@
-GCF_001286845.1
-GCF_001286845.1 # test repetition
-GCF_001286885.1
-GCF_001286885.1 # test repetition

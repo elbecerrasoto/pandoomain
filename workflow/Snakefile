@@ -1,116 +1,140 @@
 include: "rules/globals.smk"  # no rules only globals, asserts, and utils
 include: "rules/download.smk"
-include: "rules/blastp.smk"
-include: "rules/interproscan.smk"
 
 
 rule all:
     input:
-        f"{RESULTS}/pairs.tsv",
-        f"{RESULTS}/neighborhoods.tsv",
-        f"{RESULTS}/mappings_wide.tsv",
-        f"{RESULTS}/mappings_raw_wide.tsv",
+        f"{RESULTS}/genome_pid_query.tsv",
+        f"{RESULTS}/pids.txt",
+        f"{RESULTS}/hits.tsv",
         f"{RESULTS}/genomes_metadata.tsv",
+
+
+SPLITS = f"{RESULTS}/splits_hmmer"
+HEADER_HMMER_L = [
+    "genome",
+    "pid",
+    "query",
+    "score",
+    "start",
+    "end",
+    "included",
+    "reported",
+    "pid_description",
+    "query_description",
+]
+HEADER_HMMER = "\t".join(HEADER_HMMER_L)
+
+
+rule hmmer_input:
+    input:
+        ALL_FAAS,
+    output:
+        f"{RESULTS}/.input_faas.txt",
+    run:
+        with open(f"{output}", "w") as fh:
+            for faa in ALL_FAAS:
+                fh.write(f"{faa}\n")
+
+
+rule hmmer:
+    input:
+        faas=rules.hmmer_input.output,
+    output:
+        tsv=f"{RESULTS}/hmmer_raw.tsv",
+    params:
+        jobs="1600%",
+        splits=SPLITS,
+        split_size=128,
+        queries=IN_QUERIES,
+        parallel_str=f"{SPLITS}/hmmer_" + "{#}.tsv {}",
+        header=HEADER_HMMER,
+        tmp=f"{RESULTS}/hmmer_raw.tsv.tmp",
+    shell:
+        r"""
+        mkdir -p {params.splits}
+        cat {input} | parallel --jobs {params.jobs} -N {params.split_size} --progress 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}'
+        fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
+        printf "{params.header}\n" | cat - {params.tmp} >| {output}
+        rm -r {params.splits} {params.tmp}
+        """
+
+
+rule hmmer_filter:
+    input:
+        tsv=rules.hmmer.output.tsv,
+    output:
+        f"{RESULTS}/genome_pid_query.tsv",
+    shell:
+        r"""
+        workflow/scripts/genome_pid_query.R {input} >| {output}
+        """
+
+
+rule hits_input:
+    input:
+        ALL_CDS,
+    output:
+        f"{RESULTS}/.input_cds.txt",
+    run:
+        with open(f"{output}", "w") as fh:
+            for cds in ALL_CDS:
+                fh.write(f"{cds}\n")
+
+
+HITS_HEADER_L = [
+    "genome",
+    "pid",
+    "gene",
+    "order",
+    "start",
+    "end",
+    "contig",
+    "strand",
+    "locus_tag",
+    "product",
+]
+HEADER_HITS = "\t".join(HITS_HEADER_L)
+SPLITS_HITS = f"{RESULTS}/splits_hits"
+
+
+rule pids:
+    input:
+        GPQ=rules.hmmer_filter.output,
+    output:
+        pids=f"{RESULTS}/pids.txt",
+    shell:
+        r"""
+        perl -ane '$_ = "$F[1]\n"; print if $. != 1;' {input} | sort | uniq > {output}
+        """
+
+
+rule hitsNH:
+    input:
+        cds=rules.hits_input.output,
+        pids=rules.pids.output,
+    output:
+        f"{RESULTS}/.hitsNH.tsv",
+    params:
+        jobs="1600%",
+    shell:
+        r"""
+        set +e
+
+        parallel --jobs {params.jobs} --progress 'grep --no-filename --fixed-string -f {input.pids} {{}}' :::: {input.cds} >| {output}
+
+        exit 0 # grep returns exit status 1 on non-match
+        """
 
 
 rule hits:
     input:
-        cds=rules.cds.output.cds,
-        pids=rules.pids.output,
-    output:
-        f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_hits.tsv",
-    shell:
-        """
-        workflow/scripts/cds2hits.R {input.pids} {input.cds} >| {output}
-        """
-
-
-rule bind_hits:
-    input:
-        ALL_HITS,
+        hitNH=rules.hitsNH.output,
     output:
         f"{RESULTS}/hits.tsv",
     params:
-        header=CDS_HEADER,
-    run:
-        utils.bind_files(input, output, params.header)
-
-
-rule mappings:
-    input:
-        iscan=rules.interproscan_tsv.output,
-        blasts=rules.bind_blasts.output,
-    output:
-        f"{RESULTS}/mappings_raw.tsv",
-    params:
-        config=workflow.configfiles[0],
+        header=HEADER_HITS,
     shell:
+        r"""
+        printf "{params}\n" | cat - {input} >| {output}
         """
-        workflow/scripts/mappings.R {params.config} {input.iscan} {input.blasts} >| {output}
-        """
-
-
-rule filter_mappings:
-    input:
-        raw=rules.mappings.output,
-    output:
-        filtered=f"{RESULTS}/mappings.tsv",
-    params:
-        config=workflow.configfiles[0],
-    shell:
-        """
-        workflow/scripts/filter_mappings.R {params} {input} >| {output}
-        """
-
-
-mappings = (Path(rules.mappings.output[0]), Path(rules.filter_mappings.output[0]))
-for maps in mappings:
-
-    rule:
-        name:
-            f"{maps.stem}_wide"
-        input:
-            f"{maps}",
-        output:
-            f"{RESULTS}/{maps.stem}_wide.tsv",
-        shell:
-            "workflow/scripts/maps2wide.R {input} >| {output}"
-
-
-rule pairs:
-    input:
-        hits=rules.bind_hits.output,
-        maps=rules.filter_mappings.output,
-    output:
-        f"{RESULTS}/pairs.tsv",
-    params:
-        config=workflow.configfiles[0],
-    shell:
-        """
-        workflow/scripts/pairs.R {params.config} {input.hits} {input.maps} >| {output}
-        """
-
-
-rule neighborhoods:
-    input:
-        mappings=rules.filter_mappings.output,
-        cds=f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_cds.tsv",
-    output:
-        f"{RESULTS_GENOMES}/{{genome}}/{{genome}}_neighborhoods.tsv",
-    params:
-        N=N,
-    shell:
-        """
-        workflow/scripts/find_neighbors.R {input.mappings} {params.N} {input.cds} >| {output}
-        """
-
-
-rule bind_neighborhoods:
-    input:
-        ALL_HOODS,
-    output:
-        f"{RESULTS}/neighborhoods.tsv",
-    params:
-        header=NEIGHS_HEADER,
-    run:
-        utils.bind_files(input, output, params.header)

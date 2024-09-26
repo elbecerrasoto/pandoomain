@@ -1,0 +1,5 @@
+GCF_001585665.1 # negative
+GCF_900196735.1 # negative
+GCF_900459535.1 # negative
+GCF_000394295.1 # negative
+GCA_001457635.1 # negative

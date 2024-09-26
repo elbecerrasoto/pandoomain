@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
   library(rlang)
   library(stringr)
   library(tidyverse)
+  library(furrr)
 })
 
 
@@ -16,12 +17,14 @@ args <- commandArgs(trailingOnly = TRUE)
 
 CONFIG <- args[1]
 HITS <- args[2]
-MAPPINGS <- args[3]
+GPQ <- args[3]
+HITS_QUERY <- args[4]
+CORES <- as.numeric(args[5])
 
-# CONFIG <- "tests/config.yaml"
-# HITS <- "tests/results/hits.tsv"
-# MAPPINGS <- "tests/results/mappings.tsv"
-# OUT <- "tests/results/pairs.tsv"
+## CONFIG <- "tests/config.yaml"
+## HITS <- "tests/results/hits.tsv"
+## GPQ <- "tests/results/genome_pid_query.tsv"
+## HITS_QUERY <- "tests/results/hits_query.tsv"
 
 # Returns NULL on missing
 TARGETS <- read_yaml(CONFIG)$pair
@@ -37,8 +40,9 @@ stopifnot("A distance is between 2 things. Ill-formed pair." = length(TARGETS) =
 
 
 hits <- read_tsv(HITS)
-mappings <- read_tsv(MAPPINGS)
+gpq <- read_tsv(GPQ)
 
+plan(multisession, workers = CORES)
 
 # Calc ----
 
@@ -60,14 +64,14 @@ calc <- function(gene1, gene2) {
     distance = distance,
     genes_inbet = genes_inbet,
     contig = first$contig,
-    query_1 = first$q_alias,
+    query_1 = first$query_description,
     pid_1 = first$pid,
     order_1 = first$order,
     start_1 = first$start,
     end_1 = first$end,
     strand_1 = first$strand,
     locustag_1 = first$locus_tag,
-    query_2 = second$q_alias,
+    query_2 = second$query_description,
     pid_2 = second$pid,
     order_2 = second$order,
     start_2 = second$start,
@@ -80,22 +84,20 @@ calc <- function(gene1, gene2) {
 
 # Main ----
 
+# Add domain information
+hits <- hits |>
+  left_join(gpq, join_by(pid, genome))
 
-# Group by genome
-# to apply the step below
-# pid 1->1 query should be 1on1
-# currently is 1-M
-query2pid <- mappings |>
-  distinct(q_alias, query, pid)
+hits <- hits |>
+  relocate(query_description, .after = genome)
 
-# Filter to pair hits
-# Is many to many when some queries map to the same pids
-# Different blasts are finding the same hits
+hits |>
+  write_tsv(HITS_QUERY)
+
+# Filter to pairs
 hits_filtered <- hits |>
-  left_join(query2pid, join_by(pid),
-    relationship = "many-to-many"
-  ) |>
   filter(query %in% TARGETS)
+
 stopifnot("Not enough hits to find pairs." = nrow(hits) > 1)
 
 # Query to factor
@@ -105,7 +107,6 @@ hits_filtered <- hits_filtered |>
     query = as_factor(query),
     query = `levels<-`(query, TARGETS)
   )
-
 
 
 find_pairs_per_genome <- function(hits) {
@@ -164,10 +165,15 @@ find_pairs_per_genome <- function(hits) {
 }
 
 
+find_pairs_per_genome <- possibly(
+  find_pairs_per_genome,
+  tibble()
+)
+
 pairs <- hits_filtered |>
   group_by(genome) |>
   group_split() |>
-  map(find_pairs_per_genome) |>
+  future_map(find_pairs_per_genome) |>
   do.call(bind_rows, args = _)
 
 

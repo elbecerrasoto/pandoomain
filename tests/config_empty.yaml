@@ -2,7 +2,7 @@
 # It contains NCBI assembly accessions,
 # one per line, it allows comments with '#'.
 genomes:
-  tests/genomes.txt
+  tests/genomes_empty.txt
 
 # Directory of .hmm profiles.
 queries:
