@@ -1,0 +1,23 @@
+# Input genome list.
+# It contains NCBI assembly accessions,
+# one per line, it allows comments with '#'.
+genomes:
+  tests/genomes_empty.txt
+
+# Directory of .hmm profiles.
+queries:
+  tests/queries
+
+# Where to store the results?
+results:
+  tests/results
+
+# Only use genomes
+# from NCBI RefSeq assembly
+only_refseq:
+  false
+
+# DO NOT trigger a fatal error
+# on NO network access.
+offline:
+  false
