@@ -33,7 +33,7 @@ test-dry: $(GENOMES) $(CONFIG)
 
 
 .PHONY test-empty:
-test: $(GENOMES) $(CONFIG)
+test-empty: $(GENOMES) $(CONFIG)
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --configfile $(CONFIG_EMPTY)
 

@@ -15,6 +15,11 @@ HMMER <- args[1]
 
 hmmer <- read_tsv(HMMER)
 
+if (nrow(hmmer) == 0) {
+  cat("")
+  quit(status = 0)
+}
+
 hmmer <- hmmer |>
   filter(included) |>
   distinct(genome, pid, query, query_description)
