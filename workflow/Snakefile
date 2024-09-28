@@ -4,26 +4,8 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/genome_pid_query.tsv",
-        f"{RESULTS}/pids.txt",
-        f"{RESULTS}/hits.tsv",
+        f"{RESULTS}/hmmer.tsv",
         f"{RESULTS}/genomes_metadata.tsv",
-
-
-SPLITS = f"{RESULTS}/splits_hmmer"
-HEADER_HMMER_L = [
-    "genome",
-    "pid",
-    "query",
-    "score",
-    "start",
-    "end",
-    "included",
-    "reported",
-    "pid_description",
-    "query_description",
-]
-HEADER_HMMER = "\t".join(HEADER_HMMER_L)
 
 
 rule hmmer_input:
@@ -41,100 +23,10 @@ rule hmmer:
     input:
         faas=rules.hmmer_input.output,
     output:
-        tsv=f"{RESULTS}/hmmer_raw.tsv",
+        tsv=f"{RESULTS}/hmmer.tsv",
     params:
-        jobs="1600%",
-        splits=SPLITS,
-        split_size=128,
         queries=IN_QUERIES,
-        parallel_str=f"{SPLITS}/hmmer_" + "{#}.tsv {}",
-        header=HEADER_HMMER,
-        tmp=f"{RESULTS}/hmmer_raw.tsv.tmp",
     shell:
         r"""
-        mkdir -p {params.splits}
-        cat {input} | parallel --jobs {params.jobs} -N {params.split_size} --progress 'workflow/scripts/hmmer.py {params.queries} {params.parallel_str}'
-        fd -e tsv . {params.splits} | xargs cat >| {params.tmp}
-        printf "{params.header}\n" | cat - {params.tmp} >| {output}
-        rm -r {params.splits} {params.tmp}
-        """
-
-
-rule hmmer_filter:
-    input:
-        tsv=rules.hmmer.output.tsv,
-    output:
-        f"{RESULTS}/genome_pid_query.tsv",
-    shell:
-        r"""
-        workflow/scripts/genome_pid_query.R {input} >| {output}
-        """
-
-
-rule hits_input:
-    input:
-        ALL_CDS,
-    output:
-        f"{RESULTS}/.input_cds.txt",
-    run:
-        with open(f"{output}", "w") as fh:
-            for cds in ALL_CDS:
-                fh.write(f"{cds}\n")
-
-
-HITS_HEADER_L = [
-    "genome",
-    "pid",
-    "gene",
-    "order",
-    "start",
-    "end",
-    "contig",
-    "strand",
-    "locus_tag",
-    "product",
-]
-HEADER_HITS = "\t".join(HITS_HEADER_L)
-SPLITS_HITS = f"{RESULTS}/splits_hits"
-
-
-rule pids:
-    input:
-        GPQ=rules.hmmer_filter.output,
-    output:
-        pids=f"{RESULTS}/pids.txt",
-    shell:
-        r"""
-        perl -ane '$_ = "$F[1]\n"; print if $. != 1;' {input} | sort | uniq > {output}
-        """
-
-
-rule hitsNH:
-    input:
-        cds=rules.hits_input.output,
-        pids=rules.pids.output,
-    output:
-        f"{RESULTS}/.hitsNH.tsv",
-    params:
-        jobs="1600%",
-    shell:
-        r"""
-        set +e
-
-        parallel --jobs {params.jobs} --progress 'grep --no-filename --fixed-string -f {input.pids} {{}}' :::: {input.cds} >| {output}
-
-        exit 0 # grep returns exit status 1 on non-match
-        """
-
-
-rule hits:
-    input:
-        hitNH=rules.hitsNH.output,
-    output:
-        f"{RESULTS}/hits.tsv",
-    params:
-        header=HEADER_HITS,
-    shell:
-        r"""
-        printf "{params}\n" | cat - {input} >| {output}
+        workflow/scripts/hmmer.py {params} {input} {output}
         """
