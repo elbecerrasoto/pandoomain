@@ -1,24 +1,64 @@
 #!/usr/bin/env Rscript
 
-# So harvest a table
-# with: a pid & genome colss
-# and a implicit DB
-
-# harvest.R --db genomes -i pids.tsv
-# genome, pid, query, DB
-
 library(tidyverse)
 library(stringr)
+library(seqinr)
 
 IN <- "tests/results/hmmer.tsv"
+DB <- "tests/results/genomes"
 N_TXT <- 5
+
+get_headers <- function(faa) {
+  map_chr(faa, \(s) attr(s, "Annot")) |>
+    str_replace_all(">", "")
+}
+
+
+write_queries <- function(pids_tib, genome) {
+  PIDS_TIB <- pids_tib
+  FAA_ALL <- read.fasta(genome, seqtype = "AA")
+  queries2write <- PIDS_TIB |>
+    pull(query_out) |>
+    unique()
+
+  write_query <- function(query2write) {
+    qpids <- PIDS_TIB |>
+      filter(query_out == query2write) |>
+      pull(pid) |>
+      unique()
+    faa <- FAA_ALL[names(FAA_ALL) %in% qpids]
+
+    write.fasta(faa, get_headers(faa),
+      query2write,
+      open = "a",
+      nbchar = 80
+    )
+  }
+
+  walk(queries2write, write_query)
+}
+# Main ----
 
 hmmer <- read_tsv(IN)
 
 hmmer <- hmmer |>
-  mutate(query_out = str_c(query,
-                           "_",
-                           str_sub(query_txt, 1, N_TXT),
-                           ".faa"))
+  mutate(
+    genome_in = str_c(
+      DB, "/", genome, "/", genome,
+      ".faa"
+    ),
+    query_out = str_c(
+      query,
+      "_",
+      str_sub(query_txt, 1, N_TXT),
+      ".faa"
+    )
+  )
 
+genomes <- hmmer |>
+  distinct(pid, query_out, .keep_all = TRUE) |>
+  select(genome_in, query_out, pid) |>
+  arrange(genome_in) %>%
+  split(., .$genome_in)
 
+iwalk(genomes, write_queries)
