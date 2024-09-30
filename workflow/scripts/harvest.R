@@ -1,18 +1,21 @@
 #!/usr/bin/env Rscript
 
-library(tidyverse)
-library(stringr)
-library(seqinr)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(stringr)
+  library(seqinr)
+})
 
 IN <- "tests/results/hmmer.tsv"
+OUT_DIR <- "tests/results/queries"
 DB <- "tests/results/genomes"
 N_TXT <- 5
+
 
 get_headers <- function(faa) {
   map_chr(faa, \(s) attr(s, "Annot")) |>
     str_replace_all(">", "")
 }
-
 
 write_queries <- function(pids_tib, genome) {
   PIDS_TIB <- pids_tib
@@ -22,6 +25,7 @@ write_queries <- function(pids_tib, genome) {
     unique()
 
   write_query <- function(query2write) {
+    out_file <- str_c(OUT_DIR, "/", query2write)
     qpids <- PIDS_TIB |>
       filter(query_out == query2write) |>
       pull(pid) |>
@@ -29,7 +33,7 @@ write_queries <- function(pids_tib, genome) {
     faa <- FAA_ALL[names(FAA_ALL) %in% qpids]
 
     write.fasta(faa, get_headers(faa),
-      query2write,
+      out_file,
       open = "a",
       nbchar = 80
     )
