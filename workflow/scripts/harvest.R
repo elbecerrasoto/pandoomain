@@ -4,13 +4,19 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(stringr)
   library(seqinr)
+  library(fs)
 })
 
-IN <- "tests/results/hmmer.tsv"
-OUT_DIR <- "tests/results/queries"
-DB <- "tests/results/genomes"
-N_TXT <- 5
+argv <- commandArgs(trailingOnly = TRUE)
 
+DB <- argv[[1]]
+IN <- argv[[2]]
+OUT_DIR <- argv[[3]]
+N_TXT <- 7
+
+# IN <- "tests/results/hmmer.tsv"
+# OUT_DIR <- "tests/results/queries"
+# DB <- "tests/results/genomes"
 
 get_headers <- function(faa) {
   map_chr(faa, \(s) attr(s, "Annot")) |>
@@ -27,6 +33,7 @@ write_queries <- function(pids_tib, genome) {
   write_query <- function(query2write) {
     out_file <- str_c(OUT_DIR, "/", query2write)
     unlink(out_file)
+    dir_create(OUT_DIR)
     qpids <- PIDS_TIB |>
       filter(query_out == query2write) |>
       pull(pid) |>
@@ -42,6 +49,8 @@ write_queries <- function(pids_tib, genome) {
 
   walk(queries2write, write_query)
 }
+
+
 # Main ----
 
 hmmer <- read_tsv(IN)
