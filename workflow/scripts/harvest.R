@@ -4,19 +4,25 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(stringr)
   library(seqinr)
+  library(furrr)
   library(fs)
 })
 
 argv <- commandArgs(trailingOnly = TRUE)
 
 DB <- argv[[1]]
-IN <- argv[[2]]
-OUT_DIR <- argv[[3]]
+CORES <- as.integer(argv[[2]])
+IN <- argv[[3]]
+OUT_DIR <- argv[[4]]
 N_TXT <- 7
 
 # IN <- "tests/results/hmmer.tsv"
 # OUT_DIR <- "tests/results/queries"
 # DB <- "tests/results/genomes"
+
+# multicore Unix specific
+# multisession also targets Windows
+plan(multicore, workers = CORES)
 
 get_headers <- function(faa) {
   map_chr(faa, \(s) attr(s, "Annot")) |>
@@ -75,4 +81,4 @@ genomes <- hmmer |>
   arrange(genome_in) %>%
   split(., .$genome_in)
 
-iwalk(genomes, write_queries)
+done <- future_imap(genomes, write_queries)
