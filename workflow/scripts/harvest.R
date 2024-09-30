@@ -26,6 +26,7 @@ write_queries <- function(pids_tib, genome) {
 
   write_query <- function(query2write) {
     out_file <- str_c(OUT_DIR, "/", query2write)
+    unlink(out_file)
     qpids <- PIDS_TIB |>
       filter(query_out == query2write) |>
       pull(pid) |>
