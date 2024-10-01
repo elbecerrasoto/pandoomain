@@ -39,7 +39,7 @@ rule domains_faas:
     output:
         sentinel=f"{RESULTS}/.domains_faas.sentinel",
     params:
-        db=f"{RESULTS}/genomes",
+        db=f"{RESULTS_GENOMES}",
         out_dir=f"{RESULTS}/domains_faas",
     shell:
         r"""
