@@ -6,6 +6,7 @@ rule all:
     input:
         f"{RESULTS}/hmmer.tsv",
         f"{RESULTS}/genomes_metadata.tsv",
+        f"{RESULTS}/.domains_faas.sentinel",
 
 
 rule hmmer_input:
@@ -29,4 +30,19 @@ rule hmmer:
     shell:
         r"""
         workflow/scripts/hmmer.py {params} {input} {output}
+        """
+
+
+rule domains_faas:
+    input:
+        hmmer=rules.hmmer.output,
+    output:
+        sentinel=f"{RESULTS}/.domains_faas.sentinel",
+    params:
+        db=f"{RESULTS}/genomes",
+        out_dir=f"{RESULTS}/domains_faas",
+    shell:
+        r"""
+        workflow/scripts/harvest.R {params.db} {input} {params.out_dir}
+        printf "`date`\\n" > {output}
         """
