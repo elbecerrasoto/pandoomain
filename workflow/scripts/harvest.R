@@ -4,25 +4,20 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(stringr)
   library(seqinr)
-  library(furrr)
   library(fs)
 })
 
 argv <- commandArgs(trailingOnly = TRUE)
 
 DB <- argv[[1]]
-CORES <- as.integer(argv[[2]])
-IN <- argv[[3]]
-OUT_DIR <- argv[[4]]
+IN <- argv[[2]]
+OUT_DIR <- argv[[3]]
 N_TXT <- 7
 
 # IN <- "tests/results/hmmer.tsv"
 # OUT_DIR <- "tests/results/queries"
 # DB <- "tests/results/genomes"
 
-# multicore Unix specific
-# multisession also targets Windows
-plan(multicore, workers = CORES)
 
 get_headers <- function(faa) {
   map_chr(faa, \(s) attr(s, "Annot")) |>
@@ -32,14 +27,18 @@ get_headers <- function(faa) {
 write_queries <- function(pids_tib, genome) {
   PIDS_TIB <- pids_tib
   FAA_ALL <- read.fasta(genome, seqtype = "AA")
+  dir_create(OUT_DIR)
+
   queries2write <- PIDS_TIB |>
     pull(query_out) |>
     unique()
 
+  queries2write_full <- str_c(OUT_DIR, "/", queries2write)
+
+  walk(queries2write_full, unlink)
+
   write_query <- function(query2write) {
     out_file <- str_c(OUT_DIR, "/", query2write)
-    unlink(out_file)
-    dir_create(OUT_DIR)
     qpids <- PIDS_TIB |>
       filter(query_out == query2write) |>
       pull(pid) |>
@@ -81,4 +80,4 @@ genomes <- hmmer |>
   arrange(genome_in) %>%
   split(., .$genome_in)
 
-done <- future_imap(genomes, write_queries)
+done <- iwalk(genomes, write_queries)
