@@ -55,8 +55,8 @@ rule bind_faas:
     output:
         f"{RESULTS}/all.faa",
     params:
-        doms_dir=f"{RESULTS}/domains_faas",
+        rules.domains_faas.params.out_dir,
     shell:
         r"""
-        cat  {params.doms_dir}/*.faa >| {output}
+        cat  {params}/*.faa >| {output}
         """
