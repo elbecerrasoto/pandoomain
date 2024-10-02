@@ -7,6 +7,7 @@ rule all:
         f"{RESULTS}/hmmer.tsv",
         f"{RESULTS}/genomes_metadata.tsv",
         f"{RESULTS}/.domains_faas.sentinel",
+        f"{RESULTS}/all.faa",
 
 
 rule hmmer_input:
@@ -44,5 +45,18 @@ rule domains_faas:
     shell:
         r"""
         workflow/scripts/harvest.R {params.db} {input} {params.out_dir}
-        printf "`date`\\n" > {output}
+        printf "`date`\\n" >| {output}
+        """
+
+
+rule bind_faas:
+    input:
+        rules.domains_faas.output,
+    output:
+        f"{RESULTS}/all.faa",
+    params:
+        doms_dir=f"{RESULTS}/domains_faas",
+    shell:
+        r"""
+        cat  {params.doms_dir}/*.faa >| {output}
         """
