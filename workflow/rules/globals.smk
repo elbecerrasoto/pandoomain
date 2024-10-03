@@ -46,7 +46,7 @@ assert IN_HEADERS.exists(), (
 RESULTS = Path(config["results"])
 RESULTS_GENOMES = RESULTS / "genomes"
 USED_GENOMES = RESULTS / "genomes.tsv"
-LOGS = Path(RESULTS / "logs")
+LOGS = RESULTS / "logs"
 
 # Optionals keys on YAML
 ONLY_REFSEQ = config.setdefault("only_refseq", False)

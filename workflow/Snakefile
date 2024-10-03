@@ -8,6 +8,7 @@ rule all:
         f"{RESULTS}/genomes_metadata.tsv",
         f"{RESULTS}/.domains_faas.sentinel",
         f"{RESULTS}/all.faa",
+        f"{RESULTS}/iscan.tsv",
 
 
 rule hmmer_input:
@@ -27,7 +28,7 @@ rule hmmer:
     output:
         tsv=f"{RESULTS}/hmmer.tsv",
     params:
-        queries=IN_QUERIES,
+        queries=f"{IN_QUERIES}",
     shell:
         r"""
         workflow/scripts/hmmer.py {params} {input} {output}
@@ -59,4 +60,49 @@ rule bind_faas:
     shell:
         r"""
         cat  {params}/*.faa >| {output}
+        """
+
+
+rule interproscan_xml:
+    input:
+        faa=rules.bind_faas.output,
+    output:
+        xml=f"{RESULTS}/.iscan.xml",
+    params:
+        tmp="/tmp",
+    threads: workflow.cores
+    cache: "omit-software"
+    shell:
+        """
+        interproscan.sh --formats XML\
+                        --input {input} \
+                        --outfile {output} \
+                        --cpu {threads} \
+                        --tempdir {params} \
+                        --goterms
+        """
+
+
+rule interproscan_tsv:
+    input:
+        xml=rules.interproscan_xml.output,
+    output:
+        tsv=f"{RESULTS}/iscan.tsv",
+    params:
+        header=ISCAN_HEADER,
+        tmp="/tmp",
+    cache: "omit-software"
+    shell:
+        """
+        interproscan.sh --mode convert \
+                        --formats TSV \
+                        --input {input.xml} \
+                        --outfile {output.tsv}.temp \
+                        --goterms \
+                        --enable-tsv-residue-annot
+
+        # Annotate headers
+        cat - {output.tsv}.temp >| {output.tsv} <<< '{params.header}'
+
+        rm {output.tsv}.temp
         """
