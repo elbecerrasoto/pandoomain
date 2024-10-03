@@ -91,7 +91,6 @@ rule interproscan_tsv:
     params:
         header=ISCAN_HEADER,
         tmp="/tmp",
-    cache: "omit-software"
     shell:
         """
         interproscan.sh --mode convert \
