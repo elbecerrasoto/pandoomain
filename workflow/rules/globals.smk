@@ -43,21 +43,13 @@ assert IN_HEADERS.exists(), (
     + f"\nTried to look it up at: {IN_HEADERS}."
 )
 
-
 RESULTS = Path(config["results"])
+RESULTS_GENOMES = RESULTS / "genomes"
+USED_GENOMES = RESULTS / "genomes.tsv"
 LOGS = Path(RESULTS / "logs")
-USED_GENOMES = Path(RESULTS / "genomes.tsv")
-RESULTS_GENOMES = Path(RESULTS / "genomes")
-
 
 # Optionals keys on YAML
 ONLY_REFSEQ = config.setdefault("only_refseq", False)
-N = int(config.setdefault("neighborhood", 0))
-
-DIAMOND_ARGS = config.setdefault("diamond_args", "")
-
-PAIR = config.setdefault("pair", None)
-FILTERING_DOMS = config.setdefault("filtering_doms", None)
 
 OFFLINE_MODE = config.setdefault("offline", False)
 if not OFFLINE_MODE:
@@ -79,21 +71,5 @@ ISCAN_HEADER_L = HEADERS["ISCAN_HEADER"]
 ISCAN_HEADER = "\t".join(ISCAN_HEADER_L)
 
 
-NEIGHS_HEADER_L = HEADERS["NEIGHS_HEADER"]
-NEIGHS_HEADER = "\t".join(NEIGHS_HEADER_L)
-
-
-BLAST_HEADER_L = HEADERS["BLAST_HEADER"]
-BLAST_FORMAT = " ".join(BLAST_HEADER_L)
-
-BLAST_FORMAT_RENAMES = {"qseqid": "query", "sseqid": "pid"}
-d = BLAST_FORMAT_RENAMES
-blast_renamed = [d[i] if i in d.keys() else i for i in BLAST_HEADER_L]
-BLAST_HEADER = "\t".join(["genome"] + blast_renamed)
-
-
 ALL_CDS = utils.for_all_genomes("_cds.tsv", RESULTS_GENOMES, GENOMES)
 ALL_FAAS = utils.for_all_genomes(".faa", RESULTS_GENOMES, GENOMES)
-ALL_BLASTS = utils.for_all_genomes("_blast.tsv", RESULTS_GENOMES, GENOMES)
-ALL_HITS = utils.for_all_genomes("_hits.tsv", RESULTS_GENOMES, GENOMES)
-ALL_HOODS = utils.for_all_genomes("_neighborhoods.tsv", RESULTS_GENOMES, GENOMES)

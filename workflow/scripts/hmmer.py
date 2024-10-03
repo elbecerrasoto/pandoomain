@@ -2,18 +2,34 @@
 import os
 import re
 import sys
+from collections import namedtuple
+from functools import partial
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Iterable, Union
 
+import numpy as np
 from pyhmmer import hmmsearch
-from pyhmmer.easel import Alphabet, SequenceFile
-from pyhmmer.plan7 import HMM, Background, HMMFile
+from pyhmmer.easel import SequenceFile
+from pyhmmer.plan7 import HMM, HMMFile
 
 QUERIES_DIR = Path(sys.argv[1])
-OUT_FILE = Path(sys.argv[2])
-GENOMES = sys.argv[3:]
+GENOMES_FILE = sys.argv[2]
+OUT_FILE = Path(sys.argv[3])
 
 GENOME_REGEX = re.compile(r"(GC[FA]_\d+\.\d)\.faa$")
+FIELDS = (
+    "genome",
+    "pid",
+    "query",
+    "score",
+    "evalue",
+    "start",
+    "end",
+    "pid_txt",
+    "query_txt",
+)
+Results = namedtuple("Results", FIELDS)
 
 
 class HMMFiles(Iterable[HMM]):
@@ -26,21 +42,10 @@ class HMMFiles(Iterable[HMM]):
                 yield from hmm_file
 
 
-alphabet = Alphabet.amino()
-background = Background(alphabet)
-
-
 def get_hmms(queries_path):
     queries_path = Path(queries_path)
     hmms_files = HMMFiles(*queries_path.iterdir())
     return hmms_files
-
-
-def run_genome(genome_path, hmms_files):
-    with SequenceFile(genome_path, digital=True) as genome_file:
-        genome = genome_file.read_block()
-    hits = hmmsearch(hmms_files, genome)
-    return hits
 
 
 def parse_genome(genome_path):
@@ -49,44 +54,78 @@ def parse_genome(genome_path):
     return genome
 
 
-def parse_hit(hit):
-    out = [
+def parse_hit(hit, genome_id):
+
+    out = [genome_id] + [
         (pid := hit.name.decode("utf-8")),
         (query := hit.hits.query_accession.decode("utf-8")),
         (score := hit.score),
+        (evalue := hit.evalue),
         (start := hit.best_domain.env_from),
         (end := hit.best_domain.env_to),
-        (included := hit.included),
-        (reported := hit.reported),
-        (pid_description := hit.description.decode("utf-8")),
-        (query_description := hit.hits.query_name.decode("utf-8")),
+        (pid_txt := hit.description.decode("utf-8")),
+        (query_txt := hit.hits.query_name.decode("utf-8")),
     ]
 
     out = [str(i) for i in out]
-    return "\t".join(out) + "\n"
+
+    return Results(*out)
+
+
+def run_genomes(genome_paths, hmms_files):
+
+    def run_genome(genome_path):
+        genome_id = parse_genome(genome_path)
+
+        with SequenceFile(genome_path, digital=True) as genome_file:
+            genome = genome_file.read_block()
+            results = hmmsearch(hmms_files, genome, bit_cutoffs="trusted")
+
+        hittup = []
+        for top_hits in results:
+            for hit in top_hits:
+                if hit.included:
+                    parsed = parse_hit(hit, genome_id)
+                    hittup.append(parsed)
+
+        out = {}
+        out[genome_id] = hittup
+
+        return out
+
+    merged = {}
+    for resultD in map(run_genome, genome_paths):
+        merged |= resultD
+
+    return merged
 
 
 if __name__ == "__main__":
+
+    with open(GENOMES_FILE, "r") as genomes_file:
+        genomes_paths = [Path(line.rstrip()) for line in genomes_file]
+        n_batches = len(genomes_paths)
+        batches = np.array_split(np.array(genomes_paths), n_batches)
+
     hmms_files = get_hmms(QUERIES_DIR)
+    worker = partial(run_genomes, hmms_files=hmms_files)
 
-    OUT = {}
-    for genome in GENOMES:
+    with Pool() as pool:
+        results = pool.imap_unordered(worker, batches)
+        pool.close()
+        pool.join()
 
-        genome_id = parse_genome(genome)
-        results = run_genome(genome, hmms_files)
-
-        TO_WRITE = list()
-        for top_hits in results:
-            for hit in top_hits:
-                parsed = parse_hit(hit)
-                hit_data = f"{genome_id}\t{parsed}"
-                TO_WRITE.append(hit_data)
-
-        OUT[genome_id] = TO_WRITE
-
-        del results
+    merged = {}
+    for result in results:
+        merged |= result
 
     with open(OUT_FILE, "w") as tsv:
-        for genome in OUT:
-            for hit_data in OUT[genome]:
-                tsv.write(hit_data)
+        w = lambda itsv: "\t".join(itsv) + "\n"
+
+        tsv.write(w(FIELDS))
+
+        for genome_id in merged:
+            top_hits = merged[genome_id]
+
+            for hittup in top_hits:
+                tsv.write(w(hittup))
