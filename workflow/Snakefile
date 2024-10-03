@@ -9,6 +9,7 @@ rule all:
         f"{RESULTS}/.domains_faas.sentinel",
         f"{RESULTS}/all.faa",
         f"{RESULTS}/iscan.tsv",
+        f"{RESULTS}/archs.tsv",
 
 
 rule hmmer_input:
@@ -104,4 +105,19 @@ rule interproscan_tsv:
         cat - {output.tsv}.temp >| {output.tsv} <<< '{params.header}'
 
         rm {output.tsv}.temp
+        """
+
+
+rule darchs:
+    input:
+        rules.interproscan_tsv.output,
+    output:
+        d_focus=f"{RESULTS}/archs.tsv",
+        p_focus=f"{RESULTS}/archsPIDF.tsv",
+        code=f"{RESULTS}/archsCODE.tsv",
+    params:
+        f"{RESULTS}",
+    shell:
+        """
+        workflow/scripts/archs.R {input} {params}
         """
