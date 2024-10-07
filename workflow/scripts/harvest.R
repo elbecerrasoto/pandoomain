@@ -20,13 +20,12 @@ N_TXT <- 7
 
 
 get_headers <- function(faa) {
-  map_chr(faa, \(s) attr(s, "Annot")) |>
-    str_replace_all(">", "")
+  map_chr(faa, \(s) attr(s, "Annot"))
 }
 
 write_queries <- function(pids_tib, genome) {
   PIDS_TIB <- pids_tib
-  FAA_ALL <- read.fasta(genome, seqtype = "AA")
+  FAA_ALL <- read.fasta(genome, seqtype = "AA", strip.desc = TRUE)
   dir_create(OUT_DIR)
 
   queries2write <- PIDS_TIB |>
