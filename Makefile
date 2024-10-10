@@ -40,6 +40,7 @@ test-empty: $(GENOMES) $(CONFIG)
 
 .PHONY test:
 test: $(GENOMES) $(CONFIG)
+	@printf "Before looking for errors, clean-cache.\n\n"
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --configfile $(CONFIG)
 
