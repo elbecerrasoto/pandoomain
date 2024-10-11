@@ -4,19 +4,24 @@
 
 suppressPackageStartupMessages({
   library(tidyverse)
+  library(furrr)
   library(seqinr)
   library(fs)
 })
 
 argv <- commandArgs(trailingOnly = TRUE)
 
+
 DB <- argv[[1]]
-IN <- argv[[2]]
-OUT_DIR <- argv[[3]]
+CORES <- as.integer(argv[[2]])
+IN <- argv[[3]]
+OUT_DIR <- argv[[4]]
 
 # DB <- "tests/results/genomes"
 # IN <- "tests/results/hmmer.tsv"
 # OUT_DIR <- "tests/results/domains_faas"
+
+plan(multicore, workers = CORES)
 
 # Helpers ----
 
@@ -73,4 +78,4 @@ Lqueries <- hmmer %>%
 
 dir_create(OUT_DIR)
 
-done <- walk(Lqueries, write_query)
+done <- future_map(Lqueries, write_query)

@@ -44,9 +44,10 @@ rule domains_faas:
     params:
         db=f"{RESULTS_GENOMES}",
         out_dir=f"{RESULTS}/domains_faas",
+    threads: workflow.cores
     shell:
         r"""
-        workflow/scripts/harvest.R {params.db} {input} {params.out_dir}
+        workflow/scripts/harvest.R {params.db} {threads} {input} {params.out_dir}
         printf "`date`\\n" >| {output}
         """
 
