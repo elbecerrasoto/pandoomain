@@ -1,7 +1,7 @@
 SHELL = /usr/bin/bash
 
 CORES = all
-ISCAN_VERSION = 5.69-101.0
+ISCAN_VERSION = 5.70-102.0
 CACHE = ~/.local/snakemake
 
 SETUP_CACHE = mkdir -p $(CACHE) &&\
