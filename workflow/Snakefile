@@ -126,9 +126,7 @@ rule darchs:
 
 
 def params_output_name(wc, output):
-    output = output[0]  # simplify to string?
-    print(type(output))
-    return Path(output).name
+    return Path(output[0]).name
 
 
 rule taxallnomy_targz:
@@ -149,16 +147,18 @@ rule taxallnomy_targz:
         """
 
 
-# rule taxallnomy_linname:
-#     input:
-#         rules.interproscan_tsv.output,
-#     output:
-#         d_focus=f"{RESULTS}/archs.tsv",
-#         p_focus=f"{RESULTS}/archsPIDF.tsv",
-#         code=f"{RESULTS}/archsCODE.tsv",
-#     params:
-#         f"{RESULTS}",
-#     shell:
-#         """
-#         workflow/scripts/archs.R {input} {params}
-#         """
+taxallnomy_database / taxallnomy_lin_name.tab
+
+
+rule taxallnomy_linname:
+    input:
+        rules.taxallnomy_targz.output,
+    output:
+        f"{RESULTS}/taxallnomy_lin_name.tsv",
+    params:
+        ori=f"{RESULTS}/taxallnomy_database/taxallnomy_lin_name.tab",
+    shell:
+        """
+        tar -vxf {input}
+        ln -sf {params.ori} {output}
+        """
