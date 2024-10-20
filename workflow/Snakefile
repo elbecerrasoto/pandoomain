@@ -10,6 +10,7 @@ rule all:
         f"{RESULTS}/all.faa",
         f"{RESULTS}/iscan.tsv",
         f"{RESULTS}/archs.tsv",
+        f"{RESULTS}/taxallnomy.tar.gz",
 
 
 rule hmmer_input:
@@ -122,3 +123,42 @@ rule darchs:
         """
         workflow/scripts/archs.R {input} {params}
         """
+
+
+def params_output_name(wc, output):
+    output = output[0]  # simplify to string?
+    print(type(output))
+    return Path(output).name
+
+
+rule taxallnomy_targz:
+    output:
+        f"{RESULTS}/taxallnomy.tar.gz",
+    cache: "omit-software"
+    params:
+        url="https://sourceforge.net/projects/taxallnomy/files/latest/download",
+        output_name=params_output_name,
+    shell:
+        """
+        aria2c --dir {RESULTS}\
+            --continue=true --split 12\
+            --max-connection-per-server=16\
+            --min-split-size=1M\
+            --out={params.output_name}\
+            {params.url}
+        """
+
+
+# rule taxallnomy_linname:
+#     input:
+#         rules.interproscan_tsv.output,
+#     output:
+#         d_focus=f"{RESULTS}/archs.tsv",
+#         p_focus=f"{RESULTS}/archsPIDF.tsv",
+#         code=f"{RESULTS}/archsCODE.tsv",
+#     params:
+#         f"{RESULTS}",
+#     shell:
+#         """
+#         workflow/scripts/archs.R {input} {params}
+#         """
