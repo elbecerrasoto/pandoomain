@@ -11,6 +11,7 @@ rule all:
         f"{RESULTS}/iscan.tsv",
         f"{RESULTS}/archs.tsv",
         f"{RESULTS}/taxallnomy.tar.gz",
+        f"{RESULTS}/taxallnomy_lin_name.tsv",
 
 
 rule hmmer_input:
@@ -147,9 +148,6 @@ rule taxallnomy_targz:
         """
 
 
-taxallnomy_database / taxallnomy_lin_name.tab
-
-
 rule taxallnomy_linname:
     input:
         rules.taxallnomy_targz.output,
@@ -159,6 +157,6 @@ rule taxallnomy_linname:
         ori=f"{RESULTS}/taxallnomy_database/taxallnomy_lin_name.tab",
     shell:
         """
-        tar -vxf {input}
-        ln -sf {params.ori} {output}
+        tar --directory={RESULTS} -vxf {input}
+        ln -srf {params.ori} {output}
         """
