@@ -12,6 +12,7 @@ rule all:
         f"{RESULTS}/archs.tsv",
         f"{RESULTS}/taxallnomy.tar.gz",
         f"{RESULTS}/taxallnomy_lin_name.tsv",
+        f"{RESULTS}/.taxallnomy_lin_name.txt",
 
 
 rule hmmer_input:
@@ -92,6 +93,7 @@ rule interproscan_tsv:
         xml=rules.interproscan_xml.output,
     output:
         tsv=f"{RESULTS}/iscan.tsv",
+    cache: "omit-software"
     params:
         header=ISCAN_HEADER,
         tmp="/tmp",
@@ -153,10 +155,22 @@ rule taxallnomy_linname:
         rules.taxallnomy_targz.output,
     output:
         f"{RESULTS}/taxallnomy_lin_name.tsv",
+    cache: "omit-software"
     params:
         ori=f"{RESULTS}/taxallnomy_database/taxallnomy_lin_name.tab",
     shell:
         """
         tar --directory={RESULTS} -vxf {input}
-        ln -srf {params.ori} {output}
+        mv {params.ori} {output}
+        """
+
+
+rule taxallnomy_linname_1st:
+    input:
+        rules.taxallnomy_linname.output,
+    output:
+        f"{RESULTS}/.taxallnomy_lin_name.txt",
+    shell:
+        """
+        cut -f1 -d$'\\t' {input} > {output}
         """

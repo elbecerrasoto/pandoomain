@@ -9,7 +9,8 @@ SETUP_CACHE = mkdir -p $(CACHE) &&\
 
 SNAKEMAKE = $(SETUP_CACHE) &&\
             snakemake --cores $(CORES)\
-                      --cache
+                      --cache\
+					  --printshellcmds
 
 CONFIG = tests/config.yaml
 CONFIG_EMPTY = tests/config_empty.yaml
