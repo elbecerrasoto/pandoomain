@@ -12,8 +12,7 @@ rule all:
         f"{RESULTS}/archs.tsv",
         f"{RESULTS}/taxallnomy.tar.gz",
         f"{RESULTS}/taxallnomy_lin_name.tsv",
-        f"{RESULTS}/.genomes_unique_taxids.txt",
-        f"{RESULTS}/taxallnomy_relevant.txt",
+        f"{RESULTS}/genomes_ranks.tsv",
 
 
 rule hmmer_input:
@@ -166,28 +165,14 @@ rule taxallnomy_linname:
         """
 
 
-rule unique_taxids:
+rule join_genomes_taxallnomy:
     input:
-        rules.get_metadata.output,
+        taxallnomy=rules.taxallnomy_linname.output,
+        genomes=rules.get_metadata.output,
     output:
-        f"{RESULTS}/.genomes_unique_taxids.txt",
-    params:
-        col="4",
+        f"{RESULTS}/genomes_ranks.tsv",
+    cache: "omit-software"
     shell:
         """
-        cut -d $'\\t' -f {params} {input} | sed '1d' | sort -n | uniq  >| {output}
-        """
-
-
-rule relevant_taxids:
-    input:
-        all=rules.taxallnomy_linname.output,
-        genomes=rules.unique_taxids.output,
-    output:
-        f"{RESULTS}/taxallnomy_relevant.txt",
-    shell:
-        """
-        perl -ne \
-        'BEGIN {{ open $fh, "<", "{input.genomes}" ; chomp @genomes = <$fh>; $regex = join "|", @genomes; print $regex . "\\n";}} \
-        print if /$regex/' {input.all} >| {output}
+        workflow/scripts/cross.R {input} >| {output}
         """

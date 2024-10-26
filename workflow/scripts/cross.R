@@ -1,16 +1,20 @@
 #!/usr/bin/env Rscript
 
-# Join Manually
-# genomes_metadata.tsv & taxallnomy_lin_name.tsv
-# by taxid
-# why? to only use the relevant part of the table taxallnomy table.
+suppressPackageStartupMessages({
+  library(data.table)
+  library(tidyverse)
+})
 
-library(tidyverse)
+# Join taxallnomy_lin_name.tsv and genomes_metadata.tsv
+# by tax_id
 
-TAXID_ALL <- "tests/results/.taxallnomy_lin_name.txt"
-TAXID_GENOMES <- "tests/results/genomes_metadata.tsv"
+argv <- commandArgs(trailingOnly = TRUE)
 
-TREE <- "tests/results/taxallnomy_lin_name.tsv"
+TAXID_ALL <- argv[[1]]
+TAXID_GENOMES <- argv[[2]]
+
+# TAXID_ALL <- "tests/results/taxallnomy_lin_name.tsv"
+# TAXID_GENOMES <- "tests/results/genomes_metadata.tsv"
 
 NAMES <- c(
   "tax_id", "superkingdom", "Kin", "sbKin",
@@ -24,26 +28,12 @@ NAMES <- c(
   "Srt", "Str", "Iso"
 )
 
+taxallnomy <- fread(TAXID_ALL)
+names(taxallnomy) <- NAMES
 
-# styler: off
-genomes    <- read_tsv(TAXID_GENOMES) |>
-  select(genome, tax_id)
-taxallnomy <- read_tsv(TAXID_ALL, col_names = "tax_id")
-
-taxid_all     <-     taxallnomy$tax_id
-taxid_genomes <- unique(genomes$tax_id)
-# styler: on
-
-rows <- sort(which(taxid_all %in% taxid_genomes))
-
-# subset the taxallnomy table
-# to only relevant entries
-
-tree <- read_tsv(TREE, col_names = NAMES)
-relevant <- tree[rows, ]
-rm(tree)
+genomes <- fread(TAXID_GENOMES)
 
 genomes |>
-  left_join(relevant, join_by(tax_id)) |>
+  left_join(taxallnomy, join_by(tax_id)) |>
   format_tsv() |>
   writeLines(stdout(), sep = "")
