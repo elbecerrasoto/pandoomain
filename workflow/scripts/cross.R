@@ -31,7 +31,8 @@ NAMES <- c(
 taxallnomy <- fread(TAXID_ALL)
 names(taxallnomy) <- NAMES
 
-genomes <- fread(TAXID_GENOMES)
+genomes <- fread(TAXID_GENOMES) |>
+  select(genome, tax_id)
 
 genomes |>
   left_join(taxallnomy, join_by(tax_id)) |>

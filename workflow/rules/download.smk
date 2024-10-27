@@ -7,7 +7,7 @@ rule get_metadata_raw:
     output:
         f"{RESULTS}/genomes_metadata_raw.tsv",
     priority: 1
-    cache: "omit-software"
+    cache: True
     params:
         no_header=f"{RESULTS}/.genomes.txt",
     shell:
@@ -41,7 +41,7 @@ rule download_genome:
         include="protein gff3",
         genome="{genome}",
     retries: 3
-    cache: "omit-software"
+    cache: True
     shell:
         """
         workflow/scripts/download_genome.py --include {params.include} --out-dir {RESULTS_GENOMES}/{params.genome} -- {params.genome}

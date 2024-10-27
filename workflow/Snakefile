@@ -76,7 +76,7 @@ rule interproscan_xml:
     params:
         tmp="/tmp",
     threads: workflow.cores
-    cache: "omit-software"
+    cache: True
     shell:
         """
         interproscan.sh --formats XML\
@@ -93,7 +93,7 @@ rule interproscan_tsv:
         xml=rules.interproscan_xml.output,
     output:
         tsv=f"{RESULTS}/iscan.tsv",
-    cache: "omit-software"
+    cache: True
     params:
         header=ISCAN_HEADER,
         tmp="/tmp",
@@ -135,7 +135,7 @@ def params_output_name(wc, output):
 rule taxallnomy_targz:
     output:
         f"{RESULTS}/taxallnomy.tar.gz",
-    cache: "omit-software"
+    cache: True
     params:
         url="https://sourceforge.net/projects/taxallnomy/files/latest/download",
         output_name=params_output_name,
@@ -155,7 +155,7 @@ rule taxallnomy_linname:
         rules.taxallnomy_targz.output,
     output:
         f"{RESULTS}/taxallnomy_lin_name.tsv",
-    cache: "omit-software"
+    cache: True
     params:
         ori=f"{RESULTS}/taxallnomy_database/taxallnomy_lin_name.tab",
     shell:
@@ -171,7 +171,7 @@ rule join_genomes_taxallnomy:
         genomes=rules.get_metadata.output,
     output:
         f"{RESULTS}/genomes_ranks.tsv",
-    cache: "omit-software"
+    cache: True
     shell:
         """
         workflow/scripts/cross.R {input} >| {output}
