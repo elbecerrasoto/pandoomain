@@ -64,11 +64,6 @@ debug: $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) -np --cores 1 > debug.out 2> debug.err
 
 
-.PHONY clean-cache:
-clean-cache:
-	rm -rf $(CACHE)/*
-
-
 .PHONY install-iscan:
 install-iscan: utils/install_iscan.py
 	@printf "To install remove --dry-run option from script.\n\n"
@@ -95,15 +90,20 @@ report.html: $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) --report
 
 
-.PHONY clean:
-clean:
-	@rm -rf $(CLEAN)
-	git clean -d -n
-	@printf "\nTo remove untracked files run:\ngit clean -d -f\n"
-	@printf "Cache data has to be deleted manually:\nrm -r $(CACHE)"
-
-
 .PHONY git-config:
 git-config:
 	git config --global alias.root 'rev-parse --show-toplevel'
 	git config push.autoSetupRemote true
+
+
+.PHONY clean:
+clean:
+	@rm -rf $(CLEAN)
+	git clean -d -n
+	@printf "\nTo remove untracked files:\ngit clean -d -f\n"
+	@printf "To remove cache data:\nmake clean-cache $(CACHE)"
+
+
+.PHONY clean-cache:
+clean-cache:
+	rm -rf $(CACHE)/*
