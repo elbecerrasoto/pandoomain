@@ -187,14 +187,9 @@ rule get_absence_presence:
         proteins=rules.hmmer.output,
         domains=rules.get_archs.output.archs,
     output:
-        absence_presence=f"{RESULTS}/absence_presence.tsv",
         TGPD=f"{RESULTS}/TGPD.tsv",
+        absence_presence=f"{RESULTS}/absence_presence.tsv",
     shell:
         """
-        workflow/scripts/absence_presence.R {input.taxa}\
-                                            {input.genomes}\
-                                            {input.proteins}\
-                                            {input.domains}\
-                                            TRUE\
-                                            {output.TGPD} >| {output.absence_presence}
+        workflow/scripts/absence_presence.R {input} {output}
         """
