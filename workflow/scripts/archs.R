@@ -61,7 +61,7 @@ get_arch_len <- function(arch) {
 
 # Main ----
 
-iscan <- read_tsv(ISCAN)
+iscan <- read_tsv(ISCAN, show_col_types = FALSE)
 
 archs <- iscan |>
   filter(analysis == "Pfam", recommended) |>

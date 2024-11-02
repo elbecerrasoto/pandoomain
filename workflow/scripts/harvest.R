@@ -71,7 +71,7 @@ write_query <- function(query_tib) {
 
 # Main ----
 
-hmmer <- read_tsv(IN)
+hmmer <- read_tsv(IN, show_col_types = FALSE)
 
 Lqueries <- hmmer %>%
   split(., .$query)

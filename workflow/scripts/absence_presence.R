@@ -31,14 +31,14 @@ TAXA_SEL <- c(
 )
 
 
-ranks <- read_tsv(TAXA) |>
+ranks <- read_tsv(TAXA, show_col_types = FALSE) |>
   select(all_of(TAXA_SEL))
-genomes <- read_tsv(GENOMES) |>
+genomes <- read_tsv(GENOMES, show_col_types = FALSE) |>
   select(genome, tax_id) |>
   mutate(tax_id = as.integer(tax_id))
-proteins <- read_tsv(PROTEINS) |>
+proteins <- read_tsv(PROTEINS, show_col_types = FALSE) |>
   select(genome, pid)
-domains <- read_tsv(DOMAINS) |>
+domains <- read_tsv(DOMAINS, show_col_types = FALSE) |>
   select(pid, domain)
 
 # Taxid 1-m Genomes m-m Proteins m-m Domains
