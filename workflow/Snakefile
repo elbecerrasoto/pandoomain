@@ -145,6 +145,7 @@ rule taxallnomy_targz:
             --max-connection-per-server=16\
             --min-split-size=1M\
             --out={params.output_name}\
+            --quiet\
             {params.url}
         """
 
