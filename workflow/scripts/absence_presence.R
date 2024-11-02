@@ -7,21 +7,21 @@ suppressPackageStartupMessages({
 argv <- commandArgs(trailingOnly = TRUE)
 
 
+# Inputs
 TAXA <- argv[[1]]
 GENOMES <- argv[[2]]
 PROTEINS <- argv[[3]]
 DOMAINS <- argv[[4]]
 
-WRITE_TGPD <- as.logical(argv[[5]])
-TGPD_PATH <- argv[[6]]
+# Outputs
+OUT_TGPD <- argv[[5]]
+OUT_ABSENCE_PRESENCE <- argv[[6]]
 
 ## GENOMES <- "tests/results/genomes_metadata.tsv"
 ## PROTEINS <- "tests/results/hmmer.tsv"
 ## DOMAINS <- "tests/results/archs.tsv"
 ## TAXA <- "tests/results/genomes_ranks.tsv"
 
-## WRITE_TGPD <- TRUE
-## TGPD_PATH <- "TGPD.tsv"
 
 TAXA_SEL <- c(
   "genome", "tax_id",
@@ -54,10 +54,8 @@ TGPD <- genomes |>
     relationship = "many-to-many"
   )
 
-if (WRITE_TGPD) {
-  write_tsv(TGPD, TGPD_PATH)
-}
 
+# One Hot Encoding
 absence_presence <- TGPD |>
   select(-pid) |>
   distinct() |>
@@ -71,8 +69,10 @@ absence_presence <- TGPD |>
   select(-any_of("NA"))
 
 
-absence_presence |>
+absence_presence <- absence_presence |>
   left_join(ranks, join_by(genome, tax_id)) |>
-  relocate(genome, tax_id, species) |>
-  format_tsv() |>
-  writeLines(stdout(), sep = "")
+  relocate(genome, tax_id, species)
+
+
+write_tsv(TGPD, OUT_TGPD)
+write_tsv(absence_presence, OUT_ABSENCE_PRESENCE)
