@@ -1,11 +1,13 @@
 #!/usr/bin/env Rscript
 
-library(tidyverse)
+suppressPackageStartupMessages({
+  library(tidyverse)
+})
 
 args <- commandArgs(trailingOnly = TRUE)
 IN <- args[1]
 
-meta <- read_tsv(IN) |>
+meta <- read_tsv(IN, show_col_types = FALSE) |>
   janitor::clean_names() |>
   distinct(assembly_accession, .keep_all = TRUE)
 

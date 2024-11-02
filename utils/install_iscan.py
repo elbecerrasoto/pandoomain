@@ -121,9 +121,10 @@ if __name__ == "__main__":
 
     # create link
     if not DRY:
+        ISCAN_INSTALLATION_BIN.unlink(missing_ok=True)
         ISCAN_INSTALLATION_BIN.symlink_to(ISCAN_BIN)
     else:
-        print(f"ln -s {ISCAN_BIN} {ISCAN_INSTALLATION_BIN.parent}")
+        print(f"ln -fs {ISCAN_BIN} {ISCAN_INSTALLATION_BIN.parent}")
 
     # test
     run(f"interproscan.sh -i test_all_appl.fasta -f tsv", dry=DRY)

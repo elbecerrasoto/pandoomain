@@ -39,8 +39,8 @@ if (is.null(TARGETS)) {
 stopifnot("A distance is between 2 things. Ill-formed pair." = length(TARGETS) == 2)
 
 
-hits <- read_tsv(HITS)
-gpq <- read_tsv(GPQ)
+hits <- read_tsv(HITS, show_col_types = FALSE)
+gpq <- read_tsv(GPQ, show_col_types = FALSE)
 
 plan(multisession, workers = CORES)
 

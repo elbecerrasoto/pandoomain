@@ -1,83 +1,81 @@
 #!/usr/bin/env Rscript
 
+# Globals ----
+
 suppressPackageStartupMessages({
   library(tidyverse)
-  library(stringr)
+  library(furrr)
   library(seqinr)
   library(fs)
 })
 
 argv <- commandArgs(trailingOnly = TRUE)
 
+
 DB <- argv[[1]]
-IN <- argv[[2]]
-OUT_DIR <- argv[[3]]
-N_TXT <- 7
+CORES <- as.integer(argv[[2]])
+IN <- argv[[3]]
+OUT_DIR <- argv[[4]]
 
-# IN <- "tests/results/hmmer.tsv"
-# OUT_DIR <- "tests/results/queries"
 # DB <- "tests/results/genomes"
+# IN <- "tests/results/hmmer.tsv"
+# OUT_DIR <- "tests/results/domains_faas"
 
+plan(multicore, workers = CORES)
+
+# Helpers ----
 
 get_headers <- function(faa) {
-  map_chr(faa, \(s) attr(s, "Annot")) |>
-    str_replace_all(">", "")
+  map_chr(faa, \(s) attr(s, "Annot"))
 }
 
-write_queries <- function(pids_tib, genome) {
-  PIDS_TIB <- pids_tib
-  FAA_ALL <- read.fasta(genome, seqtype = "AA")
-  dir_create(OUT_DIR)
+write_query <- function(query_tib) {
+  query_tib <- distinct(query_tib, pid, .keep_all = TRUE)
+  query <- unique(query_tib$query)
+  txt <- unique(query_tib$query_txt)
 
-  queries2write <- PIDS_TIB |>
-    pull(query_out) |>
-    unique()
+  stopifnot(
+    length(query) == 1,
+    length(txt) == 1
+  )
 
-  queries2write_full <- str_c(OUT_DIR, "/", queries2write)
+  OUT_FAA <- paste0(OUT_DIR, "/", query, "_", txt, ".faa")
+  unlink(OUT_FAA)
 
-  walk(queries2write_full, unlink)
 
-  write_query <- function(query2write) {
-    out_file <- str_c(OUT_DIR, "/", query2write)
-    qpids <- PIDS_TIB |>
-      filter(query_out == query2write) |>
-      pull(pid) |>
-      unique()
-    faa <- FAA_ALL[names(FAA_ALL) %in% qpids]
+  write_genome <- function(genome_tib) {
+    genome <- unique(genome_tib$genome)
+    in_genome <- paste0(DB, "/", genome, "/", genome, ".faa")
+    pids <- unique(genome_tib$pid)
+
+    stopifnot(length(genome) == 1)
+
+    faa <- read.fasta(in_genome, seqtype = "AA", strip.desc = TRUE)
+    faa <- faa[names(faa) %in% pids]
 
     write.fasta(faa, get_headers(faa),
-      out_file,
+      OUT_FAA,
       open = "a",
       nbchar = 80
     )
   }
 
-  walk(queries2write, write_query)
-}
 
+  Lgenomes <- query_tib %>%
+    split(., .$genome)
+
+  walk(Lgenomes, write_genome)
+
+  OUT_FAA
+}
 
 # Main ----
 
-hmmer <- read_tsv(IN)
+hmmer <- read_tsv(IN, show_col_types = FALSE)
 
-hmmer <- hmmer |>
-  mutate(
-    genome_in = str_c(
-      DB, "/", genome, "/", genome,
-      ".faa"
-    ),
-    query_out = str_c(
-      query,
-      "_",
-      str_sub(query_txt, 1, N_TXT),
-      ".faa"
-    )
-  )
+Lqueries <- hmmer %>%
+  split(., .$query)
 
-genomes <- hmmer |>
-  distinct(pid, query_out, .keep_all = TRUE) |>
-  select(genome_in, query_out, pid) |>
-  arrange(genome_in) %>%
-  split(., .$genome_in)
+dir_create(OUT_DIR)
 
-done <- iwalk(genomes, write_queries)
+done <- future_map(Lqueries, write_query)

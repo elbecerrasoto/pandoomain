@@ -1,7 +1,7 @@
 SHELL = /usr/bin/bash
 
 CORES = all
-ISCAN_VERSION = 5.69-101.0
+ISCAN_VERSION = 5.70-102.0
 CACHE = ~/.local/snakemake
 
 SETUP_CACHE = mkdir -p $(CACHE) &&\
@@ -9,7 +9,8 @@ SETUP_CACHE = mkdir -p $(CACHE) &&\
 
 SNAKEMAKE = $(SETUP_CACHE) &&\
             snakemake --cores $(CORES)\
-                      --cache
+                      --cache\
+					  --printshellcmds
 
 CONFIG = tests/config.yaml
 CONFIG_EMPTY = tests/config_empty.yaml
@@ -40,6 +41,7 @@ test-empty: $(GENOMES) $(CONFIG)
 
 .PHONY test:
 test: $(GENOMES) $(CONFIG)
+	@printf "Before looking for errors, clean-cache.\n\n"
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --configfile $(CONFIG)
 
@@ -60,11 +62,6 @@ test-mtime: $(GENOMES) $(CONFIG)
 debug: $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation > smkC.py 2> smkC.err
 	$(SNAKEMAKE) --configfile $(CONFIG) -np --cores 1 > debug.out 2> debug.err
-
-
-.PHONY clean-cache:
-clean-cache:
-	rm -rf $(CACHE)/*
 
 
 .PHONY install-iscan:
@@ -93,15 +90,20 @@ report.html: $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) --report
 
 
-.PHONY clean:
-clean:
-	@rm -rf $(CLEAN)
-	git clean -d -n
-	@printf "\nTo remove untracked files run:\ngit clean -d -f\n"
-	@printf "Cache data has to be deleted manually:\nrm -r $(CACHE)"
-
-
 .PHONY git-config:
 git-config:
 	git config --global alias.root 'rev-parse --show-toplevel'
 	git config push.autoSetupRemote true
+
+
+.PHONY clean:
+clean:
+	@rm -rf $(CLEAN)
+	git clean -d -n
+	@printf "\nTo remove untracked files:\ngit clean -d -f\n"
+	@printf "To remove cache data:\nmake clean-cache $(CACHE)"
+
+
+.PHONY clean-cache:
+clean-cache:
+	rm -rf $(CACHE)/*
