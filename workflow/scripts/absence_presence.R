@@ -4,22 +4,35 @@ suppressPackageStartupMessages({
   library(tidyverse)
 })
 
-GENOMES <- "tests/results/genomes_metadata.tsv"
-PROTEINS <- "tests/results/hmmer.tsv"
-DOMAINS <- "tests/results/archs.tsv"
+argv <- commandArgs(trailingOnly = TRUE)
 
-RANKS <- "tests/results/genomes_ranks.tsv"
-RANKS_SEL <- c(
+
+TAXA <- argv[[1]]
+GENOMES <- argv[[2]]
+PROTEINS <- argv[[3]]
+DOMAINS <- argv[[4]]
+
+WRITE_TGPD <- as.logical(argv[[5]])
+TGPD_PATH <- argv[[6]]
+
+## GENOMES <- "tests/results/genomes_metadata.tsv"
+## PROTEINS <- "tests/results/hmmer.tsv"
+## DOMAINS <- "tests/results/archs.tsv"
+## TAXA <- "tests/results/genomes_ranks.tsv"
+
+## WRITE_TGPD <- TRUE
+## TGPD_PATH <- "TGPD.tsv"
+
+TAXA_SEL <- c(
   "genome", "tax_id",
   "superkingdom",
   "phylum", "class", "order",
   "family", "genus", "species"
 )
 
-WRITE_TGPD <- FALSE
 
-ranks <- read_tsv(RANKS) |>
-  select(all_of(RANKS_SEL))
+ranks <- read_tsv(TAXA) |>
+  select(all_of(TAXA_SEL))
 genomes <- read_tsv(GENOMES) |>
   select(genome, tax_id) |>
   mutate(tax_id = as.integer(tax_id))
@@ -42,7 +55,7 @@ TGPD <- genomes |>
   )
 
 if (WRITE_TGPD) {
-  write_tsv(TGPD, "TGPD.tsv")
+  write_tsv(TGPD, TGPD_PATH)
 }
 
 absence_presence <- TGPD |>

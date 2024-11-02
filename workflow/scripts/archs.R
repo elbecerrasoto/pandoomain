@@ -11,12 +11,9 @@ argv <- commandArgs(trailingOnly = TRUE)
 ISCAN <- argv[[1]]
 # ISCAN <- "tests/results/iscan.tsv"
 
-OUT_DIR <- argv[[2]]
-# OUT_DIR <- "tests/results/"
-
-OUT <- paste0(OUT_DIR, "/", "archs.tsv")
-OUT_PIDFOCUS <- paste0(OUT_DIR, "/", "archsPIDF.tsv")
-OUT_CODE <- paste0(OUT_DIR, "/", "archsCODE.tsv")
+OUT <- argv[[2]]
+OUT_PIDFOCUS <- argv[[3]]
+OUT_CODE <- argv[[4]]
 
 
 one_lettercode <- function(doms) {

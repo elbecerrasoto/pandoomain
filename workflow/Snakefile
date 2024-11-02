@@ -13,6 +13,7 @@ rule all:
         f"{RESULTS}/taxallnomy.tar.gz",
         f"{RESULTS}/taxallnomy_lin_name.tsv",
         f"{RESULTS}/genomes_ranks.tsv",
+        f"{RESULTS}/absence_presence.tsv",
 
 
 rule hmmer_input:
@@ -113,18 +114,16 @@ rule interproscan_tsv:
         """
 
 
-rule darchs:
+rule get_archs:
     input:
         rules.interproscan_tsv.output,
     output:
-        d_focus=f"{RESULTS}/archs.tsv",
-        p_focus=f"{RESULTS}/archsPIDF.tsv",
-        code=f"{RESULTS}/archsCODE.tsv",
-    params:
-        f"{RESULTS}",
+        archs=f"{RESULTS}/archs.tsv",
+        pidrow=f"{RESULTS}/archs_pidrow.tsv",
+        code=f"{RESULTS}/archs_code.tsv",
     shell:
         """
-        workflow/scripts/archs.R {input} {params}
+        workflow/scripts/archs.R {input} {output}
         """
 
 
@@ -175,4 +174,24 @@ rule join_genomes_taxallnomy:
     shell:
         """
         workflow/scripts/cross.R {input} >| {output}
+        """
+
+
+rule get_absence_presence:
+    input:
+        taxa=rules.join_genomes_taxallnomy.output,
+        genomes=rules.get_metadata.output,
+        proteins=rules.hmmer.output,
+        domains=rules.get_archs.output.archs,
+    output:
+        absence_presence=f"{RESULTS}/absence_presence.tsv",
+        TGPD=f"{RESULTS}/TGPD.tsv",
+    shell:
+        """
+        workflow/scripts/absence_presence.R {input.taxa}\
+                                            {input.genomes}\
+                                            {input.proteins}\
+                                            {input.domains}\
+                                            TRUE\
+                                            {output.TGPD} >| {output.absence_presence}
         """
