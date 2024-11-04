@@ -1,5 +1,7 @@
 SHELL = /usr/bin/bash
 
+SNAKEFILE = workflow/Snakefile
+
 CORES = all
 ISCAN_VERSION = 5.70-102.0
 CACHE = ~/.local/snakemake
@@ -28,38 +30,38 @@ ISCAN_BIN = ~/.local/bin/interproscan.sh
 
 
 .PHONY test-dry:
-test-dry: $(GENOMES) $(CONFIG)
+test-dry: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --configfile $(CONFIG) -np
 
 
 .PHONY test-empty:
-test-empty: $(GENOMES) $(CONFIG)
+test-empty: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --configfile $(CONFIG_EMPTY)
 
 
 .PHONY test:
-test: $(GENOMES) $(CONFIG)
+test: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	@printf "Before looking for errors, clean-cache.\n\n"
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --configfile $(CONFIG)
 
 
 .PHONY test-offline:
-test-offline: $(GENOMES) $(CONFIG)
+test-offline: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --configfile $(CONFIG) --config offline=true
 
 
 .PHONY test-mtime:
-test-mtime: $(GENOMES) $(CONFIG)
+test-mtime: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	rm -rf $(RESULTS)
 	$(SNAKEMAKE) --configfile $(CONFIG) --rerun-triggers mtime
 
 
 .PHONY debug:
-debug: $(GENOMES) $(CONFIG)
+debug: $(SNAKEFILE) (GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation > smkC.py 2> smkC.err
 	$(SNAKEMAKE) --configfile $(CONFIG) -np --cores 1 > debug.out 2> debug.err
 
@@ -80,13 +82,13 @@ style:
 	isort --float-to-top --ext smk -- utils workflow
 
 
-$(SVGS): $(GENOMES) $(CONFIG)
+$(SVGS): $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) --dag       | dot -Tsvg > dag.svg
 	$(SNAKEMAKE) --configfile $(CONFIG) --rulegraph | dot -Tsvg > rulegraph.svg
 	$(SNAKEMAKE) --configfile $(CONFIG) --filegraph | dot -Tsvg > filegraph.svg
 
 
-report.html: $(GENOMES) $(CONFIG)
+report.html: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) --report
 
 
