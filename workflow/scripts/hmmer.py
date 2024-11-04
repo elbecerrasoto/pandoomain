@@ -72,46 +72,36 @@ def parse_hit(hit, genome_id):
     return Results(*out)
 
 
-def run_genomes(genome_paths, hmms_files):
+def run_genome(genome_path, hmms_files):
+    genome_id = parse_genome(genome_path)
 
-    def run_genome(genome_path):
-        genome_id = parse_genome(genome_path)
+    with SequenceFile(genome_path, digital=True) as genome_file:
+        genome = genome_file.read_block()
+        results = hmmsearch(hmms_files, genome, bit_cutoffs="trusted")
 
-        with SequenceFile(genome_path, digital=True) as genome_file:
-            genome = genome_file.read_block()
-            results = hmmsearch(hmms_files, genome, bit_cutoffs="trusted")
+    hittup = []
+    for top_hits in results:
+        for hit in top_hits:
+            if hit.included:
+                parsed = parse_hit(hit, genome_id)
+                hittup.append(parsed)
 
-        hittup = []
-        for top_hits in results:
-            for hit in top_hits:
-                if hit.included:
-                    parsed = parse_hit(hit, genome_id)
-                    hittup.append(parsed)
+    out = {}
+    out[genome_id] = hittup
 
-        out = {}
-        out[genome_id] = hittup
-
-        return out
-
-    merged = {}
-    for resultD in map(run_genome, genome_paths):
-        merged |= resultD
-
-    return merged
+    return out
 
 
 if __name__ == "__main__":
 
     with open(GENOMES_FILE, "r") as genomes_file:
         genomes_paths = [Path(line.rstrip()) for line in genomes_file]
-        n_batches = len(genomes_paths)
-        batches = np.array_split(np.array(genomes_paths), n_batches)
 
     hmms_files = get_hmms(QUERIES_DIR)
-    worker = partial(run_genomes, hmms_files=hmms_files)
+    worker = partial(run_genome, hmms_files=hmms_files)
 
     with Pool() as pool:
-        results = pool.imap_unordered(worker, batches)
+        results = pool.imap_unordered(worker, genomes_paths)
         pool.close()
         pool.join()
 
