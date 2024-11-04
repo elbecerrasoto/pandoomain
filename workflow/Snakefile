@@ -4,15 +4,6 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/hmmer.tsv",
-        f"{RESULTS}/genomes_metadata.tsv",
-        f"{RESULTS}/.domains_faas.sentinel",
-        f"{RESULTS}/all.faa",
-        f"{RESULTS}/iscan.tsv",
-        f"{RESULTS}/archs.tsv",
-        f"{RESULTS}/taxallnomy.tar.gz",
-        f"{RESULTS}/taxallnomy_lin_name.tsv",
-        f"{RESULTS}/genomes_ranks.tsv",
         f"{RESULTS}/absence_presence.tsv",
 
 
@@ -183,7 +174,6 @@ rule join_genomes_taxallnomy:
 rule get_absence_presence:
     input:
         taxa=rules.join_genomes_taxallnomy.output,
-        genomes=rules.get_metadata.output,
         proteins=rules.hmmer.output,
         domains=rules.get_archs.output.archs,
     output:

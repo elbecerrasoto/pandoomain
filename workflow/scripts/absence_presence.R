@@ -9,18 +9,16 @@ argv <- commandArgs(trailingOnly = TRUE)
 
 # Inputs
 TAXA <- argv[[1]]
-GENOMES <- argv[[2]]
-PROTEINS <- argv[[3]]
-DOMAINS <- argv[[4]]
+PROTEINS <- argv[[2]]
+DOMAINS <- argv[[3]]
 
 # Outputs
-OUT_TGPD <- argv[[5]]
-OUT_ABSENCE_PRESENCE <- argv[[6]]
+OUT_TGPD <- argv[[4]]
+OUT_ABSENCE_PRESENCE <- argv[[5]]
 
-## GENOMES <- "tests/results/genomes_metadata.tsv"
+## TAXA <- "tests/results/genomes_ranks.tsv"
 ## PROTEINS <- "tests/results/hmmer.tsv"
 ## DOMAINS <- "tests/results/archs.tsv"
-## TAXA <- "tests/results/genomes_ranks.tsv"
 
 
 TAXA_SEL <- c(
@@ -33,9 +31,6 @@ TAXA_SEL <- c(
 
 ranks <- read_tsv(TAXA, show_col_types = FALSE) |>
   select(all_of(TAXA_SEL))
-genomes <- read_tsv(GENOMES, show_col_types = FALSE) |>
-  select(genome, tax_id) |>
-  mutate(tax_id = as.integer(tax_id))
 proteins <- read_tsv(PROTEINS, show_col_types = FALSE) |>
   select(genome, pid)
 domains <- read_tsv(DOMAINS, show_col_types = FALSE) |>
@@ -46,7 +41,8 @@ domains <- read_tsv(DOMAINS, show_col_types = FALSE) |>
 # 1-m one-to-many
 # m-m many-to-many
 
-TGPD <- genomes |>
+TGPD <- ranks |>
+  select(tax_id, genome) |>
   left_join(proteins, join_by(genome),
     relationship = "many-to-many"
   ) |>
