@@ -4,13 +4,6 @@ from pathlib import Path
 import pandas as pd
 
 
-def read_yaml(y: Path) -> dict:
-    import yaml
-
-    with open(y, "r") as yfile:
-        return yaml.safe_load(yfile)
-
-
 def bold_red(msg: str) -> str:
     # error format
     # https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal

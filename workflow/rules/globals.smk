@@ -4,15 +4,15 @@ from snakemake.utils import min_version
 
 import utils
 
-min_version("8.5.3")
+min_version("8.20.5")
 
 
 configfile: "config/config.yaml"
 
 
 # Caching used for testing
-envvars:
-    "SNAKEMAKE_OUTPUT_CACHE",
+# envvars:
+#     "SNAKEMAKE_OUTPUT_CACHE",
 
 
 GENOME_REGEX = r"GC[AF]_\d+\.\d"
@@ -36,19 +36,13 @@ assert IN_QUERIES.exists(), (
     + f"\nTried to look it up at: {IN_QUERIES}."
 )
 
-IN_HEADERS = Path("config/headers.yaml")
-
-assert IN_HEADERS.exists(), (
-    utils.bold_red("Input blast fields file not found.")
-    + f"\nTried to look it up at: {IN_HEADERS}."
-)
 
 RESULTS = Path(config["results"])
 RESULTS_GENOMES = RESULTS / "genomes"
 USED_GENOMES = RESULTS / "genomes.tsv"
 LOGS = RESULTS / "logs"
 
-# Optionals keys on YAML
+# Optionals keys on config.yaml
 ONLY_REFSEQ = config.setdefault("only_refseq", False)
 
 OFFLINE_MODE = config.setdefault("offline", False)
@@ -60,16 +54,24 @@ RESULTS.mkdir(
 )  # Need it 'cause the output of sort_filter_genomes
 GENOMES = utils.sort_filter_genomes(IN_GENOMES, USED_GENOMES, ONLY_REFSEQ)
 
+ISCAN_HEADER = "\t".join(
+    [
+        "pid",
+        "md5",
+        "length",
+        "analysis",
+        "memberDB",
+        "memberDB_txt",
+        "start",
+        "end",
+        "score",
+        "recommended",
+        "date",
+        "interpro",
+        "interpro_txt",
+        "GO",
+        "residue",
+    ]
+)
 
-HEADERS = utils.read_yaml(IN_HEADERS)
-
-CDS_HEADER_L = HEADERS["CDS_HEADER"]
-CDS_HEADER = "\t".join(CDS_HEADER_L)
-
-
-ISCAN_HEADER_L = HEADERS["ISCAN_HEADER"]
-ISCAN_HEADER = "\t".join(ISCAN_HEADER_L)
-
-
-ALL_CDS = utils.for_all_genomes("_cds.tsv", RESULTS_GENOMES, GENOMES)
 ALL_FAAS = utils.for_all_genomes(".faa", RESULTS_GENOMES, GENOMES)
