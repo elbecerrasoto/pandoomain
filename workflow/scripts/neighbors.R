@@ -27,7 +27,7 @@ OUT_COLS <- c(
   "contig",
   "strand",
   "locus_tag",
-  "product",
+  "product"
 )
 
 GENOME_RE <- "GC[FA]_[0-9]+\\.[0-9]"
@@ -37,21 +37,21 @@ GENOME_RE <- "GC[FA]_[0-9]+\\.[0-9]"
 
 
 read_gff <- function(path) {
-  genome <- str_extract(path, GENOME_RE)
+  igenome <- str_extract(path, GENOME_RE)
 
   # segmenTools is not well behaved
-  # so it sends messages to stdout
-  # that should be on stderr
-  sink(stderr(), type = "output")
+  # it sends messages to stdout
+  sink("/dev/null", type = "output")
+  gff <- segmenTools::gff2tab(path)
+  sink()
 
-  gff <- segmenTools::gff2tab(path) |>
+  gff |>
     tibble() |>
     filter(feature == "CDS") |> # only CDS
     select_if({
       \(x) !(all(is.na(x)) | all(x == ""))
     }) # exclude empty cols
 
-  sink()
 
   # Remove pseudogenes
   if ("pseudo" %in% names(gff)) {
@@ -75,7 +75,7 @@ read_gff <- function(path) {
   # add genome, and rename to consistent names across the pipeline
   gff <- gff |>
     rename(pid = protein_id, contig = seqname) |>
-    mutate(genome = genome)
+    mutate(genome = igenome)
 
   # fix missing columns (if any)
 
@@ -103,4 +103,7 @@ read_gff <- function(path) {
 
 gff <- read_gff(GFF)
 hmmer <- read_tsv(HMMER, show_col_types = FALSE)
-genome <- str_extract(GFF, GENOME_RE)
+igenome <- str_extract(GFF, GENOME_RE)
+
+hmmer <- hmmer |>
+  filter(genome == igenome)
