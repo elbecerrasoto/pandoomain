@@ -12,8 +12,10 @@ suppressPackageStartupMessages({
 # Globals ----
 
 ARGV <- commandArgs(trailingOnly = TRUE)
-GFF <- ARGV[[1]]
-# GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
+## GFF <- ARGV[[1]]
+GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
+## HMMER <- ARGV[[2]]
+HMMER <- "tests/results/hmmer.tsv"
 
 OUT_COLS <- c(
   "genome",
@@ -97,4 +99,8 @@ read_gff <- function(path) {
 }
 
 
-# Helpers ----
+# Code ----
+
+gff <- read_gff(GFF)
+hmmer <- read_tsv(HMMER, show_col_types = FALSE)
+genome <- str_extract(GFF, GENOME_RE)
