@@ -151,18 +151,15 @@ for (i in seq_along(rows)) {
   subgff <- gff[s:e, ] |>
     filter(contig == CONTIG)
 
-  bottom <- head(subgff$row, 1)
+  bottom <- min(subgff$row)
   center <- rows[i]
-  top <- tail(subgff$row, 1)
-  neiseq <- get_neiseq(bottom, center, top)
-
-  genome <- subgff$genome[1]
-  neid <- str_flatten(c(genome, center, N), "_")
+  top <- max(subgff$row)
+  neiseqs <- get_neiseq(bottom, center, top)
 
   outi <- subgff |>
     mutate(
-      neid = neid,
-      neiseq = neiseq
+      nei = i,
+      neioff = neiseqs
     )
 
   OUT[[i]] <- outi
@@ -170,13 +167,33 @@ for (i in seq_along(rows)) {
   # TODO: Add query info
 }
 
+
 x <- bind_rows(OUT)
 
-SELECT <- c("neid", "neiseq", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig", "genome")
+SELECT <- c("genome", "nei", "neioff", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig")
 
-x |>
-  select(all_of(SELECT)) |>
-  view()
+x <- x |>
+  select(all_of(SELECT))
+
+hmmer |>
+  distinct(genome, pid, query) |>
+  right_join(x, join_by(genome, pid),
+    relationship = "many-to-many"
+  )
+
+# One Hot Encoding
+# absence_presence <- TGPD |>
+#   select(-pid) |>
+#   distinct() |>
+#   mutate(presence = TRUE) |>
+#   pivot_wider(
+#     names_from = domain,
+#     values_from = presence,
+#     values_fill = FALSE,
+#     names_sort = TRUE
+#   ) |>
+#   select(-any_of("NA"))
+
 
 # neid genome_row_N
 # TODO: generate Sequence
