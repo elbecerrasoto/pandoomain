@@ -131,7 +131,16 @@ gff <- gff |>
 hmmer <- read_tsv(HMMER, show_col_types = FALSE)
 
 hmmer <- hmmer |>
-  filter(genome == igenome)
+  filter(genome == igenome) |>
+  distinct(genome, pid, query) |>
+  group_by(pid) |>
+  summarize(queries = list(query))
+
+queries <- hmmer$queries
+names(queries) <- hmmer$pid
+
+queries
+class(queries[["WP_072173970.1"]])
 
 pids <- unique(hmmer$pid)
 
@@ -139,11 +148,15 @@ hits <- gff |>
   filter(pid %in% pids)
 
 rows <- hits$row
+pids <- hits$pid
+
 starts <- if_else(rows + N <= nrow(gff), rows + N, nrow(gff))
 ends <- if_else(rows - N >= 1, rows - N, 1)
 
 OUT <- vector(length = length(rows), mode = "list")
 for (i in seq_along(rows)) {
+  matched_queries <- queries[pids[i]]
+
   s <- starts[i]
   e <- ends[i]
   CONTIG <- gff[rows[i], ]$contig
@@ -159,44 +172,32 @@ for (i in seq_along(rows)) {
   outi <- subgff |>
     mutate(
       nei = i,
-      neioff = neiseqs
+      neioff = neiseqs,
+      queries = matched_queries
     )
 
   OUT[[i]] <- outi
-
-  # TODO: Add query info
 }
 
 
 x <- bind_rows(OUT)
 
-SELECT <- c("genome", "nei", "neioff", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig")
+SELECT <- c("genome", "nei", "neioff", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig", "queries")
 
 x <- x |>
   select(all_of(SELECT))
 
-hmmer |>
-  distinct(genome, pid, query) |>
-  right_join(x, join_by(genome, pid),
-    relationship = "many-to-many"
+y <- x |>
+  group_by(pid) |>
+  reframe(query = unlist(queries)) |>
+  mutate(presence = TRUE) |>
+  pivot_wider(
+    names_from = query,
+    values_from = presence,
+    values_fill = FALSE,
+    names_sort = TRUE
   )
 
-# One Hot Encoding
-# absence_presence <- TGPD |>
-#   select(-pid) |>
-#   distinct() |>
-#   mutate(presence = TRUE) |>
-#   pivot_wider(
-#     names_from = domain,
-#     values_from = presence,
-#     values_fill = FALSE,
-#     names_sort = TRUE
-#   ) |>
-#   select(-any_of("NA"))
-
-
-# neid genome_row_N
-# TODO: generate Sequence
-# also write them by query
-# keep a one hot encoding of each query
-# to generate a single table per query
+z <- left_join(y, x, join_by(pid)) |>
+  relocate(all_of(SELECT)) |>
+  arrange(genome, nei, neioff)
