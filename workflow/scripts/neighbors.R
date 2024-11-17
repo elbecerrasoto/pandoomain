@@ -105,10 +105,16 @@ read_gff <- function(path) {
 }
 
 
-zipf <- function(x, y) {
-  M <- max(length(x), length(y))
-  map(1:M, \(i) c(x[i], y[i]))
+get_neiseq <- function(bottom, center, top) {
+  ll <- center - bottom # length left
+  lr <- top - center # length right
+
+  left <- if (ll > 0) -ll:-1 else NULL
+  right <- if (lr > 0) 1:lr else NULL
+
+  c(left, 0L, right)
 }
+
 
 # Code ----
 
@@ -136,27 +142,44 @@ rows <- hits$row
 starts <- if_else(rows + N <= nrow(gff), rows + N, nrow(gff))
 ends <- if_else(rows - N >= 1, rows - N, 1)
 
+OUT <- vector(length = length(rows), mode = "list")
 for (i in seq_along(rows)) {
   s <- starts[i]
   e <- ends[i]
   CONTIG <- gff[rows[i], ]$contig
-  gff[s:e, ] |>
-    filter(contig == CONTIG) |>
-    print()
+
+  subgff <- gff[s:e, ] |>
+    filter(contig == CONTIG)
+
+  bottom <- head(subgff$row, 1)
+  center <- rows[i]
+  top <- tail(subgff$row, 1)
+  neiseq <- get_neiseq(bottom, center, top)
+
+  genome <- subgff$genome[1]
+  neid <- str_flatten(c(genome, center, N), "_")
+
+  outi <- subgff |>
+    mutate(
+      neid = neid,
+      neiseq = neiseq
+    )
+
+  OUT[[i]] <- outi
+
+  # TODO: Add query info
 }
+
+x <- bind_rows(OUT)
+
+SELECT <- c("neid", "neiseq", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig", "genome")
+
+x |>
+  select(all_of(SELECT)) |>
+  view()
 
 # neid genome_row_N
 # TODO: generate Sequence
 # also write them by query
 # keep a one hot encoding of each query
-
-# neiseq <- function(bottom, center, top) {
-#   left <- if_else
-#   mid <- 0L
-#   right
-#   
-#   c(-((center - bottom):1), 0:(top - center))
-# }
-# 
-# 
-# neiseq(34, 34, 34)
+# to generate a single table per query
