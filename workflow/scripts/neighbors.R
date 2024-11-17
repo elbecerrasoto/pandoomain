@@ -12,10 +12,16 @@ suppressPackageStartupMessages({
 # Globals ----
 
 ARGV <- commandArgs(trailingOnly = TRUE)
-## GFF <- ARGV[[1]]
-GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
-## HMMER <- ARGV[[2]]
+
 HMMER <- "tests/results/hmmer.tsv"
+# HMMER <- ARGV[[1]]
+
+N <- 8
+# N <- ARGV[[2]]
+
+GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
+# GFF <- ARGV[[3]]
+
 
 OUT_COLS <- c(
   "genome",
@@ -45,7 +51,7 @@ read_gff <- function(path) {
   gff <- segmenTools::gff2tab(path)
   sink()
 
-  gff |>
+  gff <- gff |>
     tibble() |>
     filter(feature == "CDS") |> # only CDS
     select_if({
@@ -99,11 +105,58 @@ read_gff <- function(path) {
 }
 
 
+zipf <- function(x, y) {
+  M <- max(length(x), length(y))
+  map(1:M, \(i) c(x[i], y[i]))
+}
+
 # Code ----
 
-gff <- read_gff(GFF)
-hmmer <- read_tsv(HMMER, show_col_types = FALSE)
+# how to declare hmmer as RAM object?
+# declare hmmer as a resource
+# and model it as a FIFO (pipe).
 igenome <- str_extract(GFF, GENOME_RE)
+
+gff <- read_gff(GFF)
+gff <- gff |>
+  mutate(row = 1:nrow(gff)) |>
+  relocate(row)
+
+hmmer <- read_tsv(HMMER, show_col_types = FALSE)
 
 hmmer <- hmmer |>
   filter(genome == igenome)
+
+pids <- unique(hmmer$pid)
+
+hits <- gff |>
+  filter(pid %in% pids)
+
+rows <- hits$row
+starts <- if_else(rows + N <= nrow(gff), rows + N, nrow(gff))
+ends <- if_else(rows - N >= 1, rows - N, 1)
+
+for (i in seq_along(rows)) {
+  s <- starts[i]
+  e <- ends[i]
+  CONTIG <- gff[rows[i], ]$contig
+  gff[s:e, ] |>
+    filter(contig == CONTIG) |>
+    print()
+}
+
+# neid genome_row_N
+# TODO: generate Sequence
+# also write them by query
+# keep a one hot encoding of each query
+
+# neiseq <- function(bottom, center, top) {
+#   left <- if_else
+#   mid <- 0L
+#   right
+#   
+#   c(-((center - bottom):1), 0:(top - center))
+# }
+# 
+# 
+# neiseq(34, 34, 34)
