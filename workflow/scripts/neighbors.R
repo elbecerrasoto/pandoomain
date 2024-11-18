@@ -118,9 +118,6 @@ get_neiseq <- function(bottom, center, top) {
 
 # Code ----
 
-# how to declare hmmer as RAM object?
-# declare hmmer as a resource
-# and model it as a FIFO (pipe).
 igenome <- str_extract(GFF, GENOME_RE)
 
 gff <- read_gff(GFF)
@@ -138,9 +135,6 @@ hmmer <- hmmer |>
 
 queries <- hmmer$queries
 names(queries) <- hmmer$pid
-
-queries
-class(queries[["WP_072173970.1"]])
 
 pids <- unique(hmmer$pid)
 
