@@ -6,38 +6,60 @@ suppressPackageStartupMessages({
   library(rlang) # warnings utils
   library(segmenTools)
   library(glue)
+  library(furrr)
 })
 
 
 # Globals ----
 
 ARGV <- commandArgs(trailingOnly = TRUE)
-## GFF <- ARGV[[1]]
-GFF <- "tests/results/genomes/GCF_001286845.1/GCF_001286845.1.gff"
-## HMMER <- ARGV[[2]]
-HMMER <- "tests/results/hmmer.tsv"
 
-OUT_COLS <- c(
-  "genome",
-  "pid",
-  "gene",
-  "order",
-  "start",
-  "end",
-  "contig",
-  "strand",
-  "locus_tag",
-  "product"
-)
+CORES <- as.integer(ARGV[1])
+# CORES <- 12
 
-GENOME_RE <- "GC[FA]_[0-9]+\\.[0-9]"
+N <- as.integer(ARGV[2])
+# N <- 8
+
+GENOMES_DIR <- ARGV[3]
+# GENOMES_DIR <- "tests/results/genomes"
+
+HMMER_FILE <- ARGV[4]
+# HMMER_FILE <- "tests/results/hmmer.tsv"
+
+HMMER <- read_tsv(HMMER_FILE, show_col_types = FALSE)
+GENOMES <- unique(HMMER$genome)
+GFFS_PATHS <- str_c(GENOMES_DIR, "/", GENOMES, "/", GENOMES, ".gff")
+
+# multicore is faster, but does not work on interactive session
+if (interactive()) plan(multisession, workers = CORES) else plan(multicore, workers = CORES)
+
+
+SELECT <- c("genome", "nei", "neioff", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig", "queries")
 
 
 # Helpers ----
 
+extract_genome <- function(path) {
+  GENOME_RE <- "GC[FA]_[0-9]+\\.[0-9]"
+  str_extract(path, GENOME_RE)
+}
+
 
 read_gff <- function(path) {
-  igenome <- str_extract(path, GENOME_RE)
+  OUT_COLS <- c(
+    "genome",
+    "pid",
+    "gene",
+    "order",
+    "start",
+    "end",
+    "contig",
+    "strand",
+    "locus_tag",
+    "product"
+  )
+
+  igenome <- extract_genome(path)
 
   # segmenTools is not well behaved
   # it sends messages to stdout
@@ -45,7 +67,7 @@ read_gff <- function(path) {
   gff <- segmenTools::gff2tab(path)
   sink()
 
-  gff |>
+  gff <- gff |>
     tibble() |>
     filter(feature == "CDS") |> # only CDS
     select_if({
@@ -82,7 +104,7 @@ read_gff <- function(path) {
   present <- OUT_COLS %in% names(gff)
   absent <- OUT_COLS[!present]
 
-  msg <- glue("The following columns were not present:\n{str_flatten(absent, collapse = ' ')}\nOn the file:\n{GFF}")
+  msg <- glue("The following columns were not present:\n{str_flatten(absent, collapse = ' ')}\nOn the file:\n{path}")
 
   if (!all(present)) {
     warn(msg)
@@ -99,11 +121,113 @@ read_gff <- function(path) {
 }
 
 
+get_neiseq <- function(bottom, center, top) {
+  ll <- center - bottom # length left
+  lr <- top - center # length right
+
+  left <- if (ll > 0) -ll:-1 else NULL
+  right <- if (lr > 0) 1:lr else NULL
+
+  c(left, 0L, right)
+}
+
+
+print_tibble <- function(tib) {
+  format_tsv(tib) |>
+    writeLines(stdout(), sep = "")
+}
+
+queries2onehot <- function(neighbors) {
+  queries_onehot <- neighbors |>
+    group_by(genome, pid) |>
+    reframe(query = unlist(queries)) |>
+    mutate(presence = TRUE) |>
+    pivot_wider(
+      names_from = query,
+      values_from = presence,
+      values_fill = FALSE,
+      names_sort = TRUE
+    )
+
+  out <- left_join(queries_onehot, neighbors, join_by(genome, pid),
+    relationship = "many-to-many"
+  ) |>
+    relocate(all_of(SELECT)) |>
+    arrange(genome, nei, neioff)
+
+  out
+}
+
 # Code ----
 
-gff <- read_gff(GFF)
-hmmer <- read_tsv(HMMER, show_col_types = FALSE)
-igenome <- str_extract(GFF, GENOME_RE)
 
-hmmer <- hmmer |>
-  filter(genome == igenome)
+process_gff <- function(gff, hmmer) {
+  queries <- hmmer$queries
+  names(queries) <- hmmer$pid
+
+  pids <- unique(hmmer$pid)
+
+  hits <- gff |>
+    filter(pid %in% pids)
+
+  rows <- hits$row
+  pids <- hits$pid
+
+  starts <- if_else(rows + N <= nrow(gff), rows + N, nrow(gff))
+  ends <- if_else(rows - N >= 1, rows - N, 1)
+
+  out <- vector(length = length(rows), mode = "list")
+  for (i in seq_along(rows)) {
+    matched_queries <- queries[pids[i]]
+
+    s <- starts[i]
+    e <- ends[i]
+    icontig <- gff[rows[i], ]$contig
+
+    subgff <- gff[s:e, ] |>
+      filter(contig == icontig)
+
+    bottom <- min(subgff$row)
+    center <- rows[i]
+    top <- max(subgff$row)
+    neiseqs <- get_neiseq(bottom, center, top)
+
+    outi <- subgff |>
+      mutate(
+        nei = i,
+        neioff = neiseqs,
+        queries = matched_queries
+      )
+
+    out[[i]] <- outi
+  }
+
+  bind_rows(out)
+}
+
+
+get_neighbors <- function(gff_path) {
+  gff <- read_gff(gff_path)
+  gff <- gff |>
+    mutate(row = 1:nrow(gff)) |>
+    relocate(row)
+
+  igenome <- extract_genome(gff_path)
+
+  hmmer <- HMMER |>
+    filter(genome == igenome) |>
+    distinct(genome, pid, query) |>
+    group_by(pid) |>
+    summarize(queries = list(query))
+
+  process_gff(gff, hmmer) |>
+    select(all_of(SELECT))
+}
+
+done <- future_map(GFFS_PATHS, get_neighbors)
+
+neighbors <- bind_rows(done)
+
+neighbors |>
+  queries2onehot() |>
+  print_tibble()
