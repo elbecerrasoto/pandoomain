@@ -5,6 +5,7 @@ include: "rules/download.smk"
 rule all:
     input:
         f"{RESULTS}/absence_presence.tsv",
+        f"{RESULTS}/neighbors.tsv",
 
 
 rule hmmer_input:
@@ -182,4 +183,19 @@ rule get_absence_presence:
     shell:
         """
         workflow/scripts/absence_presence.R {input} {output}
+        """
+
+
+rule get_neighbors:
+    input:
+        hmmer=rules.hmmer.output,
+    output:
+        neighbors=f"{RESULTS}/neighbors.tsv",
+    threads: workflow.cores
+    params:
+        N=8,
+        gdir=f"{RESULTS}/genomes",
+    shell:
+        """
+        workflow/scripts/neighbors.R {threads} {params} {input} >| {output}
         """

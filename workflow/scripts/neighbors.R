@@ -12,12 +12,19 @@ suppressPackageStartupMessages({
 
 # Globals ----
 
-# ARGV <- commandArgs(trailingOnly = TRUE)
+ARGV <- commandArgs(trailingOnly = TRUE)
 
-CORES <- 12
-N <- 8
-HMMER_FILE <- "tests/results/hmmer.tsv"
-GENOMES_DIR <- "tests/results/genomes"
+CORES <- as.integer(ARGV[1])
+# CORES <- 12
+
+N <- as.integer(ARGV[2])
+# N <- 8
+
+GENOMES_DIR <- ARGV[3]
+# GENOMES_DIR <- "tests/results/genomes"
+
+HMMER_FILE <- ARGV[4]
+# HMMER_FILE <- "tests/results/hmmer.tsv"
 
 HMMER <- read_tsv(HMMER_FILE, show_col_types = FALSE)
 GENOMES <- unique(HMMER$genome)
