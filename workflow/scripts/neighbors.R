@@ -6,6 +6,7 @@ suppressPackageStartupMessages({
   library(rlang) # warnings utils
   library(segmenTools)
   library(glue)
+  library(furrr)
 })
 
 
@@ -13,6 +14,7 @@ suppressPackageStartupMessages({
 
 # ARGV <- commandArgs(trailingOnly = TRUE)
 
+CORES <- 12
 N <- 8
 HMMER_FILE <- "tests/results/hmmer.tsv"
 GENOMES_DIR <- "tests/results/genomes"
@@ -20,6 +22,9 @@ GENOMES_DIR <- "tests/results/genomes"
 HMMER <- read_tsv(HMMER_FILE, show_col_types = FALSE)
 GENOMES <- unique(HMMER$genome)
 GFFS_PATHS <- str_c(GENOMES_DIR, "/", GENOMES, "/", GENOMES, ".gff")
+
+# multicore is faster, but does not work on interactive session
+if (interactive()) plan(multisession, workers = CORES) else plan(multicore, workers = CORES)
 
 
 # Helpers ----
@@ -202,4 +207,4 @@ get_neighbors <- function(gff_path) {
 #
 # out
 
-get_neighbors(GFFS_PATHS[[1]])
+done <- future_map(GFFS_PATHS, get_neighbors)
