@@ -27,6 +27,9 @@ GFFS_PATHS <- str_c(GENOMES_DIR, "/", GENOMES, "/", GENOMES, ".gff")
 if (interactive()) plan(multisession, workers = CORES) else plan(multicore, workers = CORES)
 
 
+SELECT <- c("genome", "nei", "neioff", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig", "queries")
+
+
 # Helpers ----
 
 extract_genome <- function(path) {
@@ -122,6 +125,32 @@ get_neiseq <- function(bottom, center, top) {
 }
 
 
+print_tibble <- function(tib) {
+  format_tsv(tib) |>
+    writeLines(stdout(), sep = "")
+}
+
+queries2onehot <- function(neighbors) {
+  queries_onehot <- neighbors |>
+    group_by(genome, pid) |>
+    reframe(query = unlist(queries)) |>
+    mutate(presence = TRUE) |>
+    pivot_wider(
+      names_from = query,
+      values_from = presence,
+      values_fill = FALSE,
+      names_sort = TRUE
+    )
+
+  out <- left_join(queries_onehot, neighbors, join_by(genome, pid),
+    relationship = "many-to-many"
+  ) |>
+    relocate(all_of(SELECT)) |>
+    arrange(genome, nei, neioff)
+
+  out
+}
+
 # Code ----
 
 
@@ -184,27 +213,14 @@ get_neighbors <- function(gff_path) {
     group_by(pid) |>
     summarize(queries = list(query))
 
-  SELECT <- c("genome", "nei", "neioff", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig", "queries")
-
   process_gff(gff, hmmer) |>
     select(all_of(SELECT))
 }
 
-# queries_onehot <- neis_raw |>
-#   group_by(pid) |>
-#   reframe(query = unlist(queries)) |>
-#   mutate(presence = TRUE) |>
-#   pivot_wider(
-#     names_from = query,
-#     values_from = presence,
-#     values_fill = FALSE,
-#     names_sort = TRUE
-#   )
-#
-# out <- left_join(queries_onehot, neis_raw, join_by(pid)) |>
-#   relocate(all_of(SELECT)) |>
-#   arrange(genome, nei, neioff)
-#
-# out
-
 done <- future_map(GFFS_PATHS, get_neighbors)
+
+neighbors <- bind_rows(done)
+
+neighbors |>
+  queries2onehot() |>
+  print_tibble()
