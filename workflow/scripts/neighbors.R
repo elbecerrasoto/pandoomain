@@ -1,5 +1,18 @@
 #!/usr/bin/Rscript
 
+# Description ----
+
+# INPUT: hmmer.tsv as ARGV[[5]]
+# OUTPUT: neighbors.tsv to stdout
+
+# It operates on the following columns
+# genome, pid, queries
+# Any input table with those columns will do
+
+# Globals ----
+
+# TEST <- TRUE
+TEST <- FALSE
 
 suppressPackageStartupMessages({
   library(tidyverse)
@@ -10,21 +23,22 @@ suppressPackageStartupMessages({
 })
 
 
-# Globals ----
-
 ARGV <- commandArgs(trailingOnly = TRUE)
 
-CORES <- as.integer(ARGV[1])
-# CORES <- 12
 
-N <- as.integer(ARGV[2])
-# N <- 8
-
-GENOMES_DIR <- ARGV[3]
-# GENOMES_DIR <- "tests/results/genomes"
-
-HMMER_FILE <- ARGV[4]
-# HMMER_FILE <- "tests/results/hmmer.tsv"
+if (!TEST) {
+  LOG <- ARGV[[1]]
+  CORES <- as.integer(ARGV[[2]])
+  N <- as.integer(ARGV[[3]])
+  GENOMES_DIR <- ARGV[[4]]
+  HMMER_FILE <- ARGV[[5]]
+} else {
+  LOG <- "/tmp/neighbors.log"
+  CORES <- 12L
+  N <- 8L
+  GENOMES_DIR <- "tests/results/genomes"
+  HMMER_FILE <- "tests/results/hmmer.tsv"
+}
 
 HMMER <- read_tsv(HMMER_FILE, show_col_types = FALSE)
 GENOMES <- unique(HMMER$genome)
@@ -142,6 +156,7 @@ queries2onehot <- function(neighbors) {
     group_by(genome, pid) |>
     reframe(query = unlist(queries)) |>
     mutate(presence = TRUE) |>
+    distinct() |>
     pivot_wider(
       names_from = query,
       values_from = presence,
@@ -224,7 +239,7 @@ get_neighbors <- function(gff_path) {
     select(all_of(SELECT))
 }
 
-done <- future_map(GFFS_PATHS, get_neighbors)
+done <- future_map(GFFS_PATHS, possibly(get_neighbors, tibble()), .progress = TRUE)
 
 neighbors <- bind_rows(done)
 
