@@ -11,8 +11,8 @@
 
 # Globals ----
 
-# TEST <- TRUE
-TEST <- FALSE
+TEST <- TRUE
+# TEST <- FALSE
 
 suppressPackageStartupMessages({
   library(tidyverse)
@@ -39,6 +39,9 @@ if (!TEST) {
   GENOMES_DIR <- "tests/results/genomes"
   HMMER_FILE <- "tests/results/hmmer.tsv"
 }
+
+
+## sink()
 
 HMMER <- read_tsv(HMMER_FILE, show_col_types = FALSE)
 GENOMES <- unique(HMMER$genome)
@@ -77,7 +80,7 @@ read_gff <- function(path) {
 
   # segmenTools is not well behaved
   # it sends messages to stdout
-  sink("/dev/null", type = "output")
+  sink(stderr(), type = "output")
   gff <- segmenTools::gff2tab(path)
   sink()
 
