@@ -11,9 +11,6 @@
 
 # Globals ----
 
-TEST <- TRUE
-# TEST <- FALSE
-
 suppressPackageStartupMessages({
   library(tidyverse)
   library(rlang) # warnings utils
@@ -26,7 +23,7 @@ suppressPackageStartupMessages({
 ARGV <- commandArgs(trailingOnly = TRUE)
 
 
-if (!TEST) {
+if (!interactive()) {
   LOG <- ARGV[[1]]
   CORES <- as.integer(ARGV[[2]])
   N <- as.integer(ARGV[[3]])
@@ -41,7 +38,8 @@ if (!TEST) {
 }
 
 
-## sink()
+# Cannot split connection, why?
+sink(file(LOG, open = "ws"), type = "message")
 
 HMMER <- read_tsv(HMMER_FILE, show_col_types = FALSE)
 GENOMES <- unique(HMMER$genome)
@@ -55,6 +53,7 @@ SELECT <- c("genome", "nei", "neioff", "order", "pid", "gene", "product", "start
 
 
 # Helpers ----
+
 
 extract_genome <- function(path) {
   GENOME_RE <- "GC[FA]_[0-9]+\\.[0-9]"
@@ -242,10 +241,22 @@ get_neighbors <- function(gff_path) {
     select(all_of(SELECT))
 }
 
-done <- future_map(GFFS_PATHS, possibly(get_neighbors, tibble()), .progress = TRUE)
+
+#
+get_neighbors_warns <- function(gff_path) {
+  tryCatch(
+    error = function(e) rlang::warn(glue("Call: get_neignbors({gff_path})\n Error: {e}")),
+    get_neighbors(gff_path)
+  )
+}
+
+
+done <- future_map(GFFS_PATHS, possibly(get_neighbors_warns, tibble()), .progress = TRUE)
 
 neighbors <- bind_rows(done)
 
 neighbors |>
   queries2onehot() |>
   print_tibble()
+
+sink()
