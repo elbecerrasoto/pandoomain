@@ -4,8 +4,7 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/absence_presence.tsv",
-        f"{RESULTS}/neighbors.tsv",
+        f"{RESULTS}/hmmer.tsv",
 
 
 rule hmmer_input:
@@ -32,7 +31,7 @@ rule hmmer:
         """
 
 
-rule domains_faas:
+rule queries_faas:
     input:
         hmmer=rules.hmmer.output,
     output:
@@ -48,22 +47,9 @@ rule domains_faas:
         """
 
 
-rule bind_faas:
-    input:
-        rules.domains_faas.output,
-    output:
-        f"{RESULTS}/all.faa",
-    params:
-        rules.domains_faas.params.out_dir,
-    shell:
-        r"""
-        cat  {params}/*.faa >| {output}
-        """
-
-
 rule interproscan_xml:
     input:
-        faa=rules.bind_faas.output,
+        faa=rules.queries_faas.output,
     output:
         xml=f"{RESULTS}/.iscan.xml",
     params:
