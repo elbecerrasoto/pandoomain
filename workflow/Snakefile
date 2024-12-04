@@ -4,7 +4,8 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/hmmer.tsv",
+        f"{RESULTS}/absence_presence.tsv",
+        f"{RESULTS}/neighbors.tsv",
 
 
 rule hmmer_input:
@@ -35,15 +36,13 @@ rule queries_faas:
     input:
         hmmer=rules.hmmer.output,
     output:
-        sentinel=f"{RESULTS}/.domains_faas.sentinel",
+        sentinel=f"{RESULTS}/queries_faas.faa",
     params:
         db=f"{RESULTS_GENOMES}",
-        out_dir=f"{RESULTS}/domains_faas",
     threads: workflow.cores
     shell:
         r"""
-        workflow/scripts/harvest.R {params.db} {threads} {input} {params.out_dir}
-        printf "`date`\\n" >| {output}
+        workflow/scripts/harvest.R {params} {threads} {input} >| {output}
         """
 
 
@@ -186,4 +185,15 @@ rule get_neighbors:
     shell:
         """
         workflow/scripts/neighbors.R {log} {threads} {params} {input} >| {output}
+        """
+
+
+rule filter_neighbors:
+    input:
+        neighbors=rules.get_neighbors.output,
+    output:
+        filtered=f"{RESULTS}/neighbors_filtered.tsv",
+    shell:
+        """
+        workflow/scripts/neighbors_filter.R {input} >| {output}
         """
