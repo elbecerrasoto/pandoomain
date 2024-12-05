@@ -6,6 +6,7 @@ rule all:
     input:
         f"{RESULTS}/neighbors.tsv",
         archs=f"{RESULTS}/archs.tsv",
+        absence_presence=f"{RESULTS}/absence_presence.tsv",
 
 
 rule hmmer_input:
@@ -121,15 +122,15 @@ rule get_archs:
         """
 
 
-# rule get_absence_presence:
-#     input:
-#         taxa=rules.join_genomes_taxallnomy.output,
-#         proteins=rules.hmmer.output,
-#         domains=rules.get_archs.output.archs,
-#     output:
-#         TGPD=f"{RESULTS}/TGPD.tsv",
-#         absence_presence=f"{RESULTS}/absence_presence.tsv",
-#     shell:
-#         """
-#         workflow/scripts/absence_presence.R {input} {output}
-#         """
+rule get_absence_presence:
+    input:
+        taxa=rules.join_genomes_taxallnomy.output,
+        proteins=rules.hmmer.output,
+        domains=rules.get_archs.output.archs,
+    output:
+        TGPD=f"{RESULTS}/TGPD.tsv",
+        absence_presence=f"{RESULTS}/absence_presence.tsv",
+    shell:
+        """
+        workflow/scripts/absence_presence.R {input} {output}
+        """
