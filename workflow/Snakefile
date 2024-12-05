@@ -5,6 +5,7 @@ include: "rules/download.smk"
 rule all:
     input:
         f"{RESULTS}/neighbors.tsv",
+        archs=f"{RESULTS}/archs.tsv",
 
 
 rule hmmer_input:
