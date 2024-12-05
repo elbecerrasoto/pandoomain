@@ -23,7 +23,8 @@ GENOMES_EMPTY = tests/genomes_empty.txt
 RESULTS = tests/results
 
 SVGS = dag.svg filegraph.svg rulegraph.svg
-CLEAN = .snakemake $(SVGS) $(RESULTS)
+PNGS = dag.png filegraph.png rulegraph.png
+CLEAN = .snakemake $(SVGS) $(PNGS) $(RESULTS)
 
 ISCAN_DATA = ~/.local/share
 ISCAN_BIN = ~/.local/bin/interproscan.sh
@@ -86,6 +87,10 @@ $(SVGS): $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) --dag       | dot -Tsvg > dag.svg
 	$(SNAKEMAKE) --configfile $(CONFIG) --rulegraph | dot -Tsvg > rulegraph.svg
 	$(SNAKEMAKE) --configfile $(CONFIG) --filegraph | dot -Tsvg > filegraph.svg
+
+
+$(PNGS): $(SVGS) $(GENOMES) $(CONFIG)
+	parallel convert -background none -size 6000x6000 {} {.}.png ::: $(SVGS) 
 
 
 report.html: $(SNAKEFILE) $(GENOMES) $(CONFIG)
