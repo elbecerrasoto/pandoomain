@@ -4,7 +4,6 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/absence_presence.tsv",
         f"{RESULTS}/neighbors.tsv",
 
 
@@ -32,11 +31,28 @@ rule hmmer:
         """
 
 
-rule queries_faas:
+rule get_neighbors:
     input:
         hmmer=rules.hmmer.output,
     output:
-        sentinel=f"{RESULTS}/queries_faas.faa",
+        neighbors=f"{RESULTS}/neighbors.tsv",
+    threads: workflow.cores
+    params:
+        N=8,
+        gdir=f"{RESULTS}/genomes",
+    log:
+        "logs/neighbors.log",
+    shell:
+        """
+        workflow/scripts/neighbors.R {log} {threads} {params} {input} >| {output}
+        """
+
+
+rule all_faas:
+    input:
+        neighbors=rules.get_neighbors.output,
+    output:
+        sentinel=f"{RESULTS}/all.faa",
     params:
         db=f"{RESULTS_GENOMES}",
     threads: workflow.cores
@@ -48,7 +64,7 @@ rule queries_faas:
 
 rule interproscan_xml:
     input:
-        faa=rules.queries_faas.output,
+        faa=rules.all_faas.output,
     output:
         xml=f"{RESULTS}/.iscan.xml",
     params:
@@ -104,96 +120,15 @@ rule get_archs:
         """
 
 
-def params_output_name(wc, output):
-    return Path(output[0]).name
-
-
-rule taxallnomy_targz:
-    output:
-        f"{RESULTS}/taxallnomy.tar.gz",
-    priority: 1
-    retries: 3
-    cache: True
-    params:
-        url="https://sourceforge.net/projects/taxallnomy/files/latest/download",
-        output_name=params_output_name,
-    shell:
-        """
-        aria2c --dir {RESULTS}\
-            --continue=true --split 12\
-            --max-connection-per-server=16\
-            --min-split-size=1M\
-            --out={params.output_name}\
-            --quiet\
-            {params.url}
-        """
-
-
-rule taxallnomy_linname:
-    input:
-        rules.taxallnomy_targz.output,
-    output:
-        f"{RESULTS}/taxallnomy_lin_name.tsv",
-    cache: True
-    params:
-        ori=f"{RESULTS}/taxallnomy_database/taxallnomy_lin_name.tab",
-    shell:
-        """
-        tar --directory={RESULTS} -vxf {input}
-        mv {params.ori} {output}
-        """
-
-
-rule join_genomes_taxallnomy:
-    input:
-        taxallnomy=rules.taxallnomy_linname.output,
-        genomes=rules.get_metadata.output,
-    output:
-        f"{RESULTS}/genomes_ranks.tsv",
-    cache: True
-    shell:
-        """
-        workflow/scripts/cross.R {input} >| {output}
-        """
-
-
-rule get_absence_presence:
-    input:
-        taxa=rules.join_genomes_taxallnomy.output,
-        proteins=rules.hmmer.output,
-        domains=rules.get_archs.output.archs,
-    output:
-        TGPD=f"{RESULTS}/TGPD.tsv",
-        absence_presence=f"{RESULTS}/absence_presence.tsv",
-    shell:
-        """
-        workflow/scripts/absence_presence.R {input} {output}
-        """
-
-
-rule get_neighbors:
-    input:
-        hmmer=rules.hmmer.output,
-    output:
-        neighbors=f"{RESULTS}/neighbors.tsv",
-    threads: workflow.cores
-    params:
-        N=8,
-        gdir=f"{RESULTS}/genomes",
-    log:
-        "logs/neighbors.log",
-    shell:
-        """
-        workflow/scripts/neighbors.R {log} {threads} {params} {input} >| {output}
-        """
-
-
-rule filter_neighbors:
-    input:
-        neighbors=rules.get_neighbors.output,
-    output:
-        filtered=f"{RESULTS}/neighbors_filtered.tsv",
-    shell:
-        """
-        workflow/scripts/neighbors_filter.R {input} >| {output}
-        """
+# rule get_absence_presence:
+#     input:
+#         taxa=rules.join_genomes_taxallnomy.output,
+#         proteins=rules.hmmer.output,
+#         domains=rules.get_archs.output.archs,
+#     output:
+#         TGPD=f"{RESULTS}/TGPD.tsv",
+#         absence_presence=f"{RESULTS}/absence_presence.tsv",
+#     shell:
+#         """
+#         workflow/scripts/absence_presence.R {input} {output}
+#         """
