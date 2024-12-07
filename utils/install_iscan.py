@@ -116,13 +116,14 @@ if __name__ == "__main__":
             try:
                 olddata_dir = Path(shutil.which("interproscan.sh")).readlink().parent
                 shutil.rmtree(olddata_dir)
-            except (OSError, FileNotFoundError) as e:
+            except (OSError, FileNotFoundError, TypeError) as e:
                 warn(
                     f"""Found a non-fatal error: {e}
 Probably causes:
     + interproscan.sh is not in the PATH
     + it is not a symbolyc link
-    + it points to a non-existing file."""
+    + it points to a non-existing file
+"""
                 )
 
     # create download directory
