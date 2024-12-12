@@ -40,7 +40,7 @@ assert IN_QUERIES.exists(), (
 RESULTS = Path(config["results"])
 RESULTS_GENOMES = RESULTS / "genomes"
 USED_GENOMES = RESULTS / "genomes.tsv"
-LOGS = RESULTS / "logs"
+LOGS = Path(config["results"])
 
 # Optionals keys on config.yaml
 ONLY_REFSEQ = config.setdefault("only_refseq", False)

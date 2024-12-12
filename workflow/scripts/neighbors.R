@@ -24,11 +24,10 @@ ARGV <- commandArgs(trailingOnly = TRUE)
 
 
 if (!interactive()) {
-  LOG <- ARGV[[1]]
-  CORES <- as.integer(ARGV[[2]])
-  N <- as.integer(ARGV[[3]])
-  GENOMES_DIR <- ARGV[[4]]
-  HMMER_FILE <- ARGV[[5]]
+  CORES <- as.integer(ARGV[[1]])
+  N <- as.integer(ARGV[[2]])
+  GENOMES_DIR <- ARGV[[3]]
+  HMMER_FILE <- ARGV[[4]]
 } else {
   LOG <- "/tmp/neighbors.log"
   CORES <- 12L
@@ -37,9 +36,6 @@ if (!interactive()) {
   HMMER_FILE <- "tests/results/hmmer.tsv"
 }
 
-
-# Cannot split connection, why?
-sink(file(LOG, open = "ws"), type = "message")
 
 HMMER <- read_tsv(HMMER_FILE, show_col_types = FALSE)
 GENOMES <- unique(HMMER$genome)
@@ -79,7 +75,7 @@ read_gff <- function(path) {
 
   # segmenTools is not well behaved
   # it sends messages to stdout
-  sink(stderr(), type = "output")
+  sink("/dev/null", type = "output")
   gff <- segmenTools::gff2tab(path)
   sink()
 
@@ -245,18 +241,19 @@ get_neighbors <- function(gff_path) {
 #
 get_neighbors_warns <- function(gff_path) {
   tryCatch(
-    error = function(e) rlang::warn(glue("Call: get_neignbors({gff_path})\n Error: {e}")),
+    error = function(e) {
+      rlang::warn(glue("Call: get_neignbors({gff_path})\n Error: {e}"))
+      stop()
+    },
     get_neighbors(gff_path)
   )
 }
 
 
-done <- future_map(GFFS_PATHS, possibly(get_neighbors_warns, tibble()), .progress = TRUE)
+done <- future_map(GFFS_PATHS, possibly(get_neighbors_warns, tibble()))
 
 neighbors <- bind_rows(done)
 
 neighbors |>
   queries2onehot() |>
   print_tibble()
-
-sink()
