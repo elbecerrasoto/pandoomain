@@ -24,10 +24,11 @@ ARGV <- commandArgs(trailingOnly = TRUE)
 
 
 if (!interactive()) {
-  CORES <- as.integer(ARGV[[1]])
-  N <- as.integer(ARGV[[2]])
-  GENOMES_DIR <- ARGV[[3]]
-  HMMER_FILE <- ARGV[[4]]
+  LOG <- ARGV[[1]]
+  CORES <- as.integer(ARGV[[2]])
+  N <- as.integer(ARGV[[3]])
+  GENOMES_DIR <- ARGV[[4]]
+  HMMER_FILE <- ARGV[[5]]
 } else {
   LOG <- "/tmp/neighbors.log"
   CORES <- 12L
@@ -238,11 +239,12 @@ get_neighbors <- function(gff_path) {
 }
 
 
-#
-get_neighbors_warns <- function(gff_path) {
+MAIN <- function(gff_path) {
   tryCatch(
     error = function(e) {
+      sink(LOG, type = "message", append = TRUE)
       rlang::warn(glue("Call: get_neignbors({gff_path})\n Error: {e}"))
+      sink()
       stop()
     },
     get_neighbors(gff_path)
@@ -250,7 +252,7 @@ get_neighbors_warns <- function(gff_path) {
 }
 
 
-done <- future_map(GFFS_PATHS, possibly(get_neighbors_warns, tibble()))
+done <- future_map(GFFS_PATHS, possibly(MAIN, tibble()), .progress = TRUE)
 
 neighbors <- bind_rows(done)
 

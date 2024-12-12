@@ -44,7 +44,7 @@ rule get_neighbors:
         f"{LOGS}/neighbors.log",
     shell:
         """
-        workflow/scripts/neighbors.R {threads} {params} {input} 2>&1 >| {output} | tee {log}
+        workflow/scripts/neighbors.R {log} {threads} {params} {input} >| {output}
         """
 
 
