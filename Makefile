@@ -3,7 +3,7 @@ SHELL = /usr/bin/bash
 SNAKEFILE = workflow/Snakefile
 
 CORES = all
-ISCAN_VERSION = 5.70-102.0
+ISCAN_VERSION = 5.72-103.0
 CACHE = ~/.local/snakemake
 
 SETUP_CACHE = mkdir -p $(CACHE) &&\
@@ -70,7 +70,7 @@ debug: $(SNAKEFILE) (GENOMES) $(CONFIG)
 .PHONY install-iscan:
 install-iscan: utils/install_iscan.py
 	@printf "To install remove --dry-run option from script.\n\n"
-	$< --target $(ISCAN_VERSION) --data $(ISCAN_DATA) --bin $(ISCAN_BIN) --dry-run
+	$< --reinstall --target $(ISCAN_VERSION) --data $(ISCAN_DATA) --bin $(ISCAN_BIN) --dry-run
 
 
 .PHONY style:
