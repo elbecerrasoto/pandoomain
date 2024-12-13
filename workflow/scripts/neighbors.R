@@ -242,17 +242,23 @@ get_neighbors <- function(gff_path) {
 MAIN <- function(gff_path) {
   tryCatch(
     error = function(e) {
-      sink(LOG, type = "message", append = TRUE)
-      rlang::warn(glue("Call: get_neignbors({gff_path})\n Error: {e}"))
+      msg <- glue("Call: get_neignbors({gff_path})\n Error: {e}")
+      sink(LOG, type = "message")
+      rlang::warn(msg)
       sink()
-      stop()
+      stop(msg)
     },
-    get_neighbors(gff_path)
+    {
+      neighbors <- get_neighbors(gff_path)
+      cat(".", file = stderr())
+      flush.console()
+      neighbors
+    }
   )
 }
 
 
-done <- future_map(GFFS_PATHS, possibly(MAIN, tibble()), .progress = TRUE)
+done <- future_map(GFFS_PATHS, possibly(MAIN, tibble()))
 
 neighbors <- bind_rows(done)
 
