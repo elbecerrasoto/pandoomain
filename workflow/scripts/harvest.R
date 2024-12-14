@@ -47,8 +47,8 @@ write_genome <- function(genome_tib) {
   faa <- read.fasta(in_genome, seqtype = "AA", strip.desc = TRUE)
   faa <- faa[names(faa) %in% pids]
 
-  cat(".", file = stderr())
-  flush.console()
+  #  cat(".", file = stderr())
+  #  flush.console()
 
   faa
 }

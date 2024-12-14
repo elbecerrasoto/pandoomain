@@ -35,7 +35,7 @@ rule get_neighbors:
     input:
         hmmer=rules.hmmer.output,
     output:
-        neighbors=f"{RESULTS}/neighbors.tsv",
+        neighbors=ensure(f"{RESULTS}/neighbors.tsv", non_empty=True),
     threads: workflow.cores
     params:
         N=8,

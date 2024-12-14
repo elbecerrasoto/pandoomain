@@ -250,8 +250,8 @@ MAIN <- function(gff_path) {
     },
     {
       neighbors <- get_neighbors(gff_path)
-      cat(".", file = stderr())
-      flush.console()
+      # cat(".", file = stderr())
+      # flush.console()
       neighbors
     }
   )
