@@ -60,54 +60,39 @@ rule all_faas:
         """
 
 
-rule interproscan_xml:
+rule interproscan:
     input:
         faa=rules.all_faas.output,
     output:
-        xml=f"{RESULTS}/.iscan.xml",
+        multiext(f"{RESULTS}/.iscan", ".tsv", ".xml"),
     params:
         tmp="/tmp",
+        batch=64000,
     threads: workflow.cores
     cache: True
     shell:
         """
-        interproscan.sh --formats XML\
-                        --input {input} \
-                        --outfile {output} \
-                        --cpu {threads} \
-                        --tempdir {params} \
-                        --goterms
+        workflow/scripts/faa_run.py {threads} {params} {input} {output}
         """
 
 
-rule interproscan_tsv:
+rule add_header:
     input:
-        xml=rules.interproscan_xml.output,
+        tsv=rules.interproscan.output[0],
     output:
         tsv=f"{RESULTS}/iscan.tsv",
-    cache: True
     params:
         header=ISCAN_HEADER,
-        tmp="/tmp",
     shell:
         """
-        interproscan.sh --mode convert \
-                        --formats TSV \
-                        --input {input.xml} \
-                        --outfile {output.tsv}.temp \
-                        --goterms \
-                        --enable-tsv-residue-annot
-
         # Annotate headers
-        cat - {output.tsv}.temp >| {output.tsv} <<< '{params.header}'
-
-        rm {output.tsv}.temp
+        cat - {input.tsv} <<< '{params}' >| {output}
         """
 
 
 rule get_archs:
     input:
-        rules.interproscan_tsv.output,
+        tsv=rules.add_header.output,
     output:
         archs=f"{RESULTS}/archs.tsv",
         pidrow=f"{RESULTS}/archs_pidrow.tsv",

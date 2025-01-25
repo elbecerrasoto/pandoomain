@@ -12,22 +12,22 @@ from xml.etree.ElementTree import ElementTree
 
 from Bio import SeqIO
 
-INPUT_FAA = Path(sys.argv[1])
-OUT_TSV = Path(sys.argv[2])
-OUT_XML = f"{OUT_TSV.stem}.xml"
+CPUS = int(sys.argv[1])
+XML_CMD_PARS = Path(sys.argv[2])
+BATCH_SIZE = int(sys.argv[3])
 
-LOG = Path("iscan.log")
+INPUT_FAA = Path(sys.argv[4])
+OUT_TSV = Path(sys.argv[5])
+OUT_XML = Path(sys.argv[6])
+
+TMP_FAA = XML_CMD_PARS / "tmp.faa"
+TMP_XML = XML_CMD_PARS / "tmp.xml"
+
+LOG = None  # Path("iscan.log")
 VERBOSE = True
-CLEAN_TMP = False
+CLEAN_TMP = True
 
 ENCODING = "utf-8"
-
-TMP_FAA = Path("tmp.faa")
-TMP_XML = Path("tmp.xml")
-
-BATCH_SIZE = 3
-CPUS = 12
-XML_CMD_PARS = Path("/tmp")
 
 
 def run_log(cmd, input_stream, log=None, verbose=False):
@@ -110,7 +110,7 @@ def xml_cmd_gen(output, cpus=CPUS, params=XML_CMD_PARS):
     ]
 
 
-def tsv_cmd_gen(output):
+def tsv_cmd_gen(output, params=XML_CMD_PARS):
     return [
         "interproscan.sh",
         "--mode",
@@ -121,6 +121,8 @@ def tsv_cmd_gen(output):
         f"-",
         "--outfile",
         f"{output}",
+        "--tempdir",
+        f"{params}",
         "--goterms",
         "--enable-tsv-residue-annot",
     ]
