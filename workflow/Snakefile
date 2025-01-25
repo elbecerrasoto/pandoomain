@@ -72,7 +72,7 @@ rule interproscan:
     cache: True
     shell:
         """
-        workflow/scripts/faa_run.py {threads} {params} {input} {output}
+        workflow/scripts/iscan.py {threads} {params} {input} {output}
         """
 
 
