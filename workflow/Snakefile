@@ -40,11 +40,9 @@ rule get_neighbors:
     params:
         N=8,
         gdir=f"{RESULTS}/genomes",
-    log:
-        f"{LOGS}/neighbors.log",
     shell:
         """
-        workflow/scripts/neighbors.R {log} {threads} {params} {input} >| {output}
+        workflow/scripts/neighbors.R {threads} {params} {input} >| {output}
         """
 
 

@@ -2,7 +2,7 @@
 
 # Description ----
 
-# INPUT: hmmer.tsv as ARGV[[5]]
+# INPUT: hmmer.tsv
 # OUTPUT: neighbors.tsv to stdout
 
 # It operates on the following columns
@@ -24,13 +24,11 @@ ARGV <- commandArgs(trailingOnly = TRUE)
 
 
 if (!interactive()) {
-  LOG <- ARGV[[1]]
-  CORES <- as.integer(ARGV[[2]])
-  N <- as.integer(ARGV[[3]])
-  GENOMES_DIR <- ARGV[[4]]
-  HMMER_FILE <- ARGV[[5]]
+  CORES <- as.integer(ARGV[[1]])
+  N <- as.integer(ARGV[[2]])
+  GENOMES_DIR <- ARGV[[3]]
+  HMMER_FILE <- ARGV[[4]]
 } else {
-  LOG <- "/tmp/neighbors.log"
   CORES <- 12L
   N <- 8L
   GENOMES_DIR <- "tests/results/genomes"
@@ -241,18 +239,12 @@ get_neighbors <- function(gff_path) {
 
 MAIN <- function(gff_path) {
   tryCatch(
-    error = function(e) {
-      msg <- glue("Call: get_neignbors({gff_path})\n Error: {e}")
-      sink(LOG, type = "message")
-      rlang::warn(msg)
-      sink()
+    error = function(cnd) {
+      msg <- glue("Call: get_neignbors({gff_path})\n Error: {cnd}")
       stop(msg)
     },
     {
-      neighbors <- get_neighbors(gff_path)
-      # cat(".", file = stderr())
-      # flush.console()
-      neighbors
+      get_neighbors(gff_path)
     }
   )
 }
