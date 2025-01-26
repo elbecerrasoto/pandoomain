@@ -4,7 +4,6 @@ suppressPackageStartupMessages({
   library(tidyverse)
 })
 
-set.seed(827540)
 
 argv <- commandArgs(trailingOnly = TRUE)
 
@@ -15,33 +14,41 @@ OUT <- argv[[2]]
 OUT_PIDFOCUS <- argv[[3]]
 OUT_CODE <- argv[[4]]
 
+OFFSET <- 33
+PF_INT_LEN <- 5
+PF_LEAD_CHAR <- "PF"
 
 one_lettercode <- function(doms) {
+  # Avoids invisible characters
+
   doms <- unique(doms)
 
-  OG <- c(46, 60:70, 97:122)
-  START <- 192
-  OFF <- 64 # para hacerlos todavia mas distintos
+  pfam_chars <- str_extract(doms, "\\d+")
+  stopifnot("Bad PFAM ID." = all(str_length(pfam_chars) == PF_INT_LEN))
 
-  if (length(OG) >= length(doms)) {
-    SAMPLE <- sample(OG, length(doms), replace = F)
-  } else {
-    extra <- START:(START + (length(doms) - length(OG)) + OFF)
-    SAMPLE <- sample(c(OG, extra), length(doms), replace = F)
-  }
+  pfam_ints <- as.integer(pfam_chars)
 
-  START_U <- 192 + length(doms)
-
-  STEP <- #
-    OUT <- vector(mode = "list", length = length(doms))
+  OUT <- as.list(str_split_1(intToUtf8(pfam_ints + OFFSET), ""))
   names(OUT) <- doms
 
-  i <- 1
-  for (dom in doms) {
-    Ucode <- intToUtf8(SAMPLE[[i]])
-    OUT[[dom]] <- Ucode
-    i <- i + 1
-  }
+  OUT
+}
+
+
+code_to_pfam <- function(codes) {
+  TOTAL_LEN <- PF_INT_LEN + str_length(PF_LEAD_CHAR)
+
+  pfam_ints <- utf8ToInt(codes) - OFFSET
+  pfam_chars <- as.character(pfam_ints)
+
+  appends <- map_chr(
+    PF_INT_LEN - str_length(pfam_chars),
+    \(x) ifelse(x > 0, str_flatten(rep("0", x)), "")
+  )
+
+  OUT <- str_c(PF_LEAD_CHAR, appends, pfam_chars)
+  stopifnot("Bad PFAM ID" = all(str_length(OUT) == TOTAL_LEN))
+
   OUT
 }
 
