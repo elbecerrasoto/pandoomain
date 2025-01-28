@@ -16,9 +16,11 @@ DOMAINS <- argv[[3]]
 OUT_TGPD <- argv[[4]]
 OUT_ABSENCE_PRESENCE <- argv[[5]]
 
-## TAXA <- "tests/results/genomes_ranks.tsv"
-## PROTEINS <- "tests/results/hmmer.tsv"
-## DOMAINS <- "tests/results/archs.tsv"
+# TAXA <- "tests/results/genomes_ranks.tsv"
+# PROTEINS <- "tests/results/hmmer.tsv"
+# DOMAINS <- "tests/results/archs.tsv"
+# OUT_TGPD <- "tgpd.tsv"
+# OUT_ABSENCE_PRESENCE <- "abs.tsv"
 
 
 TAXA_SEL <- c(

@@ -107,8 +107,11 @@ git-config:
 clean:
 	@rm -rf $(CLEAN)
 	git clean -d -n
-	@printf "\nTo remove untracked files:\ngit clean -d -f\n"
-	@printf "To remove cache data:\nmake clean-cache $(CACHE)"
+	@printf "\nTo remove untracked files:\n"
+	@printf "    + git clean -d -f\n"
+	@printf "\nTo remove cache data\n"
+	@printf "at $(CACHE) run:\n"
+	@printf "    + make clean-cache\n"
 
 
 .PHONY clean-cache:

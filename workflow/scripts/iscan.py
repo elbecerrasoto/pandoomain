@@ -27,7 +27,7 @@ LOG = None  # Path("iscan.log")
 VERBOSE = True
 CLEAN_TMP = True
 
-ENCODING = "utf-8"
+ENCODING = "UTF-8"
 
 
 def run_log(cmd, input_stream, log=None, verbose=False):
@@ -168,6 +168,7 @@ if __name__ == "__main__":
 
     merged = merge_ETs(*xmlETs)
     merged.write(OUT_XML, encoding=ENCODING, xml_declaration=True)
+    sp.run(["perl", "-i", "-pe", "s/ns0:|:ns0//g", f"{OUT_XML}"], check=True)
 
     tsv_cmd = tsv_cmd_gen(OUT_TSV)
     run_log(tsv_cmd, OUT_XML, LOG, VERBOSE)
