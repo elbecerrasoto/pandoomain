@@ -70,8 +70,17 @@ rule all_faas:
         faa=f"{RESULTS}/all.faa",
     shell:
         r"""
-        fasta_sort < {input} | fasta_pretty -w=80 >| {output}
-        """
+       fasta_sort < {input} 2> /dev/null | fasta_pretty -w=80 >| {output}
+
+       # assert that unsorted and sorted have the same line length
+       fun () {{
+                perl -ne 'print(length($_)."\n");' < "$1" | sort -n | uniq -c | sort -nr | head
+       }}
+
+       X="$(fun {input})"
+       Y="$(fun {output})"
+       test "$X" '==' "$Y"
+       """
 
 
 rule interproscan:
