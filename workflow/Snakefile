@@ -4,7 +4,10 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/absence_presence.tsv",
+        f"{RESULTS}/all.faa",
+
+
+#      f"{RESULTS}/.splitted.sentinel",
 
 
 rule hmmer_input:
@@ -46,17 +49,28 @@ rule get_neighbors:
         """
 
 
-rule all_faas:
+rule all_faas_raw:
     input:
         neighbors=rules.get_neighbors.output,
     output:
-        sentinel=f"{RESULTS}/all.faa",
+        faa=f"{RESULTS}/.all.unsorted.faa",
     params:
         db=f"{RESULTS_GENOMES}",
     threads: workflow.cores
     shell:
         r"""
         workflow/scripts/harvest.R {params} {threads} {input} >| {output}
+        """
+
+
+rule all_faas:
+    input:
+        neighbors=rules.all_faas_raw.output,
+    output:
+        faa=f"{RESULTS}/all.faa",
+    shell:
+        r"""
+        fasta_sort < {input} | fasta_pretty -w=80 >| {output}
         """
 
 
