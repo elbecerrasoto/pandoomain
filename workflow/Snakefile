@@ -6,6 +6,7 @@ rule all:
     input:
         f"{RESULTS}/all.faa",
         f"{RESULTS}/.faa_pieces",
+        f"{RESULTS}/iscan.tsv",
 
 
 rule hmmer_input:
@@ -132,17 +133,27 @@ rule split_faa:
 
 rule interproscan:
     input:
-        faa=rules.all_faa.output,
+        faa_dir=rules.split_faa.output,
     output:
-        multiext(f"{RESULTS}/.iscan", ".tsv", ".xml"),
+        tsv=f"{RESULTS}/iscan.tsv",
     params:
         tmp="/tmp",
-        batch=64000,
     threads: workflow.cores
     cache: True
     shell:
         """
-        workflow/scripts/iscan.py {threads} {params} {input} {output}
+        FAAs="$(find {input} -type f -name '*.faa')"
+        echo "$FAAs"
+        for faa in $FAAs;
+        do
+            interproscan.sh --formats XML, TSV\
+                            --input "$faa" \
+                            --cpu {threads} \
+                            --tempdir {params.tmp} \
+                            --goterms\
+                            --enable-tsv-residue-annot
+        done
+        echo "Hi!" >| {output}
         """
 
 
