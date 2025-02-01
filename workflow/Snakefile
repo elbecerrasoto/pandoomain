@@ -5,9 +5,7 @@ include: "rules/download.smk"
 rule all:
     input:
         f"{RESULTS}/all.faa",
-
-
-#      f"{RESULTS}/.splitted.sentinel",
+        f"{RESULTS}/.faa_pieces",
 
 
 rule hmmer_input:
@@ -50,7 +48,7 @@ rule get_neighbors:
         """
 
 
-rule all_faas_raw:
+rule all_faa_raw:
     input:
         neighbors=rules.get_neighbors.output,
     output:
@@ -64,9 +62,9 @@ rule all_faas_raw:
         """
 
 
-rule all_faas:
+rule all_faa:
     input:
-        neighbors=rules.all_faas_raw.output,
+        neighbors=rules.all_faa_raw.output,
     output:
         faa=f"{RESULTS}/all.faa",
     shell:
@@ -84,26 +82,57 @@ rule all_faas:
        """
 
 
-# rule hmmer:
-#     input:
-#         faas=rules.hmmer_input.output,
-#     output:
-#         tsv=f"{RESULTS}/hmmer.tsv",
-#     params:
-#         queries=f"{IN_QUERIES}",
-#     shell:
-#         r"""
-#         workflow/scripts/hmmer.py {params} {input} {output}
-#         """
-#     run:
-#         with open(f"{output}", "w") as fh:
-#             for faa in ALL_FAAS:
-#                 fh.write(f"{faa}\n")
+rule split_faa:
+    input:
+        faa=rules.all_faa.output,
+    output:
+        pieces=directory(f"{RESULTS}/.faa_pieces"),
+    params:
+        max_entries=156,
+    run:
+        #!/usr/bin/env python
+        from pathlib import Path
+
+        from Bio import SeqIO
+
+        IN_FAA = Path(f"{input}")
+        OUT_PIECES = Path(f"{output}")
+        BATCH_SIZE = int(f"{params}")
+        FORMAT = "fasta"
+        OUT_LEN = 80
+
+        # main
+        in_faa = SeqIO.parse(IN_FAA, FORMAT)
+        OUT_PIECES.mkdir()
+        batch = []
+        ibatch = 0
+
+
+        def write(batch, out_file, wrap=80):
+            with open(out_file, "w") as hout:
+                w = SeqIO.FastaIO.FastaWriter(hout, wrap=wrap)
+                for seq in batch:
+                    w.write_record(seq)
+
+
+        for idx, seq in enumerate(in_faa):
+            batch.append(seq)
+
+            if (idx + 1) % BATCH_SIZE == 0:
+                ibatch += 1
+                piece = OUT_PIECES / f"{ibatch}.faa"
+                write(batch, piece, OUT_LEN)
+                batch = []
+
+        if len(batch) > 0:
+            ibatch += 1
+            piece = OUT_PIECES / f"{ibatch}.faa"
+            write(batch, piece, OUT_LEN)
 
 
 rule interproscan:
     input:
-        faa=rules.all_faas.output,
+        faa=rules.all_faa.output,
     output:
         multiext(f"{RESULTS}/.iscan", ".tsv", ".xml"),
     params:
