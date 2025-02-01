@@ -21,11 +21,12 @@ rule hmmer_input:
                 fh.write(f"{faa}\n")
 
 
+# Is an error not having a hit!
 rule hmmer:
     input:
         faas=rules.hmmer_input.output,
     output:
-        tsv=f"{RESULTS}/hmmer.tsv",
+        tsv=ensure(f"{RESULTS}/hmmer.tsv", non_empty=True),
     params:
         queries=f"{IN_QUERIES}",
     shell:
@@ -81,6 +82,23 @@ rule all_faas:
        Y="$(fun {output})"
        test "$X" '==' "$Y"
        """
+
+
+# rule hmmer:
+#     input:
+#         faas=rules.hmmer_input.output,
+#     output:
+#         tsv=f"{RESULTS}/hmmer.tsv",
+#     params:
+#         queries=f"{IN_QUERIES}",
+#     shell:
+#         r"""
+#         workflow/scripts/hmmer.py {params} {input} {output}
+#         """
+#     run:
+#         with open(f"{output}", "w") as fh:
+#             for faa in ALL_FAAS:
+#                 fh.write(f"{faa}\n")
 
 
 rule interproscan:
