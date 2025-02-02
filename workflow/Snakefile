@@ -138,23 +138,66 @@ rule interproscan:
         tsv=f"{RESULTS}/iscan.tsv",
     params:
         tmp="/tmp",
+        pieces=".iscan_pieces",
     threads: workflow.cores
     cache: True
-    shell:
-        """
-        FAAs="$(find {input} -type f -name '*.faa')"
-        echo "$FAAs"
-        for faa in $FAAs;
-        do
-            interproscan.sh --formats XML, TSV\
-                            --input "$faa" \
-                            --cpu {threads} \
-                            --tempdir {params.tmp} \
-                            --goterms\
-                            --enable-tsv-residue-annot
-        done
-        echo "Hi!" >| {output}
-        """
+    run:
+        import re
+        import shutil
+        import subprocess as sp
+        from pathlib import Path
+
+        IN_DIR = Path(f"{input}")
+        OUT_FILE = Path(f"{output}")
+
+        OUT_DIR = Path(f"{params.pieces}")
+        CPUS = int(f"{threads}")
+        ISCAN_TMP = Path(f"{params.tmp}")
+
+
+        def cat(*files, out_file) -> None:
+
+            with open(out_file, "wb") as hout:
+                for file in files:
+                    with open(file, "rb") as hfile:
+                        shutil.copyfileobj(hfile, hout)
+
+                        # Output formats:
+                        # Default for protein sequences are TSV, XML and GFF3
+
+
+        def gen_cmd(in_faa):
+            cmd = [
+                "interproscan.sh",
+                "--input",
+                str(in_faa),
+                "--cpu",
+                str(CPUS),
+                "--tempdir",
+                str(ISCAN_TMP),
+                "--goterms",
+                "--enable-tsv-residue-annot",
+            ]
+            return cmd
+
+            # main
+
+
+        OUT_DIR.mkdir()
+        in_faas = [
+            (IN_DIR / i).resolve()
+            for i in os.listdir(IN_DIR)
+            if re.search(r"\d+\.faa$", i)
+        ]
+
+        for in_faa in in_faas:
+            sp.run(gen_cmd(in_faa), cwd=OUT_DIR, check=True)
+
+        out_tsvs = [
+            OUT_DIR / i for i in os.listdir(OUT_DIR) if re.search(r"\w+\.tsv$", i)
+        ]
+
+        cat(out_tsvs, out_file=OUT_FILE)
 
 
 rule add_header:
