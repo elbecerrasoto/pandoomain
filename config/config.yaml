@@ -21,3 +21,21 @@ only_refseq:
 # on NO network access.
 offline:
   false
+
+
+iscan_header:
+  - pid
+  - md5
+  - length
+  - analysis
+  - memberDB
+  - memberDB_txt
+  - start
+  - end
+  - score
+  - recommended
+  - date
+  - interpro
+  - interpro_txt
+  - GO
+  - residue

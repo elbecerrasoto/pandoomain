@@ -1,18 +1,5 @@
 from pathlib import Path
-
-from snakemake.utils import min_version
-
 import utils
-
-min_version("8.20.5")
-
-
-configfile: "config/config.yaml"
-
-
-# Caching used for testing
-# envvars:
-#     "SNAKEMAKE_OUTPUT_CACHE",
 
 
 GENOME_REGEX = r"GC[AF]_\d+\.\d"
@@ -54,24 +41,5 @@ RESULTS.mkdir(
 )  # Need it 'cause the output of sort_filter_genomes
 GENOMES = utils.sort_filter_genomes(IN_GENOMES, USED_GENOMES, ONLY_REFSEQ)
 
-ISCAN_HEADER = "\t".join(
-    [
-        "pid",
-        "md5",
-        "length",
-        "analysis",
-        "memberDB",
-        "memberDB_txt",
-        "start",
-        "end",
-        "score",
-        "recommended",
-        "date",
-        "interpro",
-        "interpro_txt",
-        "GO",
-        "residue",
-    ]
-)
 
 ALL_FAAS = utils.for_all_genomes(".faa", RESULTS_GENOMES, GENOMES)

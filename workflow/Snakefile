@@ -112,7 +112,7 @@ rule interproscan:
     input:
         faa_dir=rules.split_faa.output,
     output:
-        tsv=f"{RESULTS}/.iscan_nonheader.tsv",
+        tsv=f"{RESULTS}/.iscan_raw.tsv",
     params:
         tmp="/tmp",
         pieces=f"{RESULTS}/.pieces_iscan",
@@ -178,17 +178,15 @@ rule interproscan:
         cat(*out_tsvs, out_file=OUT_FILE)
 
 
-rule add_header:
+rule deduplicate_iscan:
     input:
         tsv=rules.interproscan.output,
     output:
         tsv=f"{RESULTS}/iscan.tsv",
-    params:
-        header=ISCAN_HEADER,
     shell:
         """
         # Annotate headers
-        cat - {input.tsv} <<< '{params}' >| {output}
+        workflow/scripts/deduplicate_iscan.R {input} >| {output}
         """
 
 
