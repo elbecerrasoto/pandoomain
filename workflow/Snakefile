@@ -4,9 +4,7 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/all.faa",
-        f"{RESULTS}/.faa_pieces",
-        f"{RESULTS}/iscan.tsv",
+        f"{RESULTS}/absence_presence.tsv",
 
 
 rule hmmer_input:
@@ -87,9 +85,9 @@ rule split_faa:
     input:
         faa=rules.all_faa.output,
     output:
-        pieces=directory(f"{RESULTS}/.faa_pieces"),
+        pieces=directory(f"{RESULTS}/.pieces_faa"),
     params:
-        max_entries=156,
+        max_entries=12000,
     run:
         #!/usr/bin/env python
         from pathlib import Path
@@ -138,7 +136,7 @@ rule interproscan:
         tsv=f"{RESULTS}/iscan.tsv",
     params:
         tmp="/tmp",
-        pieces=f"{RESULTS}/.iscan_pieces",
+        pieces=f"{RESULTS}/.pieces_iscan",
     threads: workflow.cores
     cache: True
     run:
