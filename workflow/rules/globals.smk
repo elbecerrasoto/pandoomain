@@ -1,8 +1,12 @@
 from pathlib import Path
+
 import utils
 
-
 GENOME_REGEX = r"GC[AF]_\d+\.\d"
+CONFIG_FILE = "config/config.yaml"
+
+
+configfile: CONFIG_FILE
 
 
 wildcard_constraints:

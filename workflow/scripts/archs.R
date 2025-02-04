@@ -71,17 +71,17 @@ get_arch_len <- function(arch) {
 iscan <- read_tsv(ISCAN, show_col_types = FALSE)
 
 archs <- iscan |>
-  filter(analysis == "Pfam", recommended) |>
+  filter(analysis == "Pfam") |>
   group_by(pid) |>
   reframe(
     domain = memberDB, start = start, end = end,
-    length = length, domain_txt = memberDB_txt
+    len = len, domain_txt = memberDB_txt
   ) |>
   arrange(pid, start, end) |>
   mutate(
     start = as.integer(start),
     end = as.integer(end),
-    length = as.integer(length)
+    len = as.integer(len)
   )
 
 archs <- archs |>
@@ -101,7 +101,7 @@ ONE_LETTER <- one_lettercode(archs$domain)
 
 pid_focus <- pid_focus |>
   left_join(
-    distinct(archs, pid, length),
+    distinct(archs, pid, len),
     join_by(pid)
   ) |>
   mutate(ndoms = get_arch_len(arch)) |>

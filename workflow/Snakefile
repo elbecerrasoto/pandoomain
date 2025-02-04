@@ -183,16 +183,18 @@ rule deduplicate_iscan:
         tsv=rules.interproscan.output,
     output:
         tsv=f"{RESULTS}/iscan.tsv",
+    params:
+        config=CONFIG_FILE,
     shell:
         """
         # Annotate headers
-        workflow/scripts/deduplicate_iscan.R {input} >| {output}
+        workflow/scripts/deduplicate_iscan.R {params} {input} >| {output}
         """
 
 
 rule get_archs:
     input:
-        tsv=rules.add_header.output,
+        tsv=rules.deduplicate_iscan.output,
     output:
         archs=f"{RESULTS}/archs.tsv",
         pidrow=f"{RESULTS}/archs_pidrow.tsv",
