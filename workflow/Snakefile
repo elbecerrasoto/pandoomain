@@ -138,7 +138,7 @@ rule interproscan:
         tsv=f"{RESULTS}/iscan.tsv",
     params:
         tmp="/tmp",
-        pieces=".iscan_pieces",
+        pieces=f"{RESULTS}/.iscan_pieces",
     threads: workflow.cores
     cache: True
     run:
@@ -162,11 +162,12 @@ rule interproscan:
                     with open(file, "rb") as hfile:
                         shutil.copyfileobj(hfile, hout)
 
-                        # Output formats:
-                        # Default for protein sequences are TSV, XML and GFF3
-
 
         def gen_cmd(in_faa):
+            """
+    Output formats:
+    Default for protein sequences are TSV, XML and GFF3
+    """
             cmd = [
                 "interproscan.sh",
                 "--input",
@@ -197,7 +198,7 @@ rule interproscan:
             OUT_DIR / i for i in os.listdir(OUT_DIR) if re.search(r"\w+\.tsv$", i)
         ]
 
-        cat(out_tsvs, out_file=OUT_FILE)
+        cat(*out_tsvs, out_file=OUT_FILE)
 
 
 rule add_header:
