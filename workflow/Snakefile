@@ -18,7 +18,6 @@ rule hmmer_input:
                 fh.write(f"{faa}\n")
 
 
-# Is an error not having a hit!
 rule hmmer:
     input:
         faas=rules.hmmer_input.output,
@@ -51,7 +50,7 @@ rule all_faa_raw:
     input:
         neighbors=rules.get_neighbors.output,
     output:
-        faa=f"{RESULTS}/.all.unsorted.faa",
+        faa=f"{RESULTS}/.all_unsorted.faa",
     params:
         db=f"{RESULTS_GENOMES}",
     threads: workflow.cores
@@ -133,7 +132,7 @@ rule interproscan:
     input:
         faa_dir=rules.split_faa.output,
     output:
-        tsv=f"{RESULTS}/iscan.tsv",
+        tsv=f"{RESULTS}/.iscan_nonheader.tsv",
     params:
         tmp="/tmp",
         pieces=f"{RESULTS}/.pieces_iscan",
@@ -201,7 +200,7 @@ rule interproscan:
 
 rule add_header:
     input:
-        tsv=rules.interproscan.output[0],
+        tsv=rules.interproscan.output,
     output:
         tsv=f"{RESULTS}/iscan.tsv",
     params:
