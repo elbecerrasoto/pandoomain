@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 # Works on anything
-# Does has the columts
+# that has the columns
 # genome & pid
 
 # Globals ----
@@ -20,7 +20,7 @@ CORES <- as.integer(argv[[2]])
 IN <- argv[[3]]
 
 ## DB <- "tests/results/genomes"
-## IN <- "tests/results/hmmer.tsv"
+## IN <- "tests/results/neighbors.tsv"
 ## CORES <- 12
 
 plan(multicore, workers = CORES)
@@ -37,7 +37,7 @@ Lgenomes <- neis %>%
   split(., .$genome)
 
 
-write_genome <- function(genome_tib) {
+read_genome <- function(genome_tib) {
   genome <- unique(genome_tib$genome)
   in_genome <- paste0(DB, "/", genome, "/", genome, ".faa")
   pids <- unique(genome_tib$pid)
@@ -55,7 +55,7 @@ write_genome <- function(genome_tib) {
 
 
 
-done <- future_map(Lgenomes, possibly(write_genome, NULL))
+done <- future_map(Lgenomes, possibly(read_genome, NULL))
 
 out_len <- sum(map_int(done, length))
 out <- vector(mode = "list", length = out_len)
@@ -72,13 +72,15 @@ get_headers <- function(faa) {
   map_chr(faa, \(s) attr(s, "Annot"))
 }
 
+names(out) <- get_headers(out)
+out <- out[sort(names(out))]
 
 suppressWarnings({
   # Suppresing Warning on file() call inside write.fasta
   # Warning:
   # In file(description = file.out, open = open) :
   # using 'raw = TRUE' because '/dev/stdout' is a fifo or pipe
-  write.fasta(out, get_headers(out),
+  write.fasta(out, names(out),
     "/dev/stdout",
     open = "a",
     nbchar = 80

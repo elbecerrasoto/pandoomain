@@ -1,4 +1,4 @@
-include: "rules/globals.smk"  # no rules only globals, asserts, and utils
+include: "rules/globals.smk"
 include: "rules/download.smk"
 
 
@@ -46,11 +46,11 @@ rule get_neighbors:
         """
 
 
-rule all_faa_raw:
+rule all_faa:
     input:
         neighbors=rules.get_neighbors.output,
     output:
-        faa=f"{RESULTS}/.all_unsorted.faa",
+        faa=f"{RESULTS}/all.faa",
     params:
         db=f"{RESULTS_GENOMES}",
     threads: workflow.cores
@@ -58,26 +58,6 @@ rule all_faa_raw:
         r"""
         workflow/scripts/harvest.R {params} {threads} {input} >| {output}
         """
-
-
-rule all_faa:
-    input:
-        neighbors=rules.all_faa_raw.output,
-    output:
-        faa=f"{RESULTS}/all.faa",
-    shell:
-        r"""
-       fasta_sort < {input} 2> /dev/null | fasta_pretty -w=80 >| {output}
-
-       # assert that unsorted and sorted have the same line length
-       fun () {{
-                perl -ne 'print(length($_)."\n");' < "$1" | sort -n | uniq -c | sort -nr | head
-       }}
-
-       X="$(fun {input})"
-       Y="$(fun {output})"
-       test "$X" '==' "$Y"
-       """
 
 
 rule split_faa:
