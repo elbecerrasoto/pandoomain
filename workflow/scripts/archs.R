@@ -8,11 +8,14 @@ suppressPackageStartupMessages({
 argv <- commandArgs(trailingOnly = TRUE)
 
 ISCAN <- argv[[1]]
-# ISCAN <- "tests/results/iscan.tsv"
-
 OUT <- argv[[2]]
 OUT_PIDFOCUS <- argv[[3]]
 OUT_CODE <- argv[[4]]
+
+# ISCAN <- "tests/results/iscan.tsv"
+# OUT <- "tests/results/archs.tsv"
+# OUT_PIDFOCUS <- "tests/results/archs_pidrow.tsv"
+# OUT_CODE <- "tests/results/archs_code.tsv"
 
 OFFSET <- 33
 PF_INT_LEN <- 5
@@ -27,9 +30,15 @@ one_lettercode <- function(doms) {
   stopifnot("Bad PFAM ID." = all(str_length(pfam_chars) == PF_INT_LEN))
 
   pfam_ints <- as.integer(pfam_chars)
+  stopifnot("Some extracted PFAM IDs are NA." = all(!is.na(pfam_ints)))
 
-  OUT <- as.list(str_split_1(intToUtf8(pfam_ints + OFFSET), ""))
+  stopifnot("Unicode points out of range." = all((pfam_ints + OFFSET) <= 0x10FFFF))
+  pfam_codes <- strsplit(intToUtf8(pfam_ints + OFFSET), "")[[1]]
+
+  stopifnot("Conversion to utf-8 failed." = length(pfam_codes) == length(doms))
+  OUT <- as.list(pfam_codes)
   names(OUT) <- doms
+
 
   OUT
 }
