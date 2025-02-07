@@ -52,6 +52,7 @@ rule all_faa:
     output:
         faa=f"{RESULTS}/all.faa",
     params:
+        faa_width=FAA_WIDTH,
         db=f"{RESULTS_GENOMES}",
     threads: workflow.cores
     shell:
@@ -77,7 +78,7 @@ rule split_faa:
         OUT_PIECES = Path(f"{output}")
         BATCH_SIZE = int(f"{params}")
         FORMAT = "fasta"
-        OUT_LEN = 80
+        OUT_LEN = FAA_WIDTH
 
         # main
         in_faa = SeqIO.parse(IN_FAA, FORMAT)
@@ -86,7 +87,7 @@ rule split_faa:
         ibatch = 0
 
 
-        def write(batch, out_file, wrap=80):
+        def write(batch, out_file, wrap=60):
             with open(out_file, "w") as hout:
                 w = SeqIO.FastaIO.FastaWriter(hout, wrap=wrap)
                 for seq in batch:
@@ -178,23 +179,21 @@ rule interproscan:
         cat(*out_tsvs, out_file=OUT_FILE)
 
 
-rule deduplicate_iscan:
+rule add_header_iscan:
     input:
         tsv=rules.interproscan.output,
     output:
         tsv=f"{RESULTS}/iscan.tsv",
-    params:
-        config=CONFIG_FILE,
     shell:
         """
         # Annotate headers
-        workflow/scripts/deduplicate_iscan.R {params} {input} >| {output}
+        workflow/scripts/add_header_iscan.R {params} {input} >| {output}
         """
 
 
 rule get_archs:
     input:
-        tsv=rules.deduplicate_iscan.output,
+        tsv=rules.add_header_iscan.output,
     output:
         archs=f"{RESULTS}/archs.tsv",
         pidrow=f"{RESULTS}/archs_pidrow.tsv",

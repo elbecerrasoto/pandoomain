@@ -7,14 +7,29 @@ suppressPackageStartupMessages({
 
 argv <- commandArgs(trailingOnly = TRUE)
 
-CONFIG <- argv[[1]]
-ISCAN <- argv[[2]]
+ISCAN <- argv[[1]]
 
-COL_NAMES <- read_yaml(CONFIG)$iscan_header
-
+COL_NAMES <-
+  c(
+    "pid",
+    "md5",
+    "length",
+    "analysis",
+    "memberDB",
+    "memberDB_txt",
+    "start",
+    "end",
+    "score",
+    "recommended",
+    "date",
+    "interpro",
+    "interpro_txt",
+    "GO",
+    "residue"
+  )
 INCLUDE <- c(
   "pid", "start", "end",
-  "len", "analysis", "interpro",
+  "length", "analysis", "interpro",
   "interpro_txt", "memberDB",
   "memberDB_txt"
 )

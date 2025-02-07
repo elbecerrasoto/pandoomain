@@ -84,13 +84,13 @@ archs <- iscan |>
   group_by(pid) |>
   reframe(
     domain = memberDB, start = start, end = end,
-    len = len, domain_txt = memberDB_txt
+    length = length, domain_txt = memberDB_txt
   ) |>
   arrange(pid, start, end) |>
   mutate(
     start = as.integer(start),
     end = as.integer(end),
-    len = as.integer(len)
+    length = as.integer(length)
   )
 
 archs <- archs |>
@@ -110,7 +110,7 @@ ONE_LETTER <- one_lettercode(archs$domain)
 
 pid_focus <- pid_focus |>
   left_join(
-    distinct(archs, pid, len),
+    distinct(archs, pid, length),
     join_by(pid)
   ) |>
   mutate(ndoms = get_arch_len(arch)) |>

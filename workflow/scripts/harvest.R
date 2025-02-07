@@ -15,13 +15,11 @@ suppressPackageStartupMessages({
 argv <- commandArgs(trailingOnly = TRUE)
 
 
-DB <- argv[[1]]
-CORES <- as.integer(argv[[2]])
-IN <- argv[[3]]
+FAA_WIDTH <- as.integer(argv[[1]])
+DB <- argv[[2]]
+CORES <- as.integer(argv[[3]])
+IN <- argv[[4]]
 
-## DB <- "tests/results/genomes"
-## IN <- "tests/results/neighbors.tsv"
-## CORES <- 12
 
 plan(multicore, workers = CORES)
 
@@ -83,6 +81,6 @@ suppressWarnings({
   write.fasta(out, names(out),
     "/dev/stdout",
     open = "a",
-    nbchar = 80
+    nbchar = FAA_WIDTH
   )
 })
