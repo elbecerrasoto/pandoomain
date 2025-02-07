@@ -22,9 +22,12 @@ GENOMES_EMPTY = tests/genomes_empty.txt
 
 RESULTS = tests/results
 
-SVGS = dag.svg filegraph.svg rulegraph.svg
-PNGS = dag.png filegraph.png rulegraph.png
-CLEAN = .snakemake $(SVGS) $(PNGS) $(RESULTS)
+FIG_DIR = graphs
+FIG_NAMES = dag filegraph rulegraph
+SVGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).svg)
+PNGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).png)
+
+CLEAN = .snakemake $(FIG_DIR) $(RESULTS)
 
 ISCAN_DATA = ~/.local/share
 ISCAN_BIN = ~/.local/bin/interproscan.sh
@@ -84,13 +87,14 @@ style:
 
 
 $(SVGS): $(SNAKEFILE) $(GENOMES) $(CONFIG)
-	$(SNAKEMAKE) --configfile $(CONFIG) --dag       | dot -Tsvg > dag.svg
-	$(SNAKEMAKE) --configfile $(CONFIG) --rulegraph | dot -Tsvg > rulegraph.svg
-	$(SNAKEMAKE) --configfile $(CONFIG) --filegraph | dot -Tsvg > filegraph.svg
+	mkdir -p $(FIG_DIR)
+	$(SNAKEMAKE) --configfile $(CONFIG) --dag       | dot -Tsvg > $(FIG_DIR)/dag.svg
+	$(SNAKEMAKE) --configfile $(CONFIG) --filegraph | dot -Tsvg > $(FIG_DIR)/filegraph.svg
+	$(SNAKEMAKE) --configfile $(CONFIG) --rulegraph | dot -Tsvg > $(FIG_DIR)/rulegraph.svg
 
 
 $(PNGS): $(SVGS) $(GENOMES) $(CONFIG)
-	parallel convert -background none -size 6000x6000 {} {.}.png ::: $(SVGS) 
+	parallel convert -background none -size 6000x6000 {} {.}.png ::: $(SVGS)
 
 
 report.html: $(SNAKEFILE) $(GENOMES) $(CONFIG)
@@ -117,3 +121,8 @@ clean:
 .PHONY clean-cache:
 clean-cache:
 	rm -rf $(CACHE)/*
+
+# Debugging print
+# .PHONY print-%:
+# Makefile:126: *** mixed implicit and normal rules: deprecated syntax
+print-%: ; @echo $* = $($*)
