@@ -12,6 +12,23 @@ queries:
 results:
   results
 
+# Search this many
+# neighbors upstream and downstream
+# of any hit
+n_neighbors:
+  12
+
+# Batch size
+# for interpro runs
+batch_size:
+  8000
+
+# Fasta formatting
+# NCBI uses 80
+# but it's usually 60
+faa_width:
+  80
+
 # Only use genomes
 # from NCBI RefSeq assembly
 only_refseq:

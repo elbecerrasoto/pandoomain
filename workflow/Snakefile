@@ -38,8 +38,8 @@ rule get_neighbors:
         neighbors=ensure(f"{RESULTS}/neighbors.tsv", non_empty=True),
     threads: workflow.cores
     params:
-        N=12,
-        gdir=f"{RESULTS}/genomes",
+        N=N_NEIGHBORS,
+        gdir=f"{RESULTS}/genomes",  # Se convertira en output
     shell:
         """
         workflow/scripts/neighbors.R {threads} {params} {input} >| {output}
@@ -66,7 +66,7 @@ rule split_faa:
     output:
         pieces=directory(f"{RESULTS}/.pieces_faa"),
     params:
-        max_entries=8000,
+        batch_size=BATCH_SIZE,
     run:
         #!/usr/bin/env python
         from pathlib import Path

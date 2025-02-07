@@ -33,6 +33,10 @@ RESULTS_GENOMES = RESULTS / "genomes"
 USED_GENOMES = RESULTS / "genomes.tsv"
 LOGS = RESULTS / "logs"
 
+N_NEIGHBORS = int(config["n_neighbors"])
+BATCH_SIZE = int(config["batch_size"])
+FAA_WIDTH = int(config["faa_width"])
+
 # Optionals keys on config.yaml
 ONLY_REFSEQ = config.setdefault("only_refseq", False)
 
