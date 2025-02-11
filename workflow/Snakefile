@@ -1,11 +1,10 @@
-include: "rules/globals.smk"  # no rules only globals, asserts, and utils
+include: "rules/globals.smk"
 include: "rules/download.smk"
 
 
 rule all:
     input:
         f"{RESULTS}/absence_presence.tsv",
-        f"{RESULTS}/neighbors.tsv",
 
 
 rule hmmer_input:
@@ -23,7 +22,7 @@ rule hmmer:
     input:
         faas=rules.hmmer_input.output,
     output:
-        tsv=f"{RESULTS}/hmmer.tsv",
+        tsv=ensure(f"{RESULTS}/hmmer.tsv", non_empty=True),
     params:
         queries=f"{IN_QUERIES}",
     shell:
@@ -32,83 +31,169 @@ rule hmmer:
         """
 
 
-rule domains_faas:
+rule get_neighbors:
     input:
         hmmer=rules.hmmer.output,
     output:
-        sentinel=f"{RESULTS}/.domains_faas.sentinel",
+        neighbors=ensure(f"{RESULTS}/neighbors.tsv", non_empty=True),
+    threads: workflow.cores
     params:
+        N=N_NEIGHBORS,
+        gdir=f"{RESULTS}/genomes",  # Se convertira en output
+    shell:
+        """
+        workflow/scripts/neighbors.R {threads} {params} {input} >| {output}
+        """
+
+
+rule all_faa:
+    input:
+        neighbors=rules.get_neighbors.output,
+    output:
+        faa=f"{RESULTS}/all.faa",
+    params:
+        faa_width=FAA_WIDTH,
         db=f"{RESULTS_GENOMES}",
-        out_dir=f"{RESULTS}/domains_faas",
     threads: workflow.cores
     shell:
         r"""
-        workflow/scripts/harvest.R {params.db} {threads} {input} {params.out_dir}
-        printf "`date`\\n" >| {output}
+        workflow/scripts/harvest.R {params} {threads} {input} >| {output}
         """
 
 
-rule bind_faas:
+rule split_faa:
     input:
-        rules.domains_faas.output,
+        faa=rules.all_faa.output,
     output:
-        f"{RESULTS}/all.faa",
+        pieces=directory(f"{RESULTS}/.pieces_faa"),
     params:
-        rules.domains_faas.params.out_dir,
-    shell:
-        r"""
-        cat  {params}/*.faa >| {output}
-        """
+        batch_size=BATCH_SIZE,
+    run:
+        #!/usr/bin/env python
+        from pathlib import Path
+
+        from Bio import SeqIO
+
+        IN_FAA = Path(f"{input}")
+        OUT_PIECES = Path(f"{output}")
+        BATCH_SIZE = int(f"{params}")
+        FORMAT = "fasta"
+        OUT_LEN = FAA_WIDTH
+
+        # main
+        in_faa = SeqIO.parse(IN_FAA, FORMAT)
+        OUT_PIECES.mkdir()
+        batch = []
+        ibatch = 0
 
 
-rule interproscan_xml:
+        def write(batch, out_file, wrap=60):
+            with open(out_file, "w") as hout:
+                w = SeqIO.FastaIO.FastaWriter(hout, wrap=wrap)
+                for seq in batch:
+                    w.write_record(seq)
+
+
+        for idx, seq in enumerate(in_faa):
+            batch.append(seq)
+
+            if (idx + 1) % BATCH_SIZE == 0:
+                ibatch += 1
+                piece = OUT_PIECES / f"{ibatch}.faa"
+                write(batch, piece, OUT_LEN)
+                batch = []
+
+        if len(batch) > 0:
+            ibatch += 1
+            piece = OUT_PIECES / f"{ibatch}.faa"
+            write(batch, piece, OUT_LEN)
+
+
+rule interproscan:
     input:
-        faa=rules.bind_faas.output,
+        faa_dir=rules.split_faa.output,
     output:
-        xml=f"{RESULTS}/.iscan.xml",
+        tsv=f"{RESULTS}/.iscan_raw.tsv",
     params:
         tmp="/tmp",
+        pieces=f"{RESULTS}/.pieces_iscan",
     threads: workflow.cores
     cache: True
-    shell:
-        """
-        interproscan.sh --formats XML\
-                        --input {input} \
-                        --outfile {output} \
-                        --cpu {threads} \
-                        --tempdir {params} \
-                        --goterms
-        """
+    run:
+        import re
+        import shutil
+        import subprocess as sp
+        from pathlib import Path
+
+        IN_DIR = Path(f"{input}")
+        OUT_FILE = Path(f"{output}")
+
+        OUT_DIR = Path(f"{params.pieces}")
+        CPUS = int(f"{threads}")
+        ISCAN_TMP = Path(f"{params.tmp}")
 
 
-rule interproscan_tsv:
+        def cat(*files, out_file) -> None:
+
+            with open(out_file, "wb") as hout:
+                for file in files:
+                    with open(file, "rb") as hfile:
+                        shutil.copyfileobj(hfile, hout)
+
+
+        def gen_cmd(in_faa):
+            """
+    Output formats:
+    Default for protein sequences are TSV, XML and GFF3
+    """
+            cmd = [
+                "interproscan.sh",
+                "--input",
+                str(in_faa),
+                "--cpu",
+                str(CPUS),
+                "--tempdir",
+                str(ISCAN_TMP),
+                "--goterms",
+                "--enable-tsv-residue-annot",
+            ]
+            return cmd
+
+            # main
+
+
+        OUT_DIR.mkdir()
+        in_faas = [
+            (IN_DIR / i).resolve()
+            for i in os.listdir(IN_DIR)
+            if re.search(r"\d+\.faa$", i)
+        ]
+
+        for in_faa in in_faas:
+            sp.run(gen_cmd(in_faa), cwd=OUT_DIR, check=True)
+
+        out_tsvs = [
+            OUT_DIR / i for i in os.listdir(OUT_DIR) if re.search(r"\w+\.tsv$", i)
+        ]
+
+        cat(*out_tsvs, out_file=OUT_FILE)
+
+
+rule add_header_iscan:
     input:
-        xml=rules.interproscan_xml.output,
+        tsv=rules.interproscan.output,
     output:
         tsv=f"{RESULTS}/iscan.tsv",
-    cache: True
-    params:
-        header=ISCAN_HEADER,
-        tmp="/tmp",
     shell:
         """
-        interproscan.sh --mode convert \
-                        --formats TSV \
-                        --input {input.xml} \
-                        --outfile {output.tsv}.temp \
-                        --goterms \
-                        --enable-tsv-residue-annot
-
         # Annotate headers
-        cat - {output.tsv}.temp >| {output.tsv} <<< '{params.header}'
-
-        rm {output.tsv}.temp
+        workflow/scripts/add_header_iscan.R {params} {input} >| {output}
         """
 
 
 rule get_archs:
     input:
-        rules.interproscan_tsv.output,
+        tsv=rules.add_header_iscan.output,
     output:
         archs=f"{RESULTS}/archs.tsv",
         pidrow=f"{RESULTS}/archs_pidrow.tsv",
@@ -116,59 +201,6 @@ rule get_archs:
     shell:
         """
         workflow/scripts/archs.R {input} {output}
-        """
-
-
-def params_output_name(wc, output):
-    return Path(output[0]).name
-
-
-rule taxallnomy_targz:
-    output:
-        f"{RESULTS}/taxallnomy.tar.gz",
-    priority: 1
-    retries: 3
-    cache: True
-    params:
-        url="https://sourceforge.net/projects/taxallnomy/files/latest/download",
-        output_name=params_output_name,
-    shell:
-        """
-        aria2c --dir {RESULTS}\
-            --continue=true --split 12\
-            --max-connection-per-server=16\
-            --min-split-size=1M\
-            --out={params.output_name}\
-            --quiet\
-            {params.url}
-        """
-
-
-rule taxallnomy_linname:
-    input:
-        rules.taxallnomy_targz.output,
-    output:
-        f"{RESULTS}/taxallnomy_lin_name.tsv",
-    cache: True
-    params:
-        ori=f"{RESULTS}/taxallnomy_database/taxallnomy_lin_name.tab",
-    shell:
-        """
-        tar --directory={RESULTS} -vxf {input}
-        mv {params.ori} {output}
-        """
-
-
-rule join_genomes_taxallnomy:
-    input:
-        taxallnomy=rules.taxallnomy_linname.output,
-        genomes=rules.get_metadata.output,
-    output:
-        f"{RESULTS}/genomes_ranks.tsv",
-    cache: True
-    shell:
-        """
-        workflow/scripts/cross.R {input} >| {output}
         """
 
 
@@ -183,19 +215,4 @@ rule get_absence_presence:
     shell:
         """
         workflow/scripts/absence_presence.R {input} {output}
-        """
-
-
-rule get_neighbors:
-    input:
-        hmmer=rules.hmmer.output,
-    output:
-        neighbors=f"{RESULTS}/neighbors.tsv",
-    threads: workflow.cores
-    params:
-        N=8,
-        gdir=f"{RESULTS}/genomes",
-    shell:
-        """
-        workflow/scripts/neighbors.R {threads} {params} {input} >| {output}
         """

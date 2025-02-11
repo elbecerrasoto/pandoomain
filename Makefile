@@ -3,7 +3,7 @@ SHELL = /usr/bin/bash
 SNAKEFILE = workflow/Snakefile
 
 CORES = all
-ISCAN_VERSION = 5.70-102.0
+ISCAN_VERSION = 5.72-103.0
 CACHE = ~/.local/snakemake
 
 SETUP_CACHE = mkdir -p $(CACHE) &&\
@@ -22,8 +22,12 @@ GENOMES_EMPTY = tests/genomes_empty.txt
 
 RESULTS = tests/results
 
-SVGS = dag.svg filegraph.svg rulegraph.svg
-CLEAN = .snakemake $(SVGS) $(RESULTS)
+FIG_DIR = graphs
+FIG_NAMES = dag filegraph rulegraph
+SVGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).svg)
+PNGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).png)
+
+CLEAN = .snakemake $(FIG_DIR) $(RESULTS)
 
 ISCAN_DATA = ~/.local/share
 ISCAN_BIN = ~/.local/bin/interproscan.sh
@@ -69,7 +73,7 @@ debug: $(SNAKEFILE) (GENOMES) $(CONFIG)
 .PHONY install-iscan:
 install-iscan: utils/install_iscan.py
 	@printf "To install remove --dry-run option from script.\n\n"
-	$< --target $(ISCAN_VERSION) --data $(ISCAN_DATA) --bin $(ISCAN_BIN) --dry-run
+	$< --reinstall --target $(ISCAN_VERSION) --data $(ISCAN_DATA) --bin $(ISCAN_BIN) --dry-run
 
 
 .PHONY style:
@@ -83,9 +87,14 @@ style:
 
 
 $(SVGS): $(SNAKEFILE) $(GENOMES) $(CONFIG)
-	$(SNAKEMAKE) --configfile $(CONFIG) --dag       | dot -Tsvg > dag.svg
-	$(SNAKEMAKE) --configfile $(CONFIG) --rulegraph | dot -Tsvg > rulegraph.svg
-	$(SNAKEMAKE) --configfile $(CONFIG) --filegraph | dot -Tsvg > filegraph.svg
+	mkdir -p $(FIG_DIR)
+	$(SNAKEMAKE) --configfile $(CONFIG) --dag       | dot -Tsvg > $(FIG_DIR)/dag.svg
+	$(SNAKEMAKE) --configfile $(CONFIG) --filegraph | dot -Tsvg > $(FIG_DIR)/filegraph.svg
+	$(SNAKEMAKE) --configfile $(CONFIG) --rulegraph | dot -Tsvg > $(FIG_DIR)/rulegraph.svg
+
+
+$(PNGS): $(SVGS) $(GENOMES) $(CONFIG)
+	parallel convert -background none -size 6000x6000 {} {.}.png ::: $(SVGS)
 
 
 report.html: $(SNAKEFILE) $(GENOMES) $(CONFIG)
@@ -102,10 +111,18 @@ git-config:
 clean:
 	@rm -rf $(CLEAN)
 	git clean -d -n
-	@printf "\nTo remove untracked files:\ngit clean -d -f\n"
-	@printf "To remove cache data:\nmake clean-cache $(CACHE)"
+	@printf "\nTo remove untracked files:\n"
+	@printf "    + git clean -d -f\n"
+	@printf "\nTo remove cache data\n"
+	@printf "at $(CACHE) run:\n"
+	@printf "    + make clean-cache\n"
 
 
 .PHONY clean-cache:
 clean-cache:
 	rm -rf $(CACHE)/*
+
+# Debugging print
+# .PHONY print-%:
+# Makefile:126: *** mixed implicit and normal rules: deprecated syntax
+print-%: ; @echo $* = $($*)

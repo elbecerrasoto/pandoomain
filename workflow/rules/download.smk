@@ -47,3 +47,59 @@ rule download_genome:
         """
         workflow/scripts/download_genome.py --include {params.include} --out-dir {RESULTS_GENOMES}/{params.genome} -- {params.genome}
         """
+
+
+def params_output_name(wc, output):
+    """
+    Used by taxallnomy_targz
+    """
+    return Path(output[0]).name
+
+
+rule taxallnomy_targz:
+    output:
+        f"{RESULTS}/taxallnomy.tar.gz",
+    priority: 1
+    retries: 3
+    cache: True
+    params:
+        url="https://sourceforge.net/projects/taxallnomy/files/latest/download",
+        output_name=params_output_name,
+    shell:
+        """
+        aria2c --dir {RESULTS}\
+            --continue=true --split 12\
+            --max-connection-per-server=16\
+            --min-split-size=1M\
+            --out={params.output_name}\
+            --quiet\
+            {params.url}
+        """
+
+
+rule taxallnomy_linname:
+    input:
+        rules.taxallnomy_targz.output,
+    output:
+        f"{RESULTS}/taxallnomy_lin_name.tsv",
+    cache: True
+    params:
+        ori=f"{RESULTS}/taxallnomy_database/taxallnomy_lin_name.tab",
+    shell:
+        """
+        tar --directory={RESULTS} -vxf {input}
+        mv {params.ori} {output}
+        """
+
+
+rule join_genomes_taxallnomy:
+    input:
+        taxallnomy=rules.taxallnomy_linname.output,
+        genomes=rules.get_metadata.output,
+    output:
+        f"{RESULTS}/genomes_ranks.tsv",
+    cache: True
+    shell:
+        """
+        workflow/scripts/cross.R {input} >| {output}
+        """

@@ -1,5 +1,15 @@
 #!/usr/bin/Rscript
 
+# Description ----
+
+# INPUT: hmmer.tsv
+# OUTPUT: neighbors.tsv to stdout
+
+# It operates on the following columns
+# genome, pid, queries
+# Any input table with those columns will do
+
+# Globals ----
 
 suppressPackageStartupMessages({
   library(tidyverse)
@@ -10,21 +20,21 @@ suppressPackageStartupMessages({
 })
 
 
-# Globals ----
-
 ARGV <- commandArgs(trailingOnly = TRUE)
 
-CORES <- as.integer(ARGV[1])
-# CORES <- 12
 
-N <- as.integer(ARGV[2])
-# N <- 8
+if (!interactive()) {
+  CORES <- as.integer(ARGV[[1]])
+  N <- as.integer(ARGV[[2]])
+  GENOMES_DIR <- ARGV[[3]]
+  HMMER_FILE <- ARGV[[4]]
+} else {
+  CORES <- 12L
+  N <- 8L
+  GENOMES_DIR <- "tests/results/genomes"
+  HMMER_FILE <- "tests/results/hmmer.tsv"
+}
 
-GENOMES_DIR <- ARGV[3]
-# GENOMES_DIR <- "tests/results/genomes"
-
-HMMER_FILE <- ARGV[4]
-# HMMER_FILE <- "tests/results/hmmer.tsv"
 
 HMMER <- read_tsv(HMMER_FILE, show_col_types = FALSE)
 GENOMES <- unique(HMMER$genome)
@@ -38,6 +48,7 @@ SELECT <- c("genome", "nei", "neioff", "order", "pid", "gene", "product", "start
 
 
 # Helpers ----
+
 
 extract_genome <- function(path) {
   GENOME_RE <- "GC[FA]_[0-9]+\\.[0-9]"
@@ -142,6 +153,7 @@ queries2onehot <- function(neighbors) {
     group_by(genome, pid) |>
     reframe(query = unlist(queries)) |>
     mutate(presence = TRUE) |>
+    distinct() |>
     pivot_wider(
       names_from = query,
       values_from = presence,
@@ -224,7 +236,21 @@ get_neighbors <- function(gff_path) {
     select(all_of(SELECT))
 }
 
-done <- future_map(GFFS_PATHS, get_neighbors)
+
+MAIN <- function(gff_path) {
+  tryCatch(
+    error = function(cnd) {
+      msg <- glue("Call: get_neignbors({gff_path})\n Error: {cnd}")
+      stop(msg)
+    },
+    {
+      get_neighbors(gff_path)
+    }
+  )
+}
+
+
+done <- future_map(GFFS_PATHS, possibly(MAIN, tibble()))
 
 neighbors <- bind_rows(done)
 

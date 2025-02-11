@@ -4,6 +4,32 @@ import os
 import shutil
 from argparse import ArgumentParser
 from pathlib import Path
+from warnings import warn
+
+
+def run(cmd: str, dry: bool = False):
+    import subprocess as sp
+    from shlex import split
+
+    print(f"{cmd}")
+
+    if not dry:
+        sp.run(split(cmd), check=True)
+
+
+def can_reach(url):
+    """
+    https://stackoverflow.com/questions/16778435/python-check-if-website-exists
+    """
+    import httplib2
+
+    try:
+        h = httplib2.Http()
+        resp = h.request(url, "HEAD")
+        return int(resp[0]["status"]) < 400
+    except httplib2.ServerNotFoundError:
+        return False
+
 
 # iscan defaults
 ISCAN_VERSION = "5.67-99.0"
@@ -34,6 +60,11 @@ parser.add_argument(
     action="store_true",
     help="Do nothing. Only print steps that would be executed.",
 )
+parser.add_argument(
+    "--reinstall",
+    action="store_true",
+    help="Before installing, delete previous installation.",
+)
 args = parser.parse_args()
 
 
@@ -44,7 +75,7 @@ ISCAN_INSTALLATION_BIN = args.bin if args.bin is not None else ISCAN_INSTALLATIO
 
 DRY = args.dry_run
 SKIP = args.skip
-
+REINSTALL = args.reinstall
 
 # remotes
 ISCAN_FTP = f"https://ftp.ebi.ac.uk/pub/databases/interpro/iprscan/5/{ISCAN_VERSION}"
@@ -63,30 +94,49 @@ ARIA2C = shutil.which("aria2c")
 JAVA = shutil.which("java")
 
 
-def run(cmd: str, dry: bool = False):
-    import subprocess as sp
-    from shlex import split
-
-    print(f"{cmd}")
-
-    if not dry:
-        sp.run(split(cmd), check=True)
-
-
 if __name__ == "__main__":
+
+    # check network
+    for url in (ISCAN_FTP_GZ, ISCAN_FTP_MD5):
+        if not can_reach(url):
+            raise ConnectionError(f"Unreachable {url}")
 
     # check dependencies
     if ARIA2C is None or JAVA is None:
         print("Missing aria2c or java binaries")
         print("Execution halted")
-        quit()
+        sys.exit(1)
+
+    # delete prior installation
+    if REINSTALL:
+        if DRY:
+            print("\n# Remove previous installation.")
+            print("rm -r $(dirname $(readlink $(which interproscan.sh)))")
+        else:
+            try:
+                olddata_dir = Path(shutil.which("interproscan.sh")).readlink().parent
+                shutil.rmtree(olddata_dir)
+            except (OSError, FileNotFoundError, TypeError) as e:
+                warn(
+                    f"""Found a non-fatal error: {e}
+Probably causes:
+    + interproscan.sh is not in the PATH
+    + it is not a symbolyc link
+    + it points to a non-existing file
+"""
+                )
 
     # create download directory
-    if not DRY:
+    if DRY:
+        print("\n# Create download directory.")
+        print(f"mkdir -p {ISCAN_INSTALLATION_DIR}")
+    else:
         ISCAN_INSTALLATION_DIR.mkdir(parents=True, exist_ok=True)
 
     # download GZ
     if not SKIP:
+        if DRY:
+            print("\n# Download GZ.")
         for ftp_target in (ISCAN_FTP_MD5, ISCAN_FTP_GZ):
             cmd = (
                 "aria2c "
@@ -104,17 +154,21 @@ if __name__ == "__main__":
     if not DRY:
         os.chdir(ISCAN_INSTALLATION_DIR)
     else:
+        print("\n# Check md5sum.")
         print(f"cd {ISCAN_INSTALLATION_DIR}")
 
     run(f"md5sum -c {MD5}", dry=DRY)
 
     # untar
+    if DRY:
+        print("\n# Untar.")
     run(f"tar -xf {GZ}", dry=DRY)
 
     # setup
     if not DRY:
         os.chdir(ISCAN_DIR)
     else:
+        print("\n# Setup profiles.")
         print(f"cd {ISCAN_DIR}")
 
     run(f"python3 setup.py -f interproscan.properties", dry=DRY)
@@ -124,9 +178,12 @@ if __name__ == "__main__":
         ISCAN_INSTALLATION_BIN.unlink(missing_ok=True)
         ISCAN_INSTALLATION_BIN.symlink_to(ISCAN_BIN)
     else:
+        print("\n# Create link to binary.")
         print(f"ln -fs {ISCAN_BIN} {ISCAN_INSTALLATION_BIN.parent}")
 
     # test
+    if DRY:
+        print("\n# Test installation.")
     run(f"interproscan.sh -i test_all_appl.fasta -f tsv", dry=DRY)
 
     # set permissions
@@ -134,5 +191,6 @@ if __name__ == "__main__":
         ISCAN_INSTALLATION_DIR.chmod(0o755)
         ISCAN_DIR.chmod(0o755)
     else:
+        print("\n# Set premissions.")
         print(f"chmod 755 {ISCAN_INSTALLATION_DIR}")
         print(f"chmod 755 {ISCAN_DIR}")
