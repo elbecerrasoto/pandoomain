@@ -21,12 +21,12 @@ RESULTS_GENOMES = RESULTS / "genomes"
 USED_GENOMES = RESULTS / "genomes.tsv"
 LOGS = RESULTS / "logs"
 
-N_NEIGHBORS = config.setdefault(12, int(config["n_neighbors"]))
-BATCH_SIZE = config.setdefault(8000, int(config["batch_size"]))
-FAA_WIDTH = config.setdefault(80, int(config["faa_width"]))
+N_NEIGHBORS = int(config.setdefault("n_neighbors", 12))
+BATCH_SIZE = int(config.setdefault("batch_size", 8000))
+FAA_WIDTH = int(config.setdefault("faa_width", 80))
 
-ONLY_REFSEQ = config.setdefault("only_refseq", False)
-OFFLINE_MODE = config.setdefault("offline", False)
+ONLY_REFSEQ = bool(config.setdefault("only_refseq", False))
+OFFLINE_MODE = bool(config.setdefault("offline", False))
 
 
 assert IN_GENOMES.is_file(), (
