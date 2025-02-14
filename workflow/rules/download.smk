@@ -1,26 +1,35 @@
 # include: "globals.smk"
 
 
+rule get_genomes_raw:
+    input:
+        f"{RESULTS}/genomes.txt"
+    output:
+        f"{RESULTS}/.genomes_raw.tsv"
+    run:
+        utils.sort_filter_genomes(input, output, ONLY_REFSEQ)
+
+
 rule get_metadata_raw:
     input:
-        ancient(USED_GENOMES),
+        rules.get_genomes_raw.output
     output:
-        f"{RESULTS}/genomes_metadata_raw.tsv",
+        f"{RESULTS}/.genomes_metadata_raw.tsv",
     priority: 1
     retries: 3
     cache: True
-    params:
-        no_header=f"{RESULTS}/.genomes.txt",
     shell:
         """
-        sed '1d' {input} | perl -ape '$_ = $F[1] . "\\n"' >| {params}
 
+        sed '1d' {input} | perl -ape '$_ = $F[1] . "\\n"' |\
+        \
         datasets summary genome accession \
-            --inputfile {params} \
+            --inputfile /dev/stdin \
             --as-json-lines |\
         tr -d '\\t' |\
         dataformat tsv genome |\
         tr -d '\\r' >| {output}
+        rm -r {params}
         """
 
 
@@ -36,16 +45,15 @@ rule get_metadata:
 
 
 rule download_genome:
+    input:
+        rules.get_genomes_raw.output
     output:
-        multiext(f"{RESULTS_GENOMES}/{{genome}}/{{genome}}", ".gff", ".faa"),
-    params:
-        include="protein gff3",
-        genome="{genome}",
-    retries: 3
-    cache: True
+        genomes=f"{RESULTS}/genomes.tsv"
+        not_found=f"{RESULTS}/not_found.tsv"
     shell:
         """
-        workflow/scripts/download_genome.py --include {params.include} --out-dir {RESULTS_GENOMES}/{params.genome} -- {params.genome}
+        touch {output.genomes}
+        touch {output.not_found}
         """
 
 

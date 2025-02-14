@@ -83,6 +83,7 @@ An installer script is provided.
 
 + pigz
 + gnu-make
++ aria2c
 
 ### R
 
