@@ -20,6 +20,8 @@ BATCHES_DIR = Path(f"{OUT_DIR}/batches")
 BATCH_SIZE = 256
 TRIES = 12
 
+COMPRESS = False
+
 KEY = os.environ.setdefault("NCBI_DATASETS_APIKEY", "")
 
 DEHYDRATE_LEAD = ["datasets", "download", "genome", "accession"]
@@ -67,7 +69,10 @@ def worker(idx, genomes):
             gff = gff.rename(genome_dir / f"{genome}.gff")
             faa = faa.rename(genome_dir / f"{genome}.faa")
 
-            sp.run(["pigz", "--processes", str(CPUS), str(gff), str(faa)], check=True)
+            if COMPRESS:
+                sp.run(
+                    ["pigz", "--processes", str(CPUS), str(gff), str(faa)], check=True
+                )
         else:
             unsuccessful_genomes.append(genome)
 
