@@ -3,10 +3,6 @@ from pathlib import Path
 import utils
 
 GENOME_REGEX = r"GC[AF]_\d+\.\d"
-CONFIG_FILE = "config/config.yaml"
-
-
-configfile: CONFIG_FILE
 
 
 wildcard_constraints:
@@ -17,8 +13,8 @@ IN_GENOMES = config.setdefault(Path("genomes.txt"), Path(config["genomes"]))
 IN_QUERIES = config.setdefault(Path("queries"), Path(config["queries"]))
 
 RESULTS = Path(config["results"])
-RESULTS_GENOMES = RESULTS / "genomes"
 USED_GENOMES = RESULTS / "genomes.tsv"
+RESULTS_GENOMES = RESULTS / "genomes"
 LOGS = RESULTS / "logs"
 
 N_NEIGHBORS = int(config.setdefault("n_neighbors", 12))

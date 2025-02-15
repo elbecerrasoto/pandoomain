@@ -3,16 +3,16 @@
 
 rule get_genomes_raw:
     input:
-        f"{RESULTS}/genomes.txt"
+        IN_GENOMES,
     output:
-        f"{RESULTS}/.genomes_raw.tsv"
+        f"{RESULTS}/.genomes_raw.tsv",
     run:
-        utils.sort_filter_genomes(input, output, ONLY_REFSEQ)
+        utils.sort_filter_genomes(f"{input}", f"{output}", ONLY_REFSEQ)
 
 
 rule get_metadata_raw:
     input:
-        rules.get_genomes_raw.output
+        rules.get_genomes_raw.output,
     output:
         f"{RESULTS}/.genomes_metadata_raw.tsv",
     priority: 1
@@ -46,10 +46,10 @@ rule get_metadata:
 
 rule download_genome:
     input:
-        rules.get_genomes_raw.output
+        rules.get_genomes_raw.output,
     output:
-        genomes=f"{RESULTS}/genomes.tsv"
-        not_found=f"{RESULTS}/not_found.tsv"
+        genomes=f"{RESULTS}/genomes.tsv",
+        not_found=f"{RESULTS}/not_found.tsv",
     shell:
         """
         touch {output.genomes}

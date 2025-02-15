@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import subprocess as sp
+import sys
 from multiprocessing import Pool
 from pathlib import Path
-from shutil import rmtree
 from random import randint
+from shutil import rmtree
 from time import sleep
 
 import numpy as np

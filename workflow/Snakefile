@@ -4,8 +4,7 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/genomes.tsv",
-        f"{RESULTS}/not_found.tsv",
+        f"{RESULTS}/.genomes_raw.tsv",
 
 
 rule hmmer_input:
