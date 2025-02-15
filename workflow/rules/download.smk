@@ -7,6 +7,7 @@ rule get_genomes_raw:
     output:
         f"{RESULTS}/.genomes_raw.tsv",
     run:
+        # weird, only works inside f-string
         utils.sort_filter_genomes(f"{input}", f"{output}", ONLY_REFSEQ)
 
 
@@ -20,7 +21,6 @@ rule get_metadata_raw:
     cache: True
     shell:
         """
-
         sed '1d' {input} | perl -ape '$_ = $F[1] . "\\n"' |\
         \
         datasets summary genome accession \
@@ -29,7 +29,6 @@ rule get_metadata_raw:
         tr -d '\\t' |\
         dataformat tsv genome |\
         tr -d '\\r' >| {output}
-        rm -r {params}
         """
 
 

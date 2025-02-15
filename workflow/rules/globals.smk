@@ -27,12 +27,12 @@ OFFLINE_MODE = bool(config.setdefault("offline", False))
 
 assert IN_GENOMES.is_file(), (
     utils.bold_red("Input genome assembly list file not found.")
-    + f"\nTried to look it up at: {IN_GENOMES}."
+    + f"\nTried to look it up: {IN_GENOMES}"
 )
 
 assert IN_QUERIES.is_dir(), (
     utils.bold_red("Input query directory not found.")
-    + f"\nTried to look it up at: {IN_QUERIES}."
+    + f"\nTried to look it up: {IN_QUERIES}"
 )
 
 if not OFFLINE_MODE:

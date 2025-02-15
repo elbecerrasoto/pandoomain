@@ -1,41 +1,50 @@
+# Defaults defined on config/globals.smk
+
 # Input genome list.
 # It contains NCBI assembly accessions,
 # one per line, it allows comments with '#'.
+# Default genomes.txt
 genomes:
   tests/genomes.txt
 
 # Directory of .hmm profiles.
+# Default queries
 queries:
   tests/queries
 
 # Where to store the results?
+# Default results
 results:
   tests/results
 
+# Search this many neighbors
+# upstream and downstream of any hit
+# Default 12
+# TODO: this is read by external scripts
+n_neighbors:
+  12
+
+# Batch size (sequence entries per fasta)
+# for interpro runs
+# Default 8000
+batch_size:
+  8000
+
+# Fasta formatting
+# NCBI uses 80
+# but it's usually 60
+# Default 80
+faa_width:
+  80
+
 # Only use genomes
 # from NCBI RefSeq assembly
+# Default false
 only_refseq:
   false
 
 # DO NOT trigger a fatal error
 # on NO network access.
+# Default false
 offline:
   false
-
-
-iscan_header:
-  - pid
-  - md5
-  - length
-  - analysis
-  - memberDB
-  - memberDB_txt
-  - start
-  - end
-  - score
-  - recommended
-  - date
-  - interpro
-  - interpro_txt
-  - GO
-  - residue
