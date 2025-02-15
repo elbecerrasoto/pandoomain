@@ -43,16 +43,22 @@ rule get_metadata:
         """
 
 
+def get_genomes_dir(wc, output):
+    return str(Path(output[0]).parent)
+
+
 rule download_genome:
     input:
         rules.get_genomes_raw.output,
     output:
-        genomes=f"{RESULTS}/genomes.tsv",
-        not_found=f"{RESULTS}/not_found.tsv",
+        genomes=f"{RESULTS}/genomes/genomes.tsv",
+        not_found=f"{RESULTS}/genomes/not_found.tsv",
+    threads: workflow.cores
+    params:
+        genomes_dir=get_genomes_dir,
     shell:
         """
-        touch {output.genomes}
-        touch {output.not_found}
+        workflow/scripts/hydrate.py {threads} {params} {input}
         """
 
 
@@ -60,7 +66,7 @@ def params_output_name(wc, output):
     """
     Used by taxallnomy_targz
     """
-    return Path(output[0]).name
+    return str(Path(output[0]).name)
 
 
 rule taxallnomy_targz:
