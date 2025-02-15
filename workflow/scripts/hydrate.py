@@ -12,12 +12,17 @@ from time import sleep
 import numpy as np
 import pandas as pd
 
-IN = sys.argv[1]
+CPUS = int(sys.argv[1])
+OUT_DIR = Path(sys.argv[2])
+IN = Path(sys.argv[3])  # A tsv with a genome col
+
+BATCHES_DIR = Path(f"{OUT_DIR}/batches")
 BATCH_SIZE = 256
 TRIES = 12
+OVERWORK_FACTOR = 10  # For I/O bound tasks spawn more processes
 
 KEY = os.environ.setdefault("NCBI_DATASETS_APIKEY", "")
-WORKERS_DOWNLOAD = os.cpu_count() * 10
+WORKERS_DOWNLOAD = CPUS * OVERWORK_FACTOR
 
 DEHYDRATE_LEAD = ["datasets", "download", "genome", "accession"]
 DEHYDRATE_LAG = ["--dehydrated", "--include", "protein,gff3", "--api-key", f"{KEY}"]
@@ -25,10 +30,10 @@ REHYDRATE_LEAD = ["datasets", "rehydrate", "--api-key", f"{KEY}"]
 
 
 def worker(idx, genomes):
-    sleep(0.1 + randint(0, 3))
+    sleep(0.1 + randint(0, 3))  # Avoids getting blocked by NCBI servers
     unsuccessful_genomes = []
 
-    batch_dir = Path(f"genomes/batches/{idx}")
+    batch_dir = BATCHES_DIR / str(idx)
     batch_zip = batch_dir / f"{idx}.zip"
 
     dehydrate_cmd = (
@@ -53,7 +58,7 @@ def worker(idx, genomes):
 
     for genome in genomes:
 
-        genome_dir = Path(f"genomes/{genome}")
+        genome_dir = OUT_DIR / str(genome)
         gff = batch_dir / "ncbi_dataset" / "data" / genome / "genomic.gff"
         faa = batch_dir / "ncbi_dataset" / "data" / genome / "protein.faa"
 
@@ -76,13 +81,12 @@ def download(genomes: list[str]):
     batches = np.array_split(genomes, int(np.ceil(len(genomes) / BATCH_SIZE)))
     batches = tuple(enumerate(batches))
 
-    batches_dir = Path(f"genomes/batches")
-    batches_dir.mkdir(parents=True)
+    BATCHES_DIR.mkdir(parents=True)
 
     with Pool(WORKERS_DOWNLOAD) as p:
         results = p.starmap(worker, batches)
 
-    rmtree(batches_dir)
+    rmtree(BATCHES_DIR)
 
     unsuccessful_genomes = []
     for result in results:
