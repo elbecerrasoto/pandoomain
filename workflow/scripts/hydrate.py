@@ -19,10 +19,8 @@ IN = Path(sys.argv[3])  # A tsv with a genome col
 BATCHES_DIR = Path(f"{OUT_DIR}/batches")
 BATCH_SIZE = 256
 TRIES = 12
-OVERWORK_FACTOR = 10  # For I/O bound tasks spawn more processes
 
 KEY = os.environ.setdefault("NCBI_DATASETS_APIKEY", "")
-WORKERS_DOWNLOAD = CPUS * OVERWORK_FACTOR
 
 DEHYDRATE_LEAD = ["datasets", "download", "genome", "accession"]
 DEHYDRATE_LAG = ["--dehydrated", "--include", "protein,gff3", "--api-key", f"{KEY}"]
@@ -69,7 +67,7 @@ def worker(idx, genomes):
             gff = gff.rename(genome_dir / f"{genome}.gff")
             faa = faa.rename(genome_dir / f"{genome}.faa")
 
-            sp.run(["pigz", str(gff), str(faa)], check=True)
+            sp.run(["pigz", "--processes", str(CPUS), str(gff), str(faa)], check=True)
         else:
             unsuccessful_genomes.append(genome)
 
@@ -83,7 +81,7 @@ def download(genomes: list[str]):
 
     BATCHES_DIR.mkdir(parents=True)
 
-    with Pool(WORKERS_DOWNLOAD) as p:
+    with Pool(CPUS) as p:
         results = p.starmap(worker, batches)
 
     rmtree(BATCHES_DIR)
