@@ -47,7 +47,7 @@ def get_genomes_dir(wc, output):
     return str(Path(output[0]).parent)
 
 
-rule download_genome:
+rule download_genomes:
     input:
         rules.get_genomes_raw.output,
     output:

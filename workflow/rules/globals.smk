@@ -13,9 +13,7 @@ IN_GENOMES = config.setdefault(Path("genomes.txt"), Path(config["genomes"]))
 IN_QUERIES = config.setdefault(Path("queries"), Path(config["queries"]))
 
 RESULTS = Path(config["results"])
-USED_GENOMES = RESULTS / "genomes.tsv"
 RESULTS_GENOMES = RESULTS / "genomes"
-LOGS = RESULTS / "logs"
 
 N_NEIGHBORS = int(config.setdefault("n_neighbors", 12))
 BATCH_SIZE = int(config.setdefault("batch_size", 8000))
@@ -37,11 +35,3 @@ assert IN_QUERIES.is_dir(), (
 
 if not OFFLINE_MODE:
     assert utils.is_internet_on(), utils.bold_red("No network connection.")
-
-
-RESULTS.mkdir(
-    parents=True, exist_ok=True
-)  # Need it 'cause the output of sort_filter_genomes
-
-GENOMES = utils.sort_filter_genomes(IN_GENOMES, USED_GENOMES, ONLY_REFSEQ)
-ALL_FAAS = utils.for_all_genomes(".faa", RESULTS_GENOMES, GENOMES)

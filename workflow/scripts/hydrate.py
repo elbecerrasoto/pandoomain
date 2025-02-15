@@ -121,8 +121,11 @@ if __name__ == "__main__":
     remaining_genomes = genomes
     for i in range(TRIES):
         remaining_genomes = download(remaining_genomes)
-        if not remaining_genomes:
-            break
+        if i == 0:
+            last = remaining_genomes
+        else:
+            if not remaining_genomes or remaining_genomes == last:
+                break
 
     with open(NOT_FOUND_TXT, "w", encoding=ENCODING) as h:
         for g in remaining_genomes:
