@@ -12,7 +12,7 @@ SETUP_CACHE = mkdir -p $(CACHE) &&\
 SNAKEMAKE = $(SETUP_CACHE) &&\
             snakemake --cores $(CORES)\
                       --cache\
-					  --printshellcmds
+                      --printshellcmds
 
 CONFIG = tests/config.yaml
 CONFIG_EMPTY = tests/config_empty.yaml
@@ -65,10 +65,9 @@ test-mtime: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 
 
 .PHONY debug:
-debug: $(SNAKEFILE) (GENOMES) $(CONFIG)
-	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation > smkC.py 2> smkC.err
-	$(SNAKEMAKE) --configfile $(CONFIG) -np --cores 1 > debug.out 2> debug.err
-
+debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
+	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation |\
+    bat --style=plain -l py
 
 .PHONY install-iscan:
 install-iscan: utils/install_iscan.py

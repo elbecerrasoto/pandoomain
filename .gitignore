@@ -1,15 +1,12 @@
-__pycache__
-ignored
-bsub_*
+genomes.txt
+queries
 results
+
+graphs
 tests/results
-tests/data
-tests/genomes.txt
-dag.svg
-filegraph.svg
-rulegraph.svg
 
 .snakemake
+__pycache__
 
 *.Rproj
 .Rproj.user

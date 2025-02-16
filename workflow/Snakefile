@@ -55,7 +55,7 @@ rule all_faa:
         faa=f"{RESULTS}/all.faa",
     params:
         faa_width=FAA_WIDTH,
-        db=f"{RESULTS_GENOMES}",
+        db=f"{RESULTS}/genomes",
     threads: workflow.cores
     shell:
         r"""
@@ -67,23 +67,32 @@ rule split_faa:
     input:
         faa=rules.all_faa.output,
     output:
-        pieces=directory(f"{RESULTS}/.pieces_faa"),
+        sentinel=f"{RESULTS}/.pieces_faa/split_faa.sentinel",
     params:
-        batch_size=BATCH_SIZE,
+        pieces=f"{RESULTS}/.pieces_faa",
+        batch_size=f"{BATCH_SIZE}",
+        faa_width=f"{FAA_WIDTH}",
     run:
         #!/usr/bin/env python
+        from datetime import datetime
         from pathlib import Path
+        from shutil import rmtree
 
         from Bio import SeqIO
 
-        IN_FAA = Path(f"{input}")
-        OUT_PIECES = Path(f"{output}")
-        BATCH_SIZE = int(f"{params}")
+        START = datetime.today()
+
+        IN_FAA = Path(f"{input.faa}")
+        OUT_PIECES = Path(f"{params.pieces}")
+        OUT_SENTINEL = Path(f"{output.sentinel}")
+        BATCH_SIZE = int(f"{params.batch_size}")
+        FAA_WIDTH = int(f"{params.faa_width}")
         FORMAT = "fasta"
-        OUT_LEN = FAA_WIDTH
 
         # main
         in_faa = SeqIO.parse(IN_FAA, FORMAT)
+        if OUT_PIECES.exists():
+            rmtree(OUT_PIECES)
         OUT_PIECES.mkdir()
         batch = []
         ibatch = 0
@@ -102,32 +111,37 @@ rule split_faa:
             if (idx + 1) % BATCH_SIZE == 0:
                 ibatch += 1
                 piece = OUT_PIECES / f"{ibatch}.faa"
-                write(batch, piece, OUT_LEN)
+                write(batch, piece, FAA_WIDTH)
                 batch = []
 
         if len(batch) > 0:
             ibatch += 1
             piece = OUT_PIECES / f"{ibatch}.faa"
-            write(batch, piece, OUT_LEN)
+            write(batch, piece, FAA_WIDTH)
+
+        END = datetime.today()
+        with open(str(OUT_SENTINEL), "w") as h_sentinel:
+            h_sentinel.write(f"{END- START}\n")
 
 
 rule interproscan:
     input:
-        faa_dir=rules.split_faa.output,
+        sentinel=f"{rules.split_faa.output.sentinel}",
     output:
         tsv=f"{RESULTS}/.iscan_raw.tsv",
     params:
         tmp="/tmp",
         pieces=f"{RESULTS}/.pieces_iscan",
+        in_dir=f"{rules.split_faa.params.pieces}",
     threads: workflow.cores
-    # cache: True
+    cache: True
     run:
         import re
         import shutil
         import subprocess as sp
         from pathlib import Path
 
-        IN_DIR = Path(f"{input}")
+        IN_DIR = Path(f"{params.in_dir}")
         OUT_FILE = Path(f"{output}")
 
         OUT_DIR = Path(f"{params.pieces}")
@@ -164,6 +178,8 @@ rule interproscan:
             # main
 
 
+        if OUT_DIR.exists():
+            shutil.rmtree(OUT_DIR)
         OUT_DIR.mkdir()
         in_faas = [
             (IN_DIR / i).resolve()
