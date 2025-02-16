@@ -66,8 +66,9 @@ test-mtime: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 
 .PHONY debug:
 debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
-	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation |\
-    bat --style=plain -l py
+	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation >| debug.py
+	black debug.py
+	bat --style=plain debug.py
 
 .PHONY install-iscan:
 install-iscan: utils/install_iscan.py
