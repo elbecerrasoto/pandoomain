@@ -120,7 +120,7 @@ rule interproscan:
         tmp="/tmp",
         pieces=f"{RESULTS}/.pieces_iscan",
     threads: workflow.cores
-    cache: True
+    # cache: True
     run:
         import re
         import shutil
