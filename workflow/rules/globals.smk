@@ -2,13 +2,6 @@ from pathlib import Path
 
 import utils
 
-GENOME_REGEX = r"GC[AF]_\d+\.\d"
-
-
-wildcard_constraints:
-    genome=GENOME_REGEX,
-
-
 IN_GENOMES = Path(config.setdefault("genomes", "genomes.txt"))
 IN_QUERIES = Path(config.setdefault("queries", "queries"))
 

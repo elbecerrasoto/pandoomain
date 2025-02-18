@@ -33,7 +33,7 @@ def sort_filter_genomes(inpath: Path, outpath: Path, only_refseq: bool) -> list[
      A tsv with the used ids is generated on a given location.
     """
 
-    GENOME_REGEX = r"^GC[AF]_\d+\.\d+$"
+    GENOMES_REGEX = r"^GC[AF]_\d+\.\d+$"
     REFSEQ_REGEX = r"^GCF_"
     ID_REGEX = r"^GC[AF]_(\d+)\.\d+$"
     VERSION_REGEX = r"^GC[AF]_\d+\.(\d+)$"
@@ -44,7 +44,7 @@ def sort_filter_genomes(inpath: Path, outpath: Path, only_refseq: bool) -> list[
     df = pd.read_table(inpath, names=("genome",), sep="\t")
     df.genome = df.genome.apply(remove_comments)
 
-    genome_matches = [bool(re.match(GENOME_REGEX, g)) for g in df.genome]
+    genome_matches = [bool(re.match(GENOMES_REGEX, g)) for g in df.genome]
 
     df = df.loc[genome_matches, :]
 

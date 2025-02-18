@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import re
 import subprocess as sp
 import sys
 from importlib import import_module
@@ -19,12 +20,13 @@ utils = import_module("utils")
 
 CPUS = int(sys.argv[1])
 OUT_DIR = Path(sys.argv[2])
-IN = Path(sys.argv[3])  # A tsv with a genome col
+IN = Path(sys.argv[3])  # A tsv with a header with genome col
 
 COMPRESS = False
+GENOMES_REGEX = r"GC[AF]_\d+\.\d"
 
 BATCH_SIZE = 256
-TRIES = 256
+MAX_TRIES = 256
 
 BATCHES_DIR = Path(f"{OUT_DIR}/batches")
 
@@ -119,11 +121,17 @@ def download(genomes: list[str]):
 
 if __name__ == "__main__":
 
+    # It is more robust if it can
+    # read anything line by line
+    # and then extract anything that looks like
+    # an identifier
     df = pd.read_table(IN)
+    genomes = [g for g in df.genome if re.search(GENOMES_REGEX, g)]  # rm non-matching
+    genomes = set(df.genome)  # rm duplications
     genomes = list(df.genome)
 
     remaining_genomes = genomes
-    for i in range(TRIES):
+    for i in range(MAX_TRIES):
         remaining_genomes = download(remaining_genomes)
         if i == 0:
             last = remaining_genomes
