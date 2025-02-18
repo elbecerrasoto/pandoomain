@@ -1,0 +1,20 @@
+name: hoox
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+# Dependencies
+  - snakemake
+  - fd-find
+  - ncbi-datasets-cli
+  - httplib2 # install-iscan
+  - aria2 # install-iscan
+  - openjdk # install-iscan
+# Development
+  - ipython
+  - black
+  - isort
+  - objprint
+  - icecream
+  - snakedeploy
+  - snakefmt
