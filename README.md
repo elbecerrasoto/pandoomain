@@ -106,26 +106,38 @@ git clone 'https://github.com/elbecerrasoto/hoox'
 cd hoox
 ```
 
-2. Install the software through an _Anaconda Distribution_.
+2. Install an _Anaconda Distribution_.
+I recommend _Miniforge_.
 ``` sh
-mamba env create
-mamba activate variants
+make install-mamba
 ```
 
-3. Install _interproscan.sh_.
+3. Install the _conda_ environment.
+``` sh
+mamba env create
+```
+
+4. Install _interproscan.sh_
 ``` sh
 make install-iscan
 ```
 
-Test the installation.
+
+5. Install R libraries.
+
+``` sh
+make install-Rlibs
+```
+
+
+5. Test the installation.
+
 ``` sh
 make test
 ```
 
+
 ## Usage
 
-The pipeline uses the snakemake conventions,
-so you can edit the config file at `config/config.yaml`,
-and then run:
 
-+ `snakemake --cores all --use-conda`
++ `snakemake --cores all --configfile config/config.yaml`
