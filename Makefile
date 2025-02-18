@@ -126,3 +126,17 @@ clean-cache:
 # .PHONY print-%:
 # Makefile:126: *** mixed implicit and normal rules: deprecated syntax
 print-%: ; @echo $* = $($*)
+
+SERVER = https://github.com/conda-forge/miniforge/releases/download/24.11.3-0
+
+MINIFORGE = Miniforge3-24.11.3-0-Linux-x86_64.sh
+LINK_MINIFORGE = $(SERVER)/$(MINIFORGE)
+
+SHA256 = $(MINIFORGE).sha256
+LINK_SHA256 = $(SERVER)/$(SHA256)
+
+$(MINIFORGE):
+	wget '$(LINK_MINIFORGE)'
+	wget '$(LINK_SHA256)'
+	sha256sum -c '$(SHA256)'
+
