@@ -15,11 +15,7 @@ SNAKEMAKE = $(SETUP_CACHE) &&\
                       --printshellcmds
 
 CONFIG = tests/config.yaml
-CONFIG_EMPTY = tests/config_empty.yaml
-
 GENOMES = tests/genomes.txt
-GENOMES_EMPTY = tests/genomes_empty.txt
-
 RESULTS = tests/results
 
 FIG_DIR = graphs
@@ -29,38 +25,42 @@ PNGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).png)
 
 CLEAN = .snakemake $(FIG_DIR) $(RESULTS)
 
+ISCAN_SCRIPT =  utils/install_iscan.py
 ISCAN_DATA = ~/.local/share
 ISCAN_BIN = ~/.local/bin/interproscan.sh
 
+RM_TEST = tests/rm_except_genomes.py
+
+SERVER = https://github.com/conda-forge/miniforge/releases/download/24.11.3-0
+
+MINIFORGE = Miniforge3-24.11.3-0-Linux-x86_64.sh
+LINK_MINIFORGE = $(SERVER)/$(MINIFORGE)
+
+SHA256 = $(MINIFORGE).sha256
+LINK_SHA256 = $(SERVER)/$(SHA256)
 
 .PHONY test-dry:
-test-dry: $(SNAKEFILE) $(GENOMES) $(CONFIG)
-	rm -rf $(RESULTS)
+test-dry: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
+	$(RM_TEST)
 	$(SNAKEMAKE) --configfile $(CONFIG) -np
 
 
-.PHONY test-empty:
-test-empty: $(SNAKEFILE) $(GENOMES) $(CONFIG)
-	rm -rf $(RESULTS)
-	$(SNAKEMAKE) --configfile $(CONFIG_EMPTY)
-
-
 .PHONY test:
-test: $(SNAKEFILE) $(GENOMES) $(CONFIG)
+test: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
 	@printf "Before looking for errors, clean-cache.\n\n"
-	rm -rf $(RESULTS)
+	$(RM_TEST)
 	$(SNAKEMAKE) --configfile $(CONFIG)
 
 
 .PHONY test-offline:
 test-offline: $(SNAKEFILE) $(GENOMES) $(CONFIG)
-	rm -rf $(RESULTS)
+	$(RM_TEST)
 	$(SNAKEMAKE) --configfile $(CONFIG) --config offline=true
 
 
 .PHONY test-mtime:
 test-mtime: $(SNAKEFILE) $(GENOMES) $(CONFIG)
-	rm -rf $(RESULTS)
+	$(RM_TEST)
 	$(SNAKEMAKE) --configfile $(CONFIG) --rerun-triggers mtime
 
 
@@ -71,8 +71,8 @@ debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	bat --style=plain debug.py
 
 .PHONY install-iscan:
-install-iscan: utils/install_iscan.py
-	@printf "To install remove --dry-run option from script.\n\n"
+install-iscan: $(ISCAN_SCRIPT)
+	@printf "To install remove --dry-run option from the line given below:\n\n"
 	$< --reinstall --target $(ISCAN_VERSION) --data $(ISCAN_DATA) --bin $(ISCAN_BIN) --dry-run
 
 
@@ -127,13 +127,6 @@ clean-cache:
 # Makefile:126: *** mixed implicit and normal rules: deprecated syntax
 print-%: ; @echo $* = $($*)
 
-SERVER = https://github.com/conda-forge/miniforge/releases/download/24.11.3-0
-
-MINIFORGE = Miniforge3-24.11.3-0-Linux-x86_64.sh
-LINK_MINIFORGE = $(SERVER)/$(MINIFORGE)
-
-SHA256 = $(MINIFORGE).sha256
-LINK_SHA256 = $(SERVER)/$(SHA256)
 
 $(MINIFORGE):
 	wget '$(LINK_MINIFORGE)'

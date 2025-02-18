@@ -24,7 +24,7 @@ IN = Path(sys.argv[3])  # A tsv with a genome col
 COMPRESS = False
 
 BATCH_SIZE = 256
-TRIES = 12
+TRIES = 256
 
 BATCHES_DIR = Path(f"{OUT_DIR}/batches")
 
@@ -77,7 +77,7 @@ def worker(idx, genomes):
         faa = batch_dir / "ncbi_dataset" / "data" / genome / "protein.faa"
 
         if gff.is_file() and faa.is_file():
-            genome_dir.mkdir()
+            genome_dir.mkdir(exist_ok=True)
             gff = gff.rename(genome_dir / f"{genome}.gff")
             faa = faa.rename(genome_dir / f"{genome}.faa")
 
@@ -99,6 +99,10 @@ def download(genomes: list[str]):
     batches = np.array_split(genomes, int(np.ceil(len(genomes) / BATCH_SIZE)))
     batches = tuple(enumerate(batches))
 
+    try:
+        rmtree(BATCHES_DIR)
+    except FileNotFoundError:
+        pass
     BATCHES_DIR.mkdir(parents=True)
 
     with Pool(CPUS) as p:
@@ -126,6 +130,7 @@ if __name__ == "__main__":
         else:
             if not remaining_genomes or remaining_genomes == last:
                 break
+        last = remaining_genomes
 
     with open(NOT_FOUND_TXT, "w", encoding=ENCODING) as h:
         for g in remaining_genomes:
