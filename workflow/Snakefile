@@ -225,7 +225,7 @@ rule get_archs:
 rule get_absence_presence:
     input:
         taxa=rules.join_genomes_taxallnomy.output,
-        proteins=rules.hmmer.output,
+        proteins=rules.get_neighbors.output,
         domains=rules.get_archs.output.archs,
     output:
         TGPD=f"{RESULTS}/TGPD.tsv",
