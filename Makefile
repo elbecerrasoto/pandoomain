@@ -3,7 +3,7 @@ SHELL = /usr/bin/bash
 SNAKEFILE = workflow/Snakefile
 
 CORES = all
-ISCAN_VERSION = 5.72-103.0
+ISCAN_VERSION = 5.73-104.0
 CACHE = ~/.local/snakemake
 
 SETUP_CACHE = mkdir -p $(CACHE) &&\
