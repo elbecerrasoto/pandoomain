@@ -13,7 +13,7 @@ rule hmmer_input:
     output:
         f"{RESULTS}/.input_faas.txt",
     params:
-        results=RESULTS,
+        results=f"{RESULTS}",
     shell:
         """
         fd -HI -e faa '^GC' {params} >| {output}
