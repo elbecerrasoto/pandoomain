@@ -32,9 +32,11 @@ BATCHES_DIR = Path(f"{OUT_DIR}/batches")
 
 NOT_FOUND = Path(f"{OUT_DIR}/not_found.tsv")
 NOT_FOUND_TXT = Path(f"{OUT_DIR}/.not_found.txt")
+NOT_FOUND_TXT.unlink(missing_ok=True)
 
 GENOMES = Path(f"{OUT_DIR}/genomes.tsv")
 GENOMES_TXT = Path(f"{OUT_DIR}/.genomes.txt")
+GENOMES_TXT.unlink(missing_ok=True)
 
 KEY = os.environ.setdefault("NCBI_DATASETS_APIKEY", "")
 
@@ -126,9 +128,27 @@ if __name__ == "__main__":
     # and then extract anything that looks like
     # an identifier
     df = pd.read_table(IN)
-    genomes = [g for g in df.genome if re.search(GENOMES_REGEX, g)]  # rm non-matching
+    genomes = [
+        str(g) for g in df.genome if re.search(GENOMES_REGEX, str(g))
+    ]  # rm non-matching
     genomes = set(df.genome)  # rm duplications
     genomes = list(df.genome)
+
+    def is_uncomplete(genome):
+        genome_dir = OUT_DIR / str(genome)
+        if genome_dir.exists():
+            gff = genome_dir / f"{genome}.gff"
+            faa = genome_dir / f"{genome}.faa"
+            complete = gff.exists() and faa.exists()
+            if complete:
+                with open(GENOMES_TXT, "a", encoding=ENCODING) as h:
+                    h.write(str(genome) + "\n")
+            return not complete
+        else:
+            return True
+
+    # rm already downloaded
+    genomes = list(filter(is_uncomplete, genomes))
 
     remaining_genomes = genomes
     for i in range(MAX_TRIES):
