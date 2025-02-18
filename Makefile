@@ -140,3 +140,8 @@ $(MINIFORGE):
 	wget '$(LINK_SHA256)'
 	sha256sum -c '$(SHA256)'
 
+
+.PHONY install-mamba:
+install-mamba: $(MINIFORGE)
+	bash $(MINIFORGE) -u
+
