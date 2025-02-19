@@ -5,17 +5,17 @@
 # one per line, it allows comments with '#'.
 # Default genomes.txt
 genomes:
-  tests/genomes.txt
+  genomes.txt
 
 # Directory of .hmm profiles.
 # Default queries
 queries:
-  tests/queries
+  queries
 
 # Where to store the results?
 # Default results
 results:
-  tests/results
+  results
 
 # Search this many neighbors
 # upstream and downstream of any hit
