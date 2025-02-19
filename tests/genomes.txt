@@ -9,4 +9,3 @@ GCF_900196735.1 # negative on YwqJ & YwqL
 GCF_900459535.1 # negative on YwqJ & YwqL
 GCF_000394295.1 # negative on YwqJ & YwqL
 GCA_001457635.1 # negative? on YwqJ & YwqL
-GCF_000394292.8 # something that will be not found

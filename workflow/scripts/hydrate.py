@@ -27,6 +27,7 @@ GENOMES_REGEX = r"GC[AF]_\d+\.\d"
 
 BATCH_SIZE = 256
 MAX_TRIES = 256
+CHECK_PROGRESS = 8
 
 BATCHES_DIR = Path(f"{OUT_DIR}/batches")
 
@@ -100,6 +101,9 @@ def worker(idx, genomes):
 
 def download(genomes: list[str]):
 
+    if len(genomes) == 0:
+        return []
+
     batches = np.array_split(genomes, int(np.ceil(len(genomes) / BATCH_SIZE)))
     batches = tuple(enumerate(batches))
 
@@ -155,9 +159,10 @@ if __name__ == "__main__":
         remaining_genomes = download(remaining_genomes)
         if i == 0:
             last = remaining_genomes
-        else:
-            if not remaining_genomes or remaining_genomes == last:
-                break
+        elif (
+            not remaining_genomes or remaining_genomes == last
+        ) and i % CHECK_PROGRESS == 0:
+            break
         last = remaining_genomes
 
     with open(NOT_FOUND_TXT, "w", encoding=ENCODING) as h:

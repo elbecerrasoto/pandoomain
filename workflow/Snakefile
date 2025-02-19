@@ -173,7 +173,7 @@ rule interproscan:
                 "--goterms",
                 "--enable-tsv-residue-annot",
                 "--applications",
-                "Pfam"
+                "Pfam",
             ]
             return cmd
 
