@@ -28,6 +28,7 @@ GENOMES_REGEX = r"GC[AF]_\d+\.\d"
 BATCH_SIZE = 256
 MAX_TRIES = 256
 CHECK_PROGRESS = 8
+OVERWORK = 10
 
 BATCHES_DIR = Path(f"{OUT_DIR}/batches")
 
@@ -113,7 +114,7 @@ def download(genomes: list[str]):
         pass
     BATCHES_DIR.mkdir(parents=True)
 
-    with Pool(CPUS) as p:
+    with Pool(CPUS*OVERWORK) as p:
         results = p.starmap(worker, batches)
 
     rmtree(BATCHES_DIR)
