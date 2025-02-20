@@ -8,14 +8,14 @@ from pathlib import Path
 from warnings import warn
 
 
-def run(cmd: str, dry: bool = False):
+def run(cmd: str, dry: bool = False, **kwargs):
     import subprocess as sp
     from shlex import split
 
     print(f"{cmd}")
 
     if not dry:
-        sp.run(split(cmd), check=True)
+        sp.run(split(cmd), check=True, **kwargs)
 
 
 def can_reach(url):
@@ -158,12 +158,12 @@ Probably causes:
         print("\n# Check md5sum.")
         print(f"cd {ISCAN_INSTALLATION_DIR}")
 
-    run(f"md5sum -c {MD5}", dry=DRY)
+    run(f"md5sum -c {MD5.name}", dry=DRY)
 
     # untar
     if DRY:
         print("\n# Untar.")
-    run(f"tar -xf {GZ}", dry=DRY)
+    run(f"tar -xf {GZ.name}", dry=DRY)
 
     # setup
     if not DRY:
