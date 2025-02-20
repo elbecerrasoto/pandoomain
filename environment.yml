@@ -13,6 +13,12 @@ dependencies:
   - httplib2 # install-iscan
   - aria2 # install-iscan
   - openjdk # install-iscan
+  - zlib # R dependency
+  - unzip
+  - biopython
+  - r-seqinr
+  - r-furrr
+  - pyhmmer=0.10.14
 # Development
   - ipython
   - black
