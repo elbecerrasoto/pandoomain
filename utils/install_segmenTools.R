@@ -1,3 +1,4 @@
-/usr/bin/env Rscript
-library(devtools)
-install_github("raim/segmenTools")
+#!/usr/bin/env Rscript
+install.packages("devtools", repos = "http://cran.us.r-project.org")
+devtools::install_github("raim/segmenTools")
+devtools::install_github("sfirke/janitor")
