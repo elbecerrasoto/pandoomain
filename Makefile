@@ -1,10 +1,12 @@
 SHELL = /usr/bin/env bash
 
 SNAKEFILE = workflow/Snakefile
+PWD = $(shell pwd)
+
 
 CORES = all
 ISCAN_VERSION = 5.73-104.0
-CACHE = ./cache
+CACHE = $(PWD)/cache # Needs to be an absolute path
 
 SETUP_CACHE = mkdir -p $(CACHE) &&\
               export SNAKEMAKE_OUTPUT_CACHE=$(CACHE)
@@ -25,19 +27,18 @@ PNGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).png)
 
 
 ISCAN_SCRIPT =  utils/install_iscan.py
-ISCAN_DATA = ./
+ISCAN_DATA = $(PWD)
 
 RM_TEST = tests/rm_except_genomes.py
 
 SERVER = https://github.com/conda-forge/miniforge/releases/download/24.11.3-0
-
 MINIFORGE = Miniforge3-24.11.3-0-Linux-x86_64.sh
 LINK_MINIFORGE = $(SERVER)/$(MINIFORGE)
-
 SHA256 = $(MINIFORGE).sha256
 LINK_SHA256 = $(SERVER)/$(SHA256)
 
-CLEAN = .snakemake $(FIG_DIR) $(RESULTS) $(MINIFORGE) $(SHA256)
+DEBUG = debug.py
+CLEAN = .snakemake $(FIG_DIR) $(RESULTS) $(MINIFORGE) $(SHA256) $(CACHE) $(DEBUG)
 
 
 .PHONY test-dry:
@@ -55,28 +56,28 @@ print-%: ; @echo $* = $($*)
 .PHONY test:
 test: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
 	@printf "Before looking for errors, run:\n"
-	@printf "make clean && make clean-cache\n\n"
+	@printf "make clean\n\n"
 	$(RM_TEST)
 	$(SNAKEMAKE) --configfile $(CONFIG)
 
 
 .PHONY test-offline:
-test-offline: $(SNAKEFILE) $(GENOMES) $(CONFIG)
+test-offline: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
 	$(RM_TEST)
 	$(SNAKEMAKE) --configfile $(CONFIG) --config offline=true
 
 
 .PHONY test-mtime:
-test-mtime: $(SNAKEFILE) $(GENOMES) $(CONFIG)
+test-mtime: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
 	$(RM_TEST)
 	$(SNAKEMAKE) --configfile $(CONFIG) --rerun-triggers mtime
 
 
 .PHONY debug:
 debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
-	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation >| debug.py
-	black debug.py
-	bat --style=plain debug.py
+	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation >| $(DEBUG)
+	black $(DEBUG)
+	bat --style=plaiqn $(DEBUG)
 
 
 .PHONY install-iscan:
@@ -133,11 +134,3 @@ clean:
 	git clean -d -n
 	@printf "\nTo remove untracked files:\n"
 	@printf "    + git clean -d -f\n"
-	@printf "\nTo remove cache data\n"
-	@printf "at $(CACHE) run:\n"
-	@printf "    + make clean-cache\n"
-
-
-.PHONY clean-cache:
-clean-cache:
-	rm -rf $(CACHE)/*

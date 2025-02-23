@@ -7,7 +7,7 @@ rule get_genomes_raw:
     output:
         f"{RESULTS}/.genomes_raw.tsv",
     run:
-        # weird, only works inside f-string
+        # weird, input/output substitution only works inside f-string
         utils.sort_filter_genomes(f"{input}", f"{output}", ONLY_REFSEQ)
 
 
