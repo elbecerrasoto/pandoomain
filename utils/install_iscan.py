@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 
-import os
 import shutil
+import subprocess as sp
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
+from shlex import split
 from warnings import warn
 
 
 def run(cmd: str, dry: bool = False, **kwargs):
-    import subprocess as sp
-    from shlex import split
 
     print(f"{cmd}")
 
@@ -33,9 +32,8 @@ def can_reach(url):
 
 
 # iscan defaults
-ISCAN_VERSION = "5.67-99.0"
-ISCAN_INSTALLATION_DIR = Path("/usr/share/interproscan")
-ISCAN_INSTALLATION_BIN = Path("/usr/bin/interproscan.sh")
+ISCAN_VERSION = "5.73-104.0"
+ISCAN_INSTALLATION_DIR = Path(".")
 
 
 # define args
@@ -48,11 +46,6 @@ parser.add_argument(
     "--data",
     type=Path,
     help=f"Where to put the profile data. About 60GB. Default: {ISCAN_INSTALLATION_DIR}",
-)
-parser.add_argument(
-    "--bin",
-    type=Path,
-    help=f"Where to link the executable to be found by the system. Default: {ISCAN_INSTALLATION_BIN}",
 )
 parser.add_argument("--skip", action="store_true", help=f"Skip downloading the tar.gz")
 parser.add_argument(
@@ -71,8 +64,9 @@ args = parser.parse_args()
 
 # parse args
 ISCAN_VERSION = args.target if args.target is not None else ISCAN_VERSION
-ISCAN_INSTALLATION_DIR = args.data if args.data is not None else ISCAN_INSTALLATION_DIR
-ISCAN_INSTALLATION_BIN = args.bin if args.bin is not None else ISCAN_INSTALLATION_BIN
+ISCAN_INSTALLATION_DIR = (
+    args.data if args.data is not None else ISCAN_INSTALLATION_DIR
+).resolve()
 
 DRY = args.dry_run
 SKIP = args.skip
@@ -84,10 +78,10 @@ ISCAN_FTP_GZ = f"{ISCAN_FTP}/interproscan-{ISCAN_VERSION}-64-bit.tar.gz"
 ISCAN_FTP_MD5 = f"{ISCAN_FTP_GZ}.md5"
 
 # local
-MD5 = ISCAN_INSTALLATION_DIR / Path(ISCAN_FTP_MD5).name
-GZ = ISCAN_INSTALLATION_DIR / Path(ISCAN_FTP_GZ).name
-ISCAN_DIR = ISCAN_INSTALLATION_DIR / f"interproscan-{ISCAN_VERSION}"
-ISCAN_BIN = ISCAN_DIR / "interproscan.sh"
+MD5 = (ISCAN_INSTALLATION_DIR / Path(ISCAN_FTP_MD5).name).resolve()
+GZ = (ISCAN_INSTALLATION_DIR / Path(ISCAN_FTP_GZ).name).resolve()
+ISCAN_DIR = (ISCAN_INSTALLATION_DIR / f"interproscan-{ISCAN_VERSION}").resolve()
+ISCAN_BIN = (ISCAN_DIR / "interproscan.sh").resolve()
 
 
 # dependencies
@@ -148,50 +142,36 @@ Probably causes:
                 "--min-split-size=1M "
                 f"{ftp_target}"
             )
-
             run(cmd, dry=DRY)
 
     # check md5sum
-    if not DRY:
-        os.chdir(ISCAN_INSTALLATION_DIR)
-    else:
+    if DRY:
         print("\n# Check md5sum.")
         print(f"cd {ISCAN_INSTALLATION_DIR}")
 
-    run(f"md5sum -c {MD5.name}", dry=DRY)
+    run(f"md5sum -c {MD5}", dry=DRY, cwd=ISCAN_INSTALLATION_DIR)
 
     # untar
     if DRY:
         print("\n# Untar.")
-    run(f"tar -xf {GZ.name}", dry=DRY)
+    run(f"tar -xf {GZ}", dry=DRY, cwd=ISCAN_INSTALLATION_DIR)
 
     # setup
-    if not DRY:
-        os.chdir(ISCAN_DIR)
-    else:
+    if DRY:
         print("\n# Setup profiles.")
         print(f"cd {ISCAN_DIR}")
 
-    run(f"python3 setup.py -f interproscan.properties", dry=DRY)
-
-    # create link
-    if not DRY:
-        ISCAN_INSTALLATION_BIN.unlink(missing_ok=True)
-        ISCAN_INSTALLATION_BIN.symlink_to(ISCAN_BIN)
-    else:
-        print("\n# Create link to binary.")
-        print(f"ln -fs {ISCAN_BIN} {ISCAN_INSTALLATION_BIN.parent}")
+    run(f"python3 setup.py -f interproscan.properties", dry=DRY, cwd=ISCAN_DIR)
 
     # test
     if DRY:
         print("\n# Test installation.")
+
     run(f"interproscan.sh -i test_all_appl.fasta -f tsv", dry=DRY)
 
     # set permissions
     if not DRY:
-        ISCAN_INSTALLATION_DIR.chmod(0o755)
         ISCAN_DIR.chmod(0o755)
     else:
         print("\n# Set premissions.")
-        print(f"chmod 755 {ISCAN_INSTALLATION_DIR}")
         print(f"chmod 755 {ISCAN_DIR}")

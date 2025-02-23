@@ -114,7 +114,7 @@ def download(genomes: list[str]):
         pass
     BATCHES_DIR.mkdir(parents=True)
 
-    with Pool(CPUS*OVERWORK) as p:
+    with Pool(CPUS * OVERWORK) as p:
         results = p.starmap(worker, batches)
 
     rmtree(BATCHES_DIR)
