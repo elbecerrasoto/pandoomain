@@ -1,10 +1,10 @@
-SHELL = /usr/bin/bash
+SHELL = /usr/bin/env bash
 
 SNAKEFILE = workflow/Snakefile
 
 CORES = all
 ISCAN_VERSION = 5.73-104.0
-CACHE = ~/.local/snakemake
+CACHE = ./cache
 
 SETUP_CACHE = mkdir -p $(CACHE) &&\
               export SNAKEMAKE_OUTPUT_CACHE=$(CACHE)
@@ -23,11 +23,9 @@ FIG_NAMES = dag filegraph rulegraph
 SVGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).svg)
 PNGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).png)
 
-CLEAN = .snakemake $(FIG_DIR) $(RESULTS)
 
 ISCAN_SCRIPT =  utils/install_iscan.py
-ISCAN_DATA = ~/.local/share
-ISCAN_BIN = ~/.local/bin/interproscan.sh
+ISCAN_DATA = ./
 
 RM_TEST = tests/rm_except_genomes.py
 
@@ -39,15 +37,25 @@ LINK_MINIFORGE = $(SERVER)/$(MINIFORGE)
 SHA256 = $(MINIFORGE).sha256
 LINK_SHA256 = $(SERVER)/$(SHA256)
 
+CLEAN = .snakemake $(FIG_DIR) $(RESULTS) $(MINIFORGE) $(SHA256)
+
+
 .PHONY test-dry:
 test-dry: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
 	$(RM_TEST)
 	$(SNAKEMAKE) --configfile $(CONFIG) -np
 
 
+# Debugging print
+# .PHONY print-%:
+# Makefile:126: *** mixed implicit and normal rules: deprecated syntax
+print-%: ; @echo $* = $($*)
+
+
 .PHONY test:
 test: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
-	@printf "Before looking for errors, clean-cache.\n\n"
+	@printf "Before looking for errors, run:\n"
+	@printf "make clean && make clean-cache\n\n"
 	$(RM_TEST)
 	$(SNAKEMAKE) --configfile $(CONFIG)
 
@@ -70,10 +78,22 @@ debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	black debug.py
 	bat --style=plain debug.py
 
+
 .PHONY install-iscan:
 install-iscan: $(ISCAN_SCRIPT)
 	@printf "To install remove --dry-run option from the line given below:\n\n"
-	$< --reinstall --target $(ISCAN_VERSION) --data $(ISCAN_DATA) --bin $(ISCAN_BIN) --dry-run
+	$< --reinstall --target $(ISCAN_VERSION) --data $(ISCAN_DATA)
+
+
+$(MINIFORGE):
+	wget '$(LINK_MINIFORGE)'
+	wget '$(LINK_SHA256)'
+	sha256sum -c '$(SHA256)'
+
+
+.PHONY install-mamba:
+install-mamba: $(MINIFORGE)
+	bash $(MINIFORGE) -u
 
 
 .PHONY style:
@@ -121,20 +141,3 @@ clean:
 .PHONY clean-cache:
 clean-cache:
 	rm -rf $(CACHE)/*
-
-# Debugging print
-# .PHONY print-%:
-# Makefile:126: *** mixed implicit and normal rules: deprecated syntax
-print-%: ; @echo $* = $($*)
-
-
-$(MINIFORGE):
-	wget '$(LINK_MINIFORGE)'
-	wget '$(LINK_SHA256)'
-	sha256sum -c '$(SHA256)'
-
-
-.PHONY install-mamba:
-install-mamba: $(MINIFORGE)
-	bash $(MINIFORGE) -u
-
