@@ -1,11 +1,13 @@
-SHELL = /usr/bin/env bash
+SH = bash
+SHELL = /usr/bin/env $(SH)
 
 SNAKEFILE = workflow/Snakefile
 PWD = $(shell pwd)
 
+ISCAN_VERSION = 5.73-104.0
+MINIFORGE_VERSION = 25.1.1-0
 
 CORES = all
-ISCAN_VERSION = 5.73-104.0
 CACHE = $(PWD)/cache # Needs to be an absolute path
 
 SETUP_CACHE = mkdir -p $(CACHE) &&\
@@ -25,14 +27,14 @@ FIG_NAMES = dag filegraph rulegraph
 SVGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).svg)
 PNGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).png)
 
-
 ISCAN_SCRIPT =  utils/install_iscan.py
 ISCAN_DATA = $(PWD)
 
 RM_TEST = tests/rm_except_genomes.py
 
-SERVER = https://github.com/conda-forge/miniforge/releases/download/24.11.3-0
-MINIFORGE = Miniforge3-24.11.3-0-Linux-x86_64.sh
+MINIFORGE_INSTALL_DIR = $(shell echo -n $$HOME)/miniforge3
+SERVER = https://github.com/conda-forge/miniforge/releases/download/$(MINIFORGE_VERSION)
+MINIFORGE = Miniforge3-$(MINIFORGE_VERSION)-Linux-x86_64.sh
 LINK_MINIFORGE = $(SERVER)/$(MINIFORGE)
 SHA256 = $(MINIFORGE).sha256
 LINK_SHA256 = $(SERVER)/$(SHA256)
@@ -77,7 +79,7 @@ test-mtime: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
 debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation >| $(DEBUG)
 	black $(DEBUG)
-	bat --style=plaiqn $(DEBUG)
+	bat --style=plain $(DEBUG)
 
 
 .PHONY install-iscan:
@@ -94,7 +96,9 @@ $(MINIFORGE):
 
 .PHONY install-mamba:
 install-mamba: $(MINIFORGE)
-	bash $(MINIFORGE) -u
+	chmod +x $(MINIFORGE)
+	./$(MINIFORGE) -b -u -p $(MINIFORGE_INSTALL_DIR)
+	$(MINIFORGE_INSTALL_DIR)/bin/mamba shell init --shell $(SH)
 
 
 .PHONY style:
