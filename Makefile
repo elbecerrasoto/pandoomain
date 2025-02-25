@@ -42,6 +42,11 @@ DEBUG = debug.py
 CLEAN = .snakemake $(FIG_DIR) $(RESULTS) $(MINIFORGE) $(SHA256) $(CACHE) $(DEBUG)
 
 
+.PHONY help:
+help:
+	less Makefile
+
+
 .PHONY test-dry:
 test-dry: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
 	$(RM_TEST)
@@ -94,8 +99,8 @@ $(MINIFORGE):
 
 .PHONY install-mamba:
 install-mamba: $(MINIFORGE)
-	chmod +x $(MINIFORGE)
-	./$(MINIFORGE) -b -u -p $(MINIFORGE_INSTALL_DIR)
+	chmod +x $<
+	./$< -b -u -p $(MINIFORGE_INSTALL_DIR)
 
 
 .PHONY style:
@@ -127,6 +132,11 @@ report.html: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 git-config:
 	git config --global alias.root 'rev-parse --show-toplevel'
 	git config push.autoSetupRemote true
+
+
+.PHONY R-libs:
+R-libs: utils/install_segmenTools.R
+	$<
 
 
 .PHONY clean:
