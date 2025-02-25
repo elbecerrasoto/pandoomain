@@ -79,7 +79,7 @@ test-mtime: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
 debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation >| $(DEBUG)
 	black $(DEBUG)
-	bat --style=plain $(DEBUG)
+	less $(DEBUG)
 
 
 .PHONY install-iscan:
@@ -98,7 +98,7 @@ $(MINIFORGE):
 install-mamba: $(MINIFORGE)
 	chmod +x $(MINIFORGE)
 	./$(MINIFORGE) -b -u -p $(MINIFORGE_INSTALL_DIR)
-	$(MINIFORGE_INSTALL_DIR)/bin/mamba shell init --shell $(SH)
+	$(MINIFORGE_INSTALL_DIR)/bin/conda init $(SH)
 
 
 .PHONY style:
