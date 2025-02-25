@@ -10,6 +10,10 @@ from warnings import warn
 
 
 def run(cmd: str, dry: bool = False, **kwargs):
+    try:
+        print(f"cd {kwargs['cwd']}")
+    except KeyError:
+        pass
 
     print(f"{cmd}")
 
@@ -147,7 +151,6 @@ Probably causes:
     # check md5sum
     if DRY:
         print("\n# Check md5sum.")
-        print(f"cd {ISCAN_INSTALLATION_DIR}")
 
     run(f"md5sum -c {MD5}", dry=DRY, cwd=ISCAN_INSTALLATION_DIR)
 
@@ -159,19 +162,19 @@ Probably causes:
     # setup
     if DRY:
         print("\n# Setup profiles.")
-        print(f"cd {ISCAN_DIR}")
 
     run(f"python3 setup.py -f interproscan.properties", dry=DRY, cwd=ISCAN_DIR)
+
+    # set permissions
+    if not DRY:
+        ISCAN_BIN.chmod(0o755)
+    else:
+        print("\n# Set premissions.")
+        print(f"chmod 755 {ISCAN_BIN}")
 
     # test
     if DRY:
         print("\n# Test installation.")
 
-    run(f"interproscan.sh -i test_all_appl.fasta -f tsv", dry=DRY)
+    run(f"{ISCAN_BIN} -i test_all_appl.fasta -f tsv", dry=DRY, cwd=ISCAN_DIR)
 
-    # set permissions
-    if not DRY:
-        ISCAN_DIR.chmod(0o755)
-    else:
-        print("\n# Set premissions.")
-        print(f"chmod 755 {ISCAN_DIR}")
