@@ -3,27 +3,30 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-# Dependencies
+  # Snakefile
   - snakemake
   - fd-find
   - ncbi-datasets-cli
   - r-base
   - r-tidyverse
   - r-data.table
-  - httplib2 # install-iscan
-  - aria2 # install-iscan
-  - openjdk # install-iscan
-  - zlib # R dependency
   - unzip
   - biopython
   - r-seqinr
   - r-furrr
   - pyhmmer=0.10.14
-# Development
-  - ipython
+  # install_iscan.py  
+  - httplib2
+  - aria2
+  - openjdk
+  # install_Rlibs.R
+  - zlib
+  # Makefile
   - black
   - isort
-  - objprint
-  - icecream
-  - snakedeploy
   - snakefmt
+  - r-styler
+  - parallel
+  - imagemagick
+  # Development
+  - ipython

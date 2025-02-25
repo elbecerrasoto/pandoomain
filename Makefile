@@ -26,8 +26,9 @@ FIG_NAMES = dag filegraph rulegraph
 SVGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).svg)
 PNGS = $(foreach i,$(FIG_NAMES),$(FIG_DIR)/$(i).png)
 
-ISCAN_SCRIPT =  utils/install_iscan.py
+ISCAN_SCRIPT = utils/install_iscan.py
 ISCAN_DATA = $(PWD)
+ISCAN_DRY = --dry
 
 RM_TEST = tests/rm_except_genomes.py
 
@@ -41,54 +42,16 @@ LINK_SHA256 = $(SERVER)/$(SHA256)
 DEBUG = debug.py
 CLEAN = .snakemake $(FIG_DIR) $(RESULTS) $(MINIFORGE) $(SHA256) $(CACHE) $(DEBUG)
 
+R_LIBS_SCRIPT = utils/install_Rlibs.R
+
 
 .PHONY help:
 help:
-	less Makefile
-
-
-.PHONY test-dry:
-test-dry: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
-	$(RM_TEST)
-	$(SNAKEMAKE) --configfile $(CONFIG) -np
+	@awk -F':' '/^[a-zA-Z0-9_-]+:/ {print $$1}' Makefile
 
 
 # Debugging print
-# .PHONY print-%:
-# Makefile:126: *** mixed implicit and normal rules: deprecated syntax
 print-%: ; @echo $* = $($*)
-
-
-.PHONY test:
-test: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
-	@printf "Before looking for errors, run:\n"
-	@printf "make clean\n\n"
-	$(RM_TEST)
-	$(SNAKEMAKE) --configfile $(CONFIG)
-
-
-.PHONY test-offline:
-test-offline: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
-	$(RM_TEST)
-	$(SNAKEMAKE) --configfile $(CONFIG) --config offline=true
-
-
-.PHONY test-mtime:
-test-mtime: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
-	$(RM_TEST)
-	$(SNAKEMAKE) --configfile $(CONFIG) --rerun-triggers mtime
-
-
-.PHONY debug:
-debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
-	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation >| $(DEBUG)
-	black $(DEBUG)
-	less $(DEBUG)
-
-
-.PHONY install-iscan:
-install-iscan: $(ISCAN_SCRIPT)
-	$< --reinstall --target $(ISCAN_VERSION) --data $(ISCAN_DATA)
 
 
 $(MINIFORGE):
@@ -101,6 +64,37 @@ $(MINIFORGE):
 install-mamba: $(MINIFORGE)
 	chmod +x $<
 	./$< -b -u -p $(MINIFORGE_INSTALL_DIR)
+
+
+.PHONY install-iscan:
+install-iscan: $(ISCAN_SCRIPT)
+	$< --reinstall --target $(ISCAN_VERSION) --data $(ISCAN_DATA) $(ISCAN_DRY)
+
+
+.PHONY install-Rlibs:
+install-Rlibs: $(R_LIBS_SCRIPT)
+	$<
+
+
+.PHONY test:
+test: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
+	@printf "Before looking for errors, run:\n"
+	@printf "make clean\n\n"
+	$(RM_TEST)
+	$(SNAKEMAKE) --configfile $(CONFIG)
+
+
+.PHONY test-dry:
+test-dry: $(SNAKEFILE) $(GENOMES) $(CONFIG) $(RM_TEST)
+	$(RM_TEST)
+	$(SNAKEMAKE) --configfile $(CONFIG) -np
+
+
+.PHONY debug:
+debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
+	$(SNAKEMAKE) --configfile $(CONFIG) -np --print-compilation >| $(DEBUG)
+	black $(DEBUG)
+	less $(DEBUG)
 
 
 .PHONY style:
@@ -132,11 +126,6 @@ report.html: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 git-config:
 	git config --global alias.root 'rev-parse --show-toplevel'
 	git config push.autoSetupRemote true
-
-
-.PHONY R-libs:
-R-libs: utils/install_segmenTools.R
-	$<
 
 
 .PHONY clean:

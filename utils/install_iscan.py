@@ -177,4 +177,3 @@ Probably causes:
         print("\n# Test installation.")
 
     run(f"{ISCAN_BIN} -i test_all_appl.fasta -f tsv", dry=DRY, cwd=ISCAN_DIR)
-
