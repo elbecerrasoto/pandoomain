@@ -7,15 +7,12 @@ ISCAN_VERSION = 5.73-104.0
 MINIFORGE_VERSION = 25.1.1-0
 
 CORES = all
-CACHE = $(PWD)/cache # Needs to be an absolute path
+# Needs to be an absolute path
+CACHE = $(PWD)/cache
 
-SETUP_CACHE = mkdir -p $(CACHE) &&\
-              export SNAKEMAKE_OUTPUT_CACHE=$(CACHE)
+SETUP_CACHE = mkdir -p $(CACHE) && export SNAKEMAKE_OUTPUT_CACHE=$(CACHE)
 
-SNAKEMAKE = $(SETUP_CACHE) &&\
-            snakemake --cores $(CORES)\
-                      --cache\
-                      --printshellcmds
+SNAKEMAKE = $(SETUP_CACHE) && snakemake --cores $(CORES) --cache --printshellcmds
 
 CONFIG = tests/config.yaml
 GENOMES = tests/genomes.txt
@@ -32,7 +29,7 @@ ISCAN_DRY = --dry
 
 RM_TEST = tests/rm_except_genomes.py
 
-MINIFORGE_INSTALL_DIR = $(shell echo -n $$HOME)/miniforge3
+MINIFORGE_INSTALL_DIR = $(shell printf "$$HOME")/miniforge3
 SERVER = https://github.com/conda-forge/miniforge/releases/download/$(MINIFORGE_VERSION)
 MINIFORGE = Miniforge3-$(MINIFORGE_VERSION)-Linux-x86_64.sh
 LINK_MINIFORGE = $(SERVER)/$(MINIFORGE)
@@ -47,11 +44,22 @@ R_LIBS_SCRIPT = utils/install_Rlibs.R
 
 .PHONY help:
 help:
+	@printf "The following are the available rules:\n\n"
 	@awk -F':' '/^[a-zA-Z0-9_-]+:/ {print $$1}' Makefile
+	@printf "\nA debugging rule is included.\n"
+	@printf	"    To use it:\n"
+	@printf "        make print-VARIABLE\n"
+	@printf "    To list all the variables run:\n"
+	@printf "        make print-vars\n"
 
 
-# Debugging print
-print-%: ; @echo $* = $($*)
+.PHONY print-vars:
+print-vars:
+	@grep '^[a-zA-Z0-9_]\+ *=' Makefile
+
+
+print-%:
+	@printf "$* = $($*)"
 
 
 $(MINIFORGE):
