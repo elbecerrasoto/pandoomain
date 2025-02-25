@@ -1,5 +1,4 @@
-SH = bash
-SHELL = /usr/bin/env $(SH)
+SHELL = /usr/bin/env bash
 
 SNAKEFILE = workflow/Snakefile
 PWD = $(shell pwd)
@@ -84,7 +83,6 @@ debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 
 .PHONY install-iscan:
 install-iscan: $(ISCAN_SCRIPT)
-	@printf "To install remove --dry-run option from the line given below:\n\n"
 	$< --reinstall --target $(ISCAN_VERSION) --data $(ISCAN_DATA)
 
 
@@ -98,7 +96,6 @@ $(MINIFORGE):
 install-mamba: $(MINIFORGE)
 	chmod +x $(MINIFORGE)
 	./$(MINIFORGE) -b -u -p $(MINIFORGE_INSTALL_DIR)
-	$(MINIFORGE_INSTALL_DIR)/bin/conda init $(SH)
 
 
 .PHONY style:
