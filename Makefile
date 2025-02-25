@@ -107,8 +107,8 @@ debug: $(SNAKEFILE) $(GENOMES) $(CONFIG)
 
 .PHONY style:
 style:
-	snakefmt .
-	black .
+	snakefmt workflow
+	black workflow utils tests
 	/usr/bin/Rscript -e 'styler::style_dir("workflow")'
 	/usr/bin/Rscript -e 'styler::style_dir("utils")'
 	isort --float-to-top -- utils workflow workflow/Snakefile
