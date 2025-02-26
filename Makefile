@@ -76,8 +76,8 @@ install-mamba: $(MINIFORGE)
 
 .PHONY install-iscan:
 install-iscan: $(ISCAN_SCRIPT)
-	@if [[ $(ISCAN_DRY) == '--dry' ]]; then printf "DRY RUN MODE\n"; fi
-	@if [[ $(ISCAN_DRY) == '--dry' ]]; then printf "to use the real thing, do:\n\n    make install-iscan ISCAN_DRY=''\n\n"; fi
+	@if [[ ! -z "$(ISCAN_DRY)" ]]; then printf "DRY RUN MODE\n"; fi
+	@if [[ ! -z "$(ISCAN_DRY)" ]]; then printf "to use the real thing, do:\n\n    make install-iscan ISCAN_DRY=''\n\n"; fi
 	$< --target $(ISCAN_VERSION) --data $(ISCAN_DATA) $(ISCAN_DRY)
 
 
