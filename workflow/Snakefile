@@ -4,27 +4,14 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/absence_presence.tsv",
-
-
-rule hmmer_input:
-    input:
-        rules.download_genomes.output.genomes,
-    output:
-        f"{RESULTS}/.input_faas.txt",
-    params:
-        results=f"{RESULTS}",
-    shell:
-        """
-        fd -HI -e faa '^GC' {params} >| {output}
-        """
+        f"{RESULTS}/.genomes_metadata_raw.tsv",
 
 
 rule hmmer:
     input:
-        faas=rules.hmmer_input.output,
+        "hi",
     output:
-        tsv=ensure(f"{RESULTS}/hmmer.tsv", non_empty=True),
+        hmmer=ensure(f"{RESULTS}/hmmer.tsv", non_empty=True),
     params:
         queries=f"{IN_QUERIES}",
     shell:
@@ -126,9 +113,9 @@ rule split_faa:
 
 rule interproscan:
     input:
-        sentinel=f"{rules.split_faa.output.sentinel}",
+        sentinel=rules.split_faa.output.sentinel,
     output:
-        tsv=f"{RESULTS}/.iscan_raw.tsv",
+        iscan_raw=f"{RESULTS}/.iscan_raw.tsv",
     params:
         tmp="/tmp",
         pieces=f"{RESULTS}/.pieces_iscan",
@@ -201,9 +188,9 @@ rule interproscan:
 
 rule add_header_iscan:
     input:
-        tsv=rules.interproscan.output,
+        iscan_raw=rules.interproscan.output,
     output:
-        tsv=f"{RESULTS}/iscan.tsv",
+        iscan=f"{RESULTS}/iscan.tsv",
     shell:
         """
         # Annotate headers
@@ -213,7 +200,7 @@ rule add_header_iscan:
 
 rule get_archs:
     input:
-        tsv=rules.add_header_iscan.output,
+        iscan=rules.add_header_iscan.output,
     output:
         archs=f"{RESULTS}/archs.tsv",
         pidrow=f"{RESULTS}/archs_pidrow.tsv",

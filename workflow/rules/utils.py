@@ -1,9 +1,3 @@
-import re
-from pathlib import Path
-
-import pandas as pd
-
-
 def bold_red(msg: str) -> str:
     # error format
     # https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal
@@ -32,6 +26,10 @@ def sort_filter_genomes(inpath: Path, outpath: Path, only_refseq: bool) -> list[
 
      A tsv with the used ids is generated on a given location.
     """
+    import re
+    from pathlib import Path
+
+    import pandas as pd
 
     GENOMES_REGEX = r"^GC[AF]_\d+\.\d+$"
     REFSEQ_REGEX = r"^GCF_"
@@ -62,21 +60,3 @@ def sort_filter_genomes(inpath: Path, outpath: Path, only_refseq: bool) -> list[
     df.to_csv(outpath, sep="\t")
 
     return list(df.genome)
-
-
-def for_all_genomes(mark: str, results_genomes: Path, genomes: [str]) -> list[str]:
-    return [str(results_genomes / genome / f"{genome}{mark}") for genome in genomes]
-
-
-def bind_files(sm_input, sm_output, header):
-
-    sm_input = str(sm_input)
-    sm_output = str(sm_output)
-    header = str(header)
-
-    with open(sm_output, "w") as wfile:
-        wfile.write(header + "\n")
-        for path in sm_input.split(" "):
-            with open(path, "r") as rfile:
-                for line in rfile:
-                    wfile.write(line)
