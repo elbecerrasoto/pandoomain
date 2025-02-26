@@ -5,6 +5,7 @@ include: "rules/download.smk"
 rule all:
     input:
         f"{RESULTS}/.genomes_metadata_raw.tsv",
+        f"{RESULTS}/genomes/genomes.tsv",
 
 
 rule hmmer:

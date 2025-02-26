@@ -177,10 +177,10 @@ def is_uncomplete(genome):
 
 if __name__ == "__main__":
 
-    with open(IN, "r", encoding=ENCODING) as hin:
+    with open(IN, "r", encoding=ENCODING) as h:
         genomes = []
-        for line in hin:
-            if match := re.search(GENOMES_REGEX, hin):
+        for line in h:
+            if match := re.search(GENOMES_REGEX, line):
                 genome = match.groups(1)
                 genomes.append(genome)
 
