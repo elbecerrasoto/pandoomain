@@ -1,4 +1,4 @@
-<img align="left" width="420" height="420" src="logo.svg">
+<img align="right" width="520" height="520" src="logo.svg">
 
 # HOOX
 ## /hʊks/
