@@ -1,6 +1,10 @@
-<img align="right" width="520" height="520" src="logo.svg">
+<h1 align="center">
+<img src="banner.svg" width="2048">
+</h1><br>
 
-# HOOX
+
+
+# :fishing_pole_and_fish: hoox :fishing_pole_and_fish:
 ## /hʊks/
 ### 0.0.1
 > Meaning on an ocean full of genomes!
