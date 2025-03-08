@@ -16,8 +16,8 @@ rule hmmer_input:
         results=f"{RESULTS}",
     shell:
         """
-        fd -HI -e faa '^GC' {params} >| {output}
-        """
+fd -HI -e faa '^GC' {params} >| {output}
+"""
 
 
 rule hmmer:
@@ -29,8 +29,8 @@ rule hmmer:
         queries=f"{IN_QUERIES}",
     shell:
         r"""
-        workflow/scripts/hmmer.py {params} {input} {output}
-        """
+workflow/scripts/hmmer.py {params} {input} {output}
+"""
 
 
 rule get_neighbors:
@@ -44,8 +44,8 @@ rule get_neighbors:
         gdir=f"{RESULTS}/genomes",  # Se convertira en output
     shell:
         """
-        workflow/scripts/neighbors.R {threads} {params} {input} >| {output}
-        """
+workflow/scripts/neighbors.R {threads} {params} {input} >| {output}
+"""
 
 
 rule all_faa:
@@ -59,8 +59,8 @@ rule all_faa:
     threads: workflow.cores
     shell:
         r"""
-        workflow/scripts/harvest.R {params} {threads} {input} >| {output}
-        """
+workflow/scripts/harvest.R {params} {threads} {input} >| {output}
+"""
 
 
 rule split_faa:
@@ -206,9 +206,9 @@ rule add_header_iscan:
         tsv=f"{RESULTS}/iscan.tsv",
     shell:
         """
-        # Annotate headers
-        workflow/scripts/add_header_iscan.R {params} {input} >| {output}
-        """
+# Annotate headers
+workflow/scripts/add_header_iscan.R {params} {input} >| {output}
+"""
 
 
 rule get_archs:
@@ -220,8 +220,8 @@ rule get_archs:
         code=f"{RESULTS}/archs_code.tsv",
     shell:
         """
-        workflow/scripts/archs.R {input} {output}
-        """
+workflow/scripts/archs.R {input} {output}
+"""
 
 
 rule get_absence_presence:
@@ -234,5 +234,5 @@ rule get_absence_presence:
         absence_presence=f"{RESULTS}/absence_presence.tsv",
     shell:
         """
-        workflow/scripts/absence_presence.R {input} {output}
-        """
+workflow/scripts/absence_presence.R {input} {output}
+"""

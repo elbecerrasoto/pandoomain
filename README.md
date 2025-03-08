@@ -1,7 +1,8 @@
-# :fishing_pole_and_fish: HOOX :fishing_pole_and_fish: 
+<img align="left" width="420" height="420" src="logo.svg">
+
+# HOOX
 ## /hʊks/
 ### 0.0.1
-
 > Meaning on an ocean full of genomes!
 
 ## Contents
@@ -11,6 +12,7 @@
 - [INPUTS](##INPUTS)
 - [OUTPUTS](##OUTPUTS)
 - [Installation](##Installation)
+
 
 ## Description
 

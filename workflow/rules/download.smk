@@ -39,8 +39,8 @@ rule get_metadata:
         f"{RESULTS}/genomes_metadata.tsv",
     shell:
         """
-        workflow/scripts/genome_metadata.R {input} >| {output}
-        """
+workflow/scripts/genome_metadata.R {input} >| {output}
+"""
 
 
 def get_genomes_dir(wc, output):
@@ -58,8 +58,8 @@ rule download_genomes:
         genomes_dir=get_genomes_dir,
     shell:
         """
-        workflow/scripts/hydrate.py {threads} {params} {input}
-        """
+workflow/scripts/hydrate.py {threads} {params} {input}
+"""
 
 
 def params_output_name(wc, output):
@@ -100,9 +100,9 @@ rule taxallnomy_linname:
         ori=f"{RESULTS}/taxallnomy_database/taxallnomy_lin_name.tab",
     shell:
         """
-        tar --directory={RESULTS} -vxf {input}
-        mv {params.ori} {output}
-        """
+tar --directory={RESULTS} -vxf {input}
+mv {params.ori} {output}
+"""
 
 
 rule join_genomes_taxallnomy:
@@ -114,5 +114,5 @@ rule join_genomes_taxallnomy:
     cache: True
     shell:
         """
-        workflow/scripts/cross.R {input} >| {output}
-        """
+workflow/scripts/cross.R {input} >| {output}
+"""
