@@ -1,181 +1,170 @@
-<h1 align="center">
-<img src="banner.svg" width="2048">
-</h1><br>
+<h1 align="center"> <img src="banner.svg" width="2048"> </h1><br>
 
 # pandoomain: the pipe
-## 0.0.1
-> Summoning dormant, long forgotten proteins ...
+
+## v0.0.1
+
+> Summoning dormant, long-forgotten proteins...
 
 ## Contents
 
-- [Description](##Description)
-- [Quick Usage](##Quick-Usage)
-- [INPUTS](##INPUTS)
-- [OUTPUTS](##OUTPUTS)
-- [Installation](##Installation)
+- [Description](#description)
+- [Quick Usage](#quick-usage)
+- [Inputs](#inputs)
+- [Outputs](#outputs)
+- [Installation](#installation)
 
 ## Description
 
-A [_snakemake pipeline_](https://snakemake.github.io/) capable of:
+*pandoomain* is a [*Snakemake pipeline*](https://snakemake.github.io/) designed for:
 
-+ Downloading genomes.
-+ Searching proteins using _Hidden Markov Models_ (HMMs).
-+ Domain annotation via `interproscan.sh`.
-+ Protein domain architecture extraction.
-+ Gene-Neighborhood extraction.
-+ Adding taxonomic information.
+- Downloading genomes.
+- Searching proteins using *Hidden Markov Models* (HMMs).
+- Domain annotation via `interproscan.sh`.
+- Extracting protein domain architectures.
+- Extracting gene neighborhoods.
+- Adding taxonomic information.
 
-The output data is useful for discovering new functional
-or evolutionary patterns through the analysis of
-_Protein Domain Architecture_ and _Gene-Neighbohood_ data.
+This pipeline helps identify functional and evolutionary patterns by analyzing *Protein Domain Architecture* and *Gene Neighborhood* data.
 
-For example some biological questions are better approached
-at a Domain level than raw just raw sequence.
+Some biological questions are better approached at the domain level rather than raw sequence level. This pipeline extends that idea to entire *Gene Neighborhoods*.
 
-This can be taken further with extracting the
-domain architecture of whole _Gene-Neighborhoods_.
+### Domain Representation
 
-_pandoomain_ represents a _domain architecture_ as a string.
-Which provides the following advantages:
-+ Existing libraries for string distance can be easily applied.
-+ Makes human inspection of the raw tables easier.
-+ Domain aligments are possible.
+*pandoomain* encodes a *domain architecture* as a string, offering several advantages:
 
-The conversion strategy is to add `+33` to the _PFAM ID_ (to avoid blank characters),
-and treat the resulting number as an _Unicode code point_.
+- Existing libraries for string distance can be directly applied.
+- Easier human inspection of raw tables.
+- Enables domain alignments.
 
-_Unicode_ can easily accomodate all defined _PFAMs_, which are in the order of `~16,000`,
-while _Unicode_ provides `155,063` characters.
+The encoding method involves adding *+33* to each *PFAM ID* (to avoid blank characters) and treating the result as a *Unicode code point*.
 
-The input to the pipeline is a text file of
-assembly accessions and
-and a directory of _HMMs_.
+*Unicode* can comfortably accommodate all defined *PFAMs* (\~16,000), as it provides *155,063* characters.
 
-Then the pipelines gets the genomes (in `.gff` and `faa` formates)
-and extract any protein that generates a _HMM_ hit.
+### Pipeline Workflow
 
-The resulting _hits_ are then annotated with `interproscan.sh`.
+The pipeline takes two inputs:
 
-Finally the _Domain Architectures_ (at protein and neighborhood level)
-are obtanined.
+1. A text file with assembly accessions.
+2. A directory of *HMMs*.
 
-The final results include taxonomic information for further analysis.
+It retrieves genomes (in `.gff` and `.faa` formats), extracts proteins that match *HMM* hits, annotates them with `interproscan.sh`, and derives *Domain Architectures* at both protein and neighborhood levels.
 
-_pandoomain_ is used at the [DeMoraes Lab](https://www.demoraeslab.org/) to search for novel bacterial toxins.
+The final results include taxonomic data for further analysis.
+
+*pandoomain* is used at the [DeMoraes Lab](https://www.demoraeslab.org/) to search for novel bacterial toxins.
 
 ### Rulegraph
 
-![rulegraph](rulegraph.svg)
+
+
+---
 
 ## Quick Usage
 
-###  Style 1: using config/config.yaml
+### Option 1: Using `config/config.yaml`
 
-Edit config/config.yaml and then run.
-``` sh
+Edit `config/config.yaml` and then run:
+
+```sh
 snakemake --cores all
 ```
 
-### Style 2: command line arguments
+### Option 2: Using Command-Line Arguments
 
-Specify configuration directly on the command line.
-``` sh
-snakemake --cores all\
-          --config\
-            genomes=genomes.txt\
+Run the pipeline with configuration directly on the command line:
+
+```sh
+snakemake --cores all \
+          --config \
+            genomes=genomes.txt \
             queries=queries
 ```
 
-Style 1 is preferred the edited configuration
-file act as log of the experiment, and makes
-the pipeline reproducible.
+*Option 1 is recommended* since an edited configuration file acts as a log of the experiment, improving reproducibility. *Option 2* is useful for quick test runs.
 
-Style 2 could be used for test runs.
+---
 
-## INPUTS
+## Inputs
 
-1. The input is a text file with no headers
-and a genome assembly accession per line.
-An example could be found at (tests/genomes.txt)[tests/genomes.txt]
+1. **Genome List**: A text file with no headers, containing one genome assembly accession per line. Example: [`tests/genomes.txt`](tests/genomes.txt).
 
-The `#` character could be used for comments.
+   - Use `#` for comments.
 
-2. A directory of `.hmm` files. Those could be
-obtained from  _interpro database_
-or be manually generated from alignments.
+2. **HMM Directory**: A directory containing `.hmm` files, which can be obtained from the *InterPro database* or manually generated from alignments.
 
-## OUTPUTS
+---
 
-_TSV Tables_ summarizing the _HMMs_ hits,
-genomes, taxonomy, and domain architectures.
+## Outputs
 
-## Usage
+The pipeline generates *TSV tables* summarizing:
 
-### 1. Edit config/config.yaml
-### 2. Run snakemake
+- *HMM* hits
+- Genome data
+- Taxonomic information
+- Protein domain architectures
 
-``` sh
-snakemake --cores all --configfile config/config.yaml
-```
+---
 
 ## Installation
 
-Install the dependencies,
-The one that requires the most setup is _interproscan.sh_,
-so a helper script is included (utils/install_iscan.py)[utils/install_iscan.py].
+### Dependencies
 
-Then the pipeline is run through the _snakemake_ framework.
+The most complex dependency is *interproscan.sh*, so a helper script is included: [`utils/install_iscan.py`](utils/install_iscan.py).
+
+The pipeline runs through the *Snakemake* framework.
 
 ### Cloud Installation
 
-Reading the code at:
-+ Check: https://github.com/elbecerrasoto/deploy-hoox
-
-Gives a pretty good walkthorugh of how to install _pandoomain_.
+For a guide on cloud deployment, see: [deploy-hoox](https://github.com/elbecerrasoto/deploy-hoox).
 
 ### Local Installation
 
-1. Clone the repository.
-``` sh
+#### 1. Clone the repository
+
+```sh
 git clone 'https://github.com/elbecerrasoto/pandoomain'
-cd hoox
+cd pandoomain
 ```
 
-2. Install an _Anaconda Distribution_.
+#### 2. Install an Anaconda Distribution
 
-I recommend (Miniforge)[https://github.com/conda-forge/miniforge].
-A _Makefile_ rule can by run to facilitate this process.
+I recommend [Miniforge](https://github.com/conda-forge/miniforge). A *Makefile* rule can simplify this step:
 
-``` sh
+```sh
 make install-mamba
 ```
 
-3. Install the _conda_ environment.
+#### 3. Install the Conda Environment
 
-``` sh
+```sh
 ~/miniforge3/bin/conda init
 source ~/.bashrc
 mamba shell init --shell bash --root-prefix=~/miniforge3
 source ~/.bashrc
 mamba env create --file environment.yml
-mamba activate hoox
+mamba activate pandoomain
 ```
 
-4. Install _interproscan.sh_
-``` sh
+#### 4. Install InterProScan
+
+```sh
 make install-iscan
 ```
 
+#### 5. Install R Libraries
 
-5. Install R libraries.
-
-``` sh
+```sh
 make install-Rlibs
 ```
 
+#### 6. Test the Installation
 
-5. Test the installation.
-
-``` sh
+```sh
 make test
 ```
+
+---
+
+Everything should now be set up and ready to run. 🚀
+
