@@ -116,7 +116,7 @@ The pipeline runs through the *Snakemake* framework.
 
 ### Cloud Installation
 
-For a guide on cloud deployment, see: [deploy-hoox](https://github.com/elbecerrasoto/deploy-hoox).
+For a guide on cloud deployment, see: [deploy-pandoomain](https://github.com/elbecerrasoto/deploy-pandoomain).
 
 ### Local Installation
 

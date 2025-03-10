@@ -1,4 +1,4 @@
-name: hoox
+name: pandoomain
 channels:
   - conda-forge
   - bioconda
