@@ -1,0 +1,45 @@
+digraph snakemake_dag {
+    graph[bgcolor=white, margin=0];
+    node[shape=ellipse, style="solid", fontname="ProtestRevolution", 
+         fontsize=24, fontcolor="gray", penwidth=0, 
+         color="gray"];
+    edge[penwidth=5, color="gray"];
+
+    0[label = "ALL"];
+    1[label = "GET ABSENCE PRESENCE"];
+    2[label = "JOIN GENOMES TAXALLNOMY"];
+    3[label = "TAXALLNOMY LINNAME"];
+    4[label = "TAXALLNOMY TARGZ"];
+    5[label = "GET METADATA"];
+    6[label = "GET METADATA RAW"];
+    7[label = "GET GENOMES RAW"];
+    8[label = "GET NEIGHBORS"];
+    9[label = "HMMER"];
+    10[label = "HMMER INPUT"];
+    11[label = "DOWNLOAD GENOMES"];
+    12[label = "GET ARCHS"];
+    13[label = "ADD HEADER ISCAN"];
+    14[label = "INTERPROSCAN"];
+    15[label = "SPLIT FAA"];
+    16[label = "ALL FAA"];
+
+    1 -> 0;
+    2 -> 1;
+    8 -> 1;
+    12 -> 1;
+    3 -> 2;
+    5 -> 2;
+    4 -> 3;
+    6 -> 5;
+    7 -> 6;
+    9 -> 8;
+    10 -> 9;
+    11 -> 10;
+    7 -> 11;
+    13 -> 12;
+    14 -> 13;
+    15 -> 14;
+    16 -> 15;
+    8 -> 16;
+}
+

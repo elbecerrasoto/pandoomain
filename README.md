@@ -1,4 +1,4 @@
-<h1 align="center"> <img src="banner.svg" width="2048"> </h1><br>
+<h1 align="center"> <img src="pics/banner.svg" width="2048"> </h1><br>
 
 # pandoomain: the pipe
 
@@ -29,6 +29,8 @@ This pipeline helps identify functional and evolutionary patterns by analyzing *
 
 Some biological questions are better approached at the domain level rather than raw sequence level. This pipeline extends that idea to entire *Gene Neighborhoods*.
 
+For further details check the documentation at [docs/README.md](docs/README.md).
+
 ### Domain Representation
 
 *pandoomain* encodes a *domain architecture* as a string, offering several advantages:
@@ -56,6 +58,8 @@ The final results include taxonomic data for further analysis.
 
 ### Rulegraph
 
+The steps that conform the pipeline are the following:
+![rulegraph](pics/rulegraph.svg)
 
 
 ---
