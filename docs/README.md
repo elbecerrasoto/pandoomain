@@ -72,15 +72,19 @@ results
 └── TGPD.tsv
 ```
 
-![filegraph](graphs/filegraph.svg)
+### Filegraph
 
-## Tables
+Relationship of rules and their produced files.
 
-| Table | Description | Main Columns |
+![filegraph](../pics/filegraph.svg)
+
+### Files Description
+
+| File | Description | Main Columns |
 | ----- | ----------- | ----------- | 
 |  genomes_metadata  | NCBI metadata about the assembly. | genome, tax_id |
 
-### `genome_metadata.tsv`
+#### `genome_metadata.tsv`
 
 Metadata of the genome assemblies.
 The data is obtained using the datasets NCBI utility.
@@ -90,3 +94,28 @@ The data is obtained using the datasets NCBI utility.
 | GCF_001286845.1 | Bacillus subtilis | Bacillus | 1423 | NA | current | Contig | 2015-08-31 | EBI | PRJEB9876 | 98.13 | 2.54 | 4061 | NA | 43.5 |
 | GCF_001286885.1 | Bacillus subtilis | Bacillus | 1423 | NA | current | Contig | 2015-08-31 | EBI | PRJEB9876 | 97.91 | 2.54 | 3945 | NA | 44 |
 | GCF_000394295.1 | Enterococcus faecalis EnGen0248 | Enterococcus | 1158629 | SF19 | current | Scaffold | 2013-05-15 | Broad Institute | PRJNA88885 | 99.5 | 0.05 | 3007 | allpaths v. R41985 | 37 |
+
+
+
+#### `genomes_ranks.tsv`
+
+Taxonomic ranks per asssembly.
+
+#### `genomes/genomes.tsv`
+
+Genomes that were downloaded,
+and are ready for analysis.
+
+#### `genomes/not_found.tsv`
+
+Genomes that weren't found.
+
+#### `hmmer.tsv`
+
+Table of proteins that
+have a hit with the provided domains.
+
+#### `neighbors.tsv`
+
+Table of upstream and downstream
+neighbors to the protein hits.
