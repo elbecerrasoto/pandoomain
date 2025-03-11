@@ -3,9 +3,6 @@
 # pandoomain: the pipe
 
 ## v0.0.1
-
-> Summoning dormant, long-forgotten proteins...
-
 ## Contents
 
 - [Description](#description)
