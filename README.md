@@ -1,15 +1,17 @@
 <h1 align="center"> <img src="pics/banner.svg" width="2048"> </h1>
 
 <p align="left">
-    <br />
     <a href="https://semver.org/"><img src="https://img.shields.io/badge/version-0.0.1-blue" alt="Semantic Versioning"></a>
-   <a href="https://snakemake.github.io/"><img src=" https://img.shields.io/badge/snake-make-green" alt="snakemake-green"></a>
+   <a href="https://snakemake.github.io/"><img src="https://img.shields.io/badge/snake-make-green" alt="snakemake-green"></a>
     <a href="http://choosealicense.com/licenses/mit/"><img src="https://img.shields.io/badge/license-MIT-red.svg?style=flat" alt="MIT License"></a>
-   <br />
 </p>
 <hr />
 
+---
+
 # pandoomain: the pipe
+
+---
 
 ## v0.0.1
 ## Contents
