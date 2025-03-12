@@ -2,7 +2,7 @@
 
 ---
 
-# pandoomain: The Documentation
+# pandoomain: the docs
 
 ---
 
@@ -13,6 +13,9 @@
     - [Domains](#domains)
     - [Configuration](#configuration)
 - [Output](#output)
+    -[Example of an Output Directory Structure](#example-of-an-output-directory-structure)
+    -[Filegraph](#filegraph)
+    -[Description of Key Output File](#description-of-key-output-files)
 
 ## Input
 
@@ -24,7 +27,7 @@ HMMs can be sourced from _InterPro_, _PFAM_, or created from a sequence alignmen
 ### Assembly IDs
 
 Assembly IDs can be retrieved from the NCBI Taxonomy database
-or by using the `datasets` command-line NCBI utility.
+or by using the [`datasets` command-line NCBI utility](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/).
 
 For example, this link provides assembly IDs for all Bacteria:
 

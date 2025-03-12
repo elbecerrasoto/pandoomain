@@ -20,7 +20,6 @@ results:
 # Search this many neighbors
 # upstream and downstream of any hit
 # Default 12
-# TODO: this is read by external scripts
 n_neighbors:
   12
 

@@ -63,7 +63,7 @@ The pipeline takes two inputs:
 2. A directory of *HMMs*.
 
 Then it retrieves genomes (in `.gff` and `.faa` formats), extracts proteins that match any given *HMM*,
-annotates them with `interproscan.sh`, and derives *Domain Architectures* at both protein and neighborhood levels.
+annotates them with [`interproscan.sh`](https://github.com/ebi-pf-team/interproscan), and derives *Domain Architectures* at both protein and neighborhood levels.
 
 The final results include taxonomic data for further analysis.
 
@@ -78,7 +78,7 @@ The steps that conform the pipeline are the following:
 
 ## Quick Usage
 
-### Option 1: Using `config/config.yaml`
+### Option 1: Using [`config/config.yaml`](config/config.yaml)
 
 Edit `config/config.yaml` and then run:
 
