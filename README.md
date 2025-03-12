@@ -1,4 +1,13 @@
-<h1 align="center"> <img src="pics/banner.svg" width="2048"> </h1><br>
+<h1 align="center"> <img src="pics/banner.svg" width="2048"> </h1>
+
+<p align="left">
+    <br />
+    <a href="https://semver.org/"><img src="https://img.shields.io/badge/version-0.0.1-blue" alt="Semantic Versioning"></a>
+   <a href="https://snakemake.github.io/"><img src=" https://img.shields.io/badge/snake-make-green" alt="snakemake-green"></a>
+    <a href="http://choosealicense.com/licenses/mit/"><img src="https://img.shields.io/badge/license-MIT-red.svg?style=flat" alt="MIT License"></a>
+   <br />
+</p>
+<hr />
 
 # pandoomain: the pipe
 
@@ -9,6 +18,7 @@
 - [Quick Usage](#quick-usage)
 - [Inputs](#inputs)
 - [Outputs](#outputs)
+- [Documentation](#documentation)
 - [Installation](#installation)
 
 ## Description
@@ -17,16 +27,15 @@
 
 - Downloading genomes.
 - Searching proteins using *Hidden Markov Models* (HMMs).
-- Domain annotation via `interproscan.sh`.
+- Domain annotation via [`interproscan.sh`](https://github.com/ebi-pf-team/interproscan).
 - Extracting protein domain architectures.
 - Extracting gene neighborhoods.
 - Adding taxonomic information.
 
 This pipeline helps identify functional and evolutionary patterns by analyzing *Protein Domain Architecture* and *Gene Neighborhood* data.
 
-Some biological questions are better approached at the domain level rather than raw sequence level. This pipeline extends that idea to entire *Gene Neighborhoods*.
+Some biological questions are better approached at the domain level rather than at raw sequence level. This pipeline extends that idea to entire *Gene Neighborhoods*.
 
-For further details check the documentation at [docs/README.md](docs/README.md).
 
 ### Domain Representation
 
@@ -36,9 +45,13 @@ For further details check the documentation at [docs/README.md](docs/README.md).
 - Easier human inspection of raw tables.
 - Enables domain alignments.
 
-The encoding method involves adding *+33* to each *PFAM ID* (to avoid blank characters) and treating the result as a *Unicode code point*.
+The encoding method consists of adding *+33*  to each *PFAM ID* and treating the result as a *Unicode code point*.
 
-*Unicode* can comfortably accommodate all defined *PFAMs* (\~16,000), as it provides *155,063* characters.
+The reasons for this are:
+- Adding *+33* avoids mapping to control and whitespace charaters,
+   using the same idea behind the *Phred33 score*.
+- *Unicode* can comfortably accommodate all defined *PFAMs* (*\~16,000*), as it provides *155,063* characters.
+   User defined HMMs could be assigned a *code point* bigger than *18,000* to comftably dodge any *PFAM ID*.
 
 ### Pipeline Workflow
 
@@ -47,7 +60,8 @@ The pipeline takes two inputs:
 1. A text file with assembly accessions.
 2. A directory of *HMMs*.
 
-It retrieves genomes (in `.gff` and `.faa` formats), extracts proteins that match *HMM* hits, annotates them with `interproscan.sh`, and derives *Domain Architectures* at both protein and neighborhood levels.
+Then it retrieves genomes (in `.gff` and `.faa` formats), extracts proteins that match any given *HMM*,
+annotates them with `interproscan.sh`, and derives *Domain Architectures* at both protein and neighborhood levels.
 
 The final results include taxonomic data for further analysis.
 
@@ -57,7 +71,6 @@ The final results include taxonomic data for further analysis.
 
 The steps that conform the pipeline are the following:
 ![rulegraph](pics/rulegraph.svg)
-
 
 ---
 
@@ -106,6 +119,13 @@ The pipeline generates *TSV tables* summarizing:
 - Protein domain architectures
 
 ---
+
+## Documentation
+
+For further details check the documentation at [docs/README.md](docs/README.md).
+
+---
+
 
 ## Installation
 
