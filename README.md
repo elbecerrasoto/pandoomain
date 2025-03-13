@@ -34,7 +34,7 @@
 
 This pipeline helps identify functional and evolutionary patterns by analyzing *Protein Domain Architecture* and *Gene Neighborhood* data.
 
-Some biological questions are better approached at the domain level rather than at raw sequence level. This pipeline extends that idea to entire *Gene Neighborhoods*.
+Some biological questions are better approached at the domain level rather than at the raw sequence level. This pipeline extends that idea to entire *Gene Neighborhoods*.
 
 
 ### Domain Representation
@@ -51,7 +51,7 @@ The reasons for this are:
 - Adding *+33* avoids mapping to control and whitespace charaters,
    using the same idea behind the *Phred33 score*.
 - *Unicode* can comfortably accommodate all defined *PFAMs* (*\~16,000*), as it provides *155,063* characters.
-   User defined HMMs could be assigned a *code point* bigger than *18,000* to comftably dodge any *PFAM ID*.
+   User-defined HMMs could be assigned a *code point* bigger than *18,000* to comfortably dodge any *PFAM ID*.
 
 ### Pipeline Workflow
 
@@ -188,4 +188,3 @@ make test
 ---
 
 Everything should now be set up and ready to run. 🚀
-
