@@ -97,6 +97,10 @@ snakemake --cores all \
 
 *Option 1 is recommended* since an edited configuration file acts as a log of the experiment, improving reproducibility. *Option 2* is useful for quick test runs.
 
+Before running anything perform a test run
+adding the following options `-np --printshellcmds`
+to the `snakemake` command.
+
 ---
 
 ## Inputs

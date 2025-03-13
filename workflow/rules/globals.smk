@@ -2,6 +2,8 @@ from pathlib import Path
 
 import utils
 
+configfile: "config/config.yaml"
+
 IN_GENOMES = Path(config.setdefault("genomes", "genomes.txt"))
 IN_QUERIES = Path(config.setdefault("queries", "queries"))
 
