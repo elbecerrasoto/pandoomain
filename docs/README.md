@@ -337,6 +337,9 @@ It looks like:
 
 #### `archs.tsv`
 
+Each row is a PFAM domain.
+It summarizes all the found PFAM domains.
+
 It looks like:
 
 | pid | domain | order | start | end | length | domain_txt |
@@ -347,7 +350,8 @@ It looks like:
 
 #### `archs_pid_row.tsv`
 
-Each row in this table is a protein.
+Same information as in `archs.tsv`,
+but each row in this table is a protein.
 It summarizes its domain architecture,
 Represented either as a list of PFAMs IDs or
 a string using the PFAMs single letter codes (explained at [`archs_code.tsv`](#archs_code.tsv)).
@@ -397,7 +401,7 @@ one_lettercode <- function(doms) {
 }
 ```
 
-+ The R function reverts the mapping:
++ This R function reverts the mapping:
 ```R
 code_to_pfam <- function(codes) {
   library(stringr)
