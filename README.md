@@ -7,8 +7,6 @@
 </p>
 <hr />
 
----
-
 # pandoomain: the pipe
 
 ---
@@ -115,10 +113,10 @@ snakemake --cores all \
 
 The pipeline generates *TSV tables* summarizing:
 
-- *HMM* hits
-- Genome data
-- Taxonomic information
-- Protein domain architectures
+- *HMM* hits.
+- Genome data.
+- Taxonomic information.
+- Protein domain architectures.
 
 ---
 
