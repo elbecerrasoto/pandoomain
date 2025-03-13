@@ -2,38 +2,37 @@
 
 ---
 
-# pandoomain: the docs
+# Pandoomain Documentation
 
 ---
 
 ## Contents
 
 - [Input](#input)
-    - [Assembly IDs](#assembly-ids)
-    - [Domains](#domains)
-    - [Configuration](#configuration)
+  - [Assembly IDs](#assembly-ids)
+  - [Domains](#domains)
+  - [Configuration](#configuration)
 - [Output](#output)
-    - [Example of an Output Directory Structure](#example-of-an-output-directory-structure)
-    - [Filegraph](#filegraph)
-    - [Description of Key Output File](#description-of-key-output-files)
+  - [Example Output Directory Structure](#example-output-directory-structure)
+  - [Filegraph](#filegraph)
+  - [Key Output Files](#key-output-files)
 
 ## Input
 
-> Where/How to Obtain the Input?
+> **Where to Obtain Input Data?**
 
-The accession numbers can be obtained from NCBI databases.
-HMMs can be sourced from _InterPro_, _PFAM_, or created from a sequence alignment using _HMMER_.
+- Assembly accession numbers can be retrieved from NCBI databases.
+- HMM profiles can be obtained from _InterPro_, _PFAM_, or generated via _HMMER_ from sequence alignments.
 
 ### Assembly IDs
 
-Assembly IDs can be retrieved from the NCBI Taxonomy database
-or by using the [`datasets` command-line NCBI utility](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/).
+Assembly IDs can be sourced from the NCBI Taxonomy database or using the [`datasets` command-line tool](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/).
 
-For example, this link provides assembly IDs for all Bacteria:
+Example link for bacterial assembly IDs:
 
-+ [NCBI Genomes](https://www.ncbi.nlm.nih.gov/datasets/genome/?taxon=2&typical_only=true&exclude_mags=true&exclude_multi_isolates=true)
+- [NCBI Genomes](https://www.ncbi.nlm.nih.gov/datasets/genome/?taxon=2&typical_only=true&exclude_mags=true&exclude_multi_isolates=true)
 
-#### Example of an Input `genomes.txt` File
+#### Example `genomes.txt` Input File
 
 ```txt
 GCF_001286845.1 # my favorite genome
@@ -43,11 +42,11 @@ GCF_001585665.1 # negative on YwqJ & YwqL proteins
 
 ### Domains
 
-For example, the _HMM_ for the _Pre-toxin TG domain_ (ID: _PF14449_) can be fetched from:
+HMM profiles for domains can be fetched from sources like PFAM. Example:
 
-+ [PF14449](https://www.ebi.ac.uk/interpro/wwwapi//entry/pfam/PF14449?annotation=hmm)
+- [_Pre-toxin TG domain_ (PF14449)](https://www.ebi.ac.uk/interpro/wwwapi//entry/pfam/PF14449?annotation=hmm)
 
-#### Example of an Input `queries` Directory
+#### Example `queries` Directory Structure
 
 ```txt
 queries
@@ -57,28 +56,22 @@ queries
 └── PF14449_PTTG.hmm
 ```
 
-#### Example of an HMM File
+#### Example HMM File
 
-Test HMMs profiles are included at [`tests/queries`](../tests/queries)
+Test HMM profiles are available in [`tests/queries`](../tests/queries), e.g.:
 
-For example:
-+ [`PF04493_EndoV.hmm`](../tests/queries/PF04493_EndoV.hmm)
+- [`PF04493_EndoV.hmm`](../tests/queries/PF04493_EndoV.hmm)
 
 ### Configuration
 
 #### [`config/config.yaml`](../config/config.yaml)
 
-To configure the pipeline edit the file at: [`config/config.yaml`](../config/config.yaml).
+Pipeline configuration is managed via [`config/config.yaml`](../config/config.yaml). The key option is:
 
-Of the configurtion options the most relevant is:
-- **`n_neighbors`** which controls how many genes to return as neighbors.
-    The returned genes are given *+N* positions upstream and *-N* positions downstream
-    of the hit. Neighbors should be on the same contig, so for a big *N*, or if the hit is close to an edge of the contig, the returned genes would be less than *2N*.
+- **`n_neighbors`**: Specifies the number of neighboring genes to return (±N positions relative to the hit). If a hit is near a contig boundary, fewer than `2N` genes may be returned.
 
+#### Example `config.yaml`
 
-This is an example `yaml` which contains all the options.
-However if none if provided, default options for the pipeline could be found
-at [`workflow/rules/globals.smk`](../workflow/rules/globals.smk)
 ```yaml
 # Input genome list.
 genomes:
@@ -88,51 +81,38 @@ genomes:
 queries:
   queries
 
-# Where to store the results?
+# Output directory.
 results:
   results
 
-# Search this many neighbors
-# upstream and downstream of any hit
+# Number of neighboring genes.
 n_neighbors:
   12
 
-# Batch size (sequence entries per fasta)
-# for interpro runs
+# Batch size for InterPro runs.
 batch_size:
   8000
 
-# Fasta formatting
-# NCBI uses 80
-# but it's usually 60
-# Default 80
+# FASTA formatting width.
 faa_width:
   80
 
-# Only use genomes
-# from NCBI RefSeq assembly
+# Use only RefSeq genomes.
 only_refseq:
   false
 
-# DO NOT trigger a fatal error
-# on NO network access.
+# Allow offline mode without error.
 offline:
   false
 ```
 
-#### Enviromental Variables
+#### Environmental Variables
 
-The script that downloads the genomes requires the following environmental variable:
-+ `NCBI_DATASETS_APIKEY`
+The genome download script requires:
 
-If the variable is not set, the script can still download the target genomes, but at a reduced speed.
+- `NCBI_DATASETS_APIKEY` (increases request limit from 3 to 10/sec per NCBI guidelines).
 
-According to NCBI documentation:
-
-> E-utils users are allowed 3 requests/second without an API key. Create an API key to increase your e-utils limit to 10 requests/second.
-
-
-To set this up, add the following line to your shell configuration (e.g. `~/.bashrc`):
+To set it up, add to your shell config (e.g., `~/.bashrc`):
 
 ```sh
 export NCBI_DATASETS_APIKEY="your_api_key_here"
@@ -142,7 +122,7 @@ export NCBI_DATASETS_APIKEY="your_api_key_here"
 
 ## Output
 
-### Example of an Output Directory Structure
+### Example Output Directory Structure
 
 ```txt
 results
@@ -155,59 +135,49 @@ results
 │   ├── GCA_001457635.1
 │   │   ├── GCA_001457635.1.faa
 │   │   └── GCA_001457635.1.gff
-│   ├── GCA_021491795.1
-│   │   ├── GCA_021491795.1.faa
-│   │   └── GCA_021491795.1.gff
-│   ├── GCF_000394295.1
-│   │   ├── GCF_000394295.1.faa
-│   │   └── GCF_000394295.1.gff
-│   ├── GCF_001286845.1
-│   │   ├── GCF_001286845.1.faa
-│   │   └── GCF_001286845.1.gff
 │   ├── genomes.tsv
 │   └── not_found.tsv
 ├── genomes_metadata.tsv
-├── genomes_ranks.tsv
 ├── hmmer.tsv
-├── iscan.tsv
 ├── neighbors.tsv
 ├── taxallnomy_lin_name.tsv
-├── taxallnomy.tar.gz
 └── TGPD.tsv
 ```
 
 ### Filegraph
 
-Relationships between rules and their output files:
+Illustrating rule-output file relationships:
 
 ![filegraph](../pics/filegraph.svg)
 
-### Description of Key Output Files
+### Key Output Files
 
-| File | Description | Main Columns |
-| ----- | ----------- | ----------- |
-| genomes_metadata.tsv | NCBI metadata about the assembly. | genome, tax_id |
-| taxallnomy_lin_name.tsv | Data from [taxallnomy](https://sourceforge.net/projects/taxallnomy/). | tax_id, phylum, class, order, family, genus, species |
-| genomes_ranks.tsv | Taxa of each assembly. | genome, tax_id |
-| genomes/genomes.tsv | Succesfully downladed genomes. | genome |
-| genomes/not_found.tsv | List of failed to download genomes. | genome |
-| hmmer.tsv | Summary of all the hit of query HMMs. | genome, pid, query |
-| neighbors.tsv | Gene neighborhood of all the hits. | genome, nei, neioff, pid, strand |
-| all.faa | Protein FASTA file of all founded proteins (hits and neighbors). | NA |
-| iscan.tsv | Domain annotations of `all.faa` generated by `interproscan.sh`. | pid, start, end, interpro, memberDB, analysis |
-| archs.tsv | Summary of domain architectures of all proteins. Each row is a domain. | pid, domain, start, end |
-| archs_pid_row.tsv | Same information as the `archs.tsv`, however each row represents a protein.| pid, arch, arch_code |
-| archs_codes.tsv | Mapping of PFAMS to a single _Unicode_ character.| domain, letter |
-| TGPD.tsv | Relationtioships between taxa, genomes, proteins, and domains.| tax_id, genome, pid, domain |
-| absence_presence.tsv | Genomes patterns of abscence/presence of domains. | genome, tax_id |
+| File | Description | Key Columns |
+|------|-------------|-------------|
+| `genomes_metadata.tsv` | NCBI assembly metadata. | genome, tax_id |
+| `taxallnomy_lin_name.tsv` | Taxonomic lineage info. | tax_id, phylum, genus |
+| `genomes_ranks.tsv` | Taxonomic ranks per assembly. | genome, tax_id |
+| `genomes/genomes.tsv` | Successfully downloaded genomes. | genome |
+| `genomes/not_found.tsv` | Failed genome downloads. | genome |
+| `hmmer.tsv` | Query HMM hits. | genome, pid, query |
+| `neighbors.tsv` | Gene neighborhoods of hits. | genome, nei, neioff, pid, strand |
+| `all.faa` | FASTA file of all found proteins. | N/A |
+| `iscan.tsv` | Domain annotations from `interproscan.sh`. | pid, start, end, interpro, analysis |
+| `archs.tsv` | Domain architectures of proteins. | pid, domain, start, end |
+| `archs_pid_row.tsv` | Per-protein architecture summary. | pid, arch, arch_code |
+| `archs_code.tsv` | PFAM-to-Unicode mapping. | domain, letter |
+| `TGPD.tsv` | Taxa-genome-protein-domain relationships. | tax_id, genome, pid, domain |
+| `absence_presence.tsv` | Presence/absence patterns of domains. | genome, tax_id |
 
-Intermediary files and less critical ones are marked as hidden files (with a `.` prefix). They are not described as they are subject to change, serving mainly mechanistic roles to keep _pandoomain_ functional.
+Intermediary files (prefixed with `.`) are subject to change and serve internal purposes.
+
+---
 
 ### Description of Common Columns
 
-+ `genome`: [Genome Assembly Accession Number](https://support.nlm.nih.gov/kbArticle/?pn=KA-03451)
-+ `pid`: [NCBI Reference Sequence](https://www.ncbi.nlm.nih.gov/refseq/about/nonredundantproteins/)
-+ `taxid`: [taxonomy identifier (TaxId)](https://www.ncbi.nlm.nih.gov/books/NBK53758/#taxonomyqs.Data_Model)
+- `genome`: [NCBI Assembly Accession](https://support.nlm.nih.gov/kbArticle/?pn=KA-03451)
+- `pid`: [NCBI Reference Sequence](https://www.ncbi.nlm.nih.gov/refseq/about/nonredundantproteins/)
+- `taxid`: [NCBI Taxonomy ID](https://www.ncbi.nlm.nih.gov/books/NBK53758/#taxonomyqs.Data_Model)
 
 #### `genome_metadata.tsv`
 
@@ -237,7 +207,7 @@ It looks like:
 
 #### `genomes_ranks.tsv`
 
-Taxonomic ranks per asssembly.
+Taxonomic ranks per assembly.
 
 It looks like:
 
@@ -264,14 +234,14 @@ It looks like:
 #### `genomes/not_found.tsv`
 
 Genomes that weren't found, due to
-having a unexistent ID or due to a network failure.
+having an unexistent ID or due to a network failure.
 
 Usually _assembly IDs_ end on _0_ ar _5_ and the version number is tipycally at most _2_.
 
-However the pipeline considers anything that match the following _regular expresion_:
+However, the pipeline considers anything that matches the following _regular expression_:
 + `GC[AF]_\d+\.\d`
 
-It look like:
+It looks like:
 
 | id | genome | refseq | version |
 | --- | --- | --- | --- |
@@ -299,8 +269,8 @@ Table of upstream and downstream
 gene neighbors to the protein hits.
 
 The `neioff` column is an offset from the hit position:
-+ `-n` marks how many genes downstream such neighbor is.
-+ `+n` marks how many genes upstream such neighbor is.
++ `-n` marks how many genes downstream the neighbor is.
++ `+n` marks how many genes upstream the neighbor is.
 + `0` position marks the subject protein.
 
 The `order` column is the order of each protein as they appear on the contig.
@@ -308,10 +278,10 @@ The `order` column is the order of each protein as they appear on the contig.
 The last columns are named as the query domains, and mark by which query that neighbor was found.
 They are useful as filters to subset the _neighbors table_ to only neighbors of a given query.
 
-The `nei` column mean neighborhood index, and is a counter of the neighbors of a single genome (assembly).
+The `nei` column means *neighborhood index*, and is a counter of the neighbors of a single genome (assembly).
 
 To generate a single `neighborhood ID` a combination of _genome_ and _nei_ suffices.
-To generate a single `neighbor entry ID` a combination of the _genome_, _nei_ and _neioff_ suffices. 
+To generate a single `neighbor entry ID` a combination of the _genome_, _nei_, and _neioff_ suffices. 
 
 It looks like:
 
@@ -329,7 +299,7 @@ that were found by _pandoomain_,
 including those that are neighbors to
 the subject proteins (hits).
 
-It look like:
+It looks like:
 
 ``` faa
 >WP_000141959.1 TIGR01741 family protein [Staphylococcus aureus]
@@ -352,7 +322,7 @@ Domain annotation of
 the proteins that were found by
 _pandoomain_ (proteins contained on `all.faa`).
 
-The annotation if performed by [`interproscan.sh`](https://github.com/ebi-pf-team/interproscan).
+The annotation is performed by [`interproscan.sh`](https://github.com/ebi-pf-team/interproscan).
 
 It looks like:
 
@@ -364,7 +334,7 @@ It looks like:
 
 #### `archs.tsv`
 
-It look like:
+It looks like:
 
 | pid | domain | order | start | end | length | domain_txt |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -377,9 +347,9 @@ It look like:
 Each row in this table is a protein.
 It summarizes its domain architecture,
 Represented either as a list of PFAMs IDs or
-a string using the PFAMs sigle letter codes (explained at [`archs_code.tsv`](#archs_code.tsv)).
+a string using the PFAMs single letter codes (explained at [`archs_code.tsv`](#archs_code.tsv)).
 
-It look like:
+It looks like:
 
 | pid | arch | ndoms | length | arch_code |
 | --- | --- | --- | --- | --- |
@@ -390,9 +360,9 @@ It look like:
 
 #### `archs_code.tsv`
 
-Each _PFAM_ domain is converted to a single character represention.
+Each _PFAM_ domain is converted to a single character representation.
 The mapping is generated by adding `+33` to the _PFAM ID_ and then
-interprenting the results as an _Unicode Point_.
+interpreting the results as a _Unicode Point_.
 
 The resulting characters are summarized in this table.
 
@@ -440,8 +410,8 @@ code_to_pfam <- function(codes) {
 
   appends <- map_chr(
     PF_INT_LEN - str_length(pfam_chars),
-    \(x) ifelse(x > 0, str_flatten(rep("0", x)), "")
-  )
+ \(x) ifelse(x > 0, str_flatten(rep("0", x)), "")
+ )
 
   OUT <- str_c(PF_LEAD_CHAR, appends, pfam_chars)
   stopifnot("Bad PFAM ID" = all(str_length(OUT) == TOTAL_LEN))
@@ -460,8 +430,8 @@ It looks like:
 
 ### `TGPD.tsv`
 
-Short for _Taxa, Genome, Protein and Domain_. This table
-joins those four things. In a way is a summary of all the pipeline results.
+Short for _Taxa, Genome, Protein, and Domain_. This table
+joins those four things. In a way, it is a summary of all the pipeline results.
 
 It looks like:
 
@@ -474,9 +444,9 @@ It looks like:
 #### `absence_presence.tsv`
 
 Contains the hits and neighbor proteins annotated domains.
-Each row is a genome with its patterns of absence or precense of all the domains found by the pipeline.
+Each row is a genome with its patterns of absence or presence of all the domains found by the pipeline.
 
-If only the initial qurey domains are wanted a simple selection of the correnct columns will do.
+If only the initial query domains are wanted a simple selection of the correct columns will do.
 
 It looks like:
 
@@ -486,3 +456,6 @@ It looks like:
 | GCF_000744065.1 | 1520703 | 'Chrysanthemum coronarium' phytoplasma | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | Bacteria | Mycoplasmatota | Mollicutes | Acholeplasmatales | Acholeplasmataceae | Candidatus Phytoplasma |
 | GCF_009268075.1 | 295320 | 'Cynodon dactylon' phytoplasma | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | Bacteria | Mycoplasmatota | Mollicutes | Acholeplasmatales | Acholeplasmataceae | Candidatus Phytoplasma |
 
+---
+
+This document provides a comprehensive overview of Pandoomain's inputs, configurations, and output files. For further details, refer to individual module documentation or contact the project maintainers.
