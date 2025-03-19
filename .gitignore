@@ -2,6 +2,8 @@ genomes.txt
 queries
 results
 
+interproscan*
+
 graphs
 tests/results
 

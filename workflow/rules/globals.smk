@@ -1,8 +1,28 @@
 from pathlib import Path
 
-import utils
+
+def bold_red(msg: str) -> str:
+    # error format
+    # https://stackoverflow.com/questions/287871/how-do-i-print-colored-text-to-the-terminal
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    return f"{FAIL}{BOLD}{msg}{ENDC}"
+
+
+def is_internet_on():
+    # https://stackoverflow.com/questions/20913411/test-if-an-internet-connection-is-present-in-python
+    import socket
+
+    try:
+        socket.create_connection(("1.1.1.1", 53))
+        return True
+    except OSError:
+        return False
+
 
 configfile: "config/config.yaml"
+
 
 IN_GENOMES = Path(config.setdefault("genomes", "genomes.txt"))
 IN_QUERIES = Path(config.setdefault("queries", "queries"))
@@ -18,14 +38,14 @@ OFFLINE_MODE = bool(config.setdefault("offline", False))
 
 
 assert IN_GENOMES.is_file(), (
-    utils.bold_red("Input genome assembly list file was not found.")
+    bold_red("Input genome assembly list file was not found.")
     + f"\nI failed to find it at: {IN_GENOMES.resolve()}"
 )
 
 assert IN_QUERIES.is_dir(), (
-    utils.bold_red("Input query directory was not found.")
+    bold_red("Input query directory was not found.")
     + f"\nI failed to find it at: {IN_QUERIES.resolve()}"
 )
 
 if not OFFLINE_MODE:
-    assert utils.is_internet_on(), utils.bold_red("No network connection.")
+    assert is_internet_on(), bold_red("No network connection.")
