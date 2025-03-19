@@ -20,6 +20,7 @@ dependencies:
   - aria2
   - openjdk
   # install_Rlibs.R
+  - r-devtools
   - zlib
   # Makefile
   - black
