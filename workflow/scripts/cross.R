@@ -17,7 +17,7 @@ TAXID_GENOMES <- argv[[2]]
 # TAXID_GENOMES <- "tests/results/genomes_metadata.tsv"
 
 NAMES <- c(
-  "tax_id", "superkingdom", "Kin", "sbKin",
+  "tax_id", "superkingdom", "Rea", "Kin", "sbKin",
   "spPhy", "phylum", "sbPhy", "inPhy", "spCla",
   "class", "sbCla", "inCla", "Coh", "sbCoh",
   "spOrd", "order", "sbOrd", "inOrd", "prOrd",
