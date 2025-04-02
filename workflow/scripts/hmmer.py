@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Iterable, Union
 
 import numpy as np
+import pandas as pd
 from pyhmmer import hmmsearch
 from pyhmmer.easel import SequenceFile
 from pyhmmer.plan7 import HMM, HMMFile
@@ -98,8 +99,7 @@ def run_genome(genome_path, hmms_files):
 
 if __name__ == "__main__":
 
-    with open(GENOMES_FILE, "r") as genomes_file:
-        genomes_paths = [Path(line.rstrip()) for line in genomes_file]
+    genomes_paths = pd.read_table(GENOMES_FILE).faa_path
 
     hmms_files = get_hmms(QUERIES_DIR)
     worker = partial(run_genome, hmms_files=hmms_files)
