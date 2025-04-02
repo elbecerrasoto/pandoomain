@@ -6,7 +6,7 @@
 # OUTPUT: neighbors.tsv to stdout
 
 # It operates on the following columns
-# genome, pid, queries
+# genome, pid, query
 # Any input table with those columns will do
 
 # Globals ----
@@ -44,7 +44,7 @@ GFFS_PATHS <- str_c(GENOMES_DIR, "/", GENOMES, "/", GENOMES, ".gff")
 if (interactive()) plan(multisession, workers = CORES) else plan(multicore, workers = CORES)
 
 
-SELECT <- c("genome", "nei", "neioff", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig", "queries")
+SELECT <- c("genome", "neid", "neoff", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig", "queries")
 
 
 # Helpers ----
@@ -165,7 +165,7 @@ queries2onehot <- function(neighbors) {
     relationship = "many-to-many"
   ) |>
     relocate(all_of(SELECT)) |>
-    arrange(genome, nei, neioff)
+    arrange(genome, neid, neoff)
 
   out
 }
@@ -206,8 +206,8 @@ process_gff <- function(gff, hmmer) {
 
     outi <- subgff |>
       mutate(
-        nei = i,
-        neioff = neiseqs,
+        neid = i,
+        neoff = neiseqs,
         queries = matched_queries
       )
 
