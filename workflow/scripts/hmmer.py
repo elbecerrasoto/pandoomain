@@ -10,9 +10,16 @@ from typing import Iterable, Union
 
 import numpy as np
 import pandas as pd
+import pyhmmer
 from pyhmmer import hmmsearch
 from pyhmmer.easel import SequenceFile
 from pyhmmer.plan7 import HMM, HMMFile
+
+DEPENDENCY_HELL = "0.10.14"
+assert (
+    pyhmmer.__version__ == DEPENDENCY_HELL
+), f"Use pyhmmer version: {DEPENDENCY_HELL}, newer versions break pandoomain."
+
 
 QUERIES_DIR = Path(sys.argv[1])
 GENOMES_FILE = sys.argv[2]
