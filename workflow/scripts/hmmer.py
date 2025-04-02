@@ -9,9 +9,17 @@ from pathlib import Path
 from typing import Iterable, Union
 
 import numpy as np
+import pandas as pd
+import pyhmmer
 from pyhmmer import hmmsearch
 from pyhmmer.easel import SequenceFile
 from pyhmmer.plan7 import HMM, HMMFile
+
+DEPENDENCY_HELL = "0.10.14"
+assert (
+    pyhmmer.__version__ == DEPENDENCY_HELL
+), f"Use pyhmmer version: {DEPENDENCY_HELL}, newer versions break pandoomain."
+
 
 QUERIES_DIR = Path(sys.argv[1])
 GENOMES_FILE = sys.argv[2]
@@ -50,7 +58,11 @@ def get_hmms(queries_path):
 
 def parse_genome(genome_path):
     genome_path = str(genome_path)
-    genome = re.search(GENOME_REGEX, genome_path).group(1)
+    genome = None
+
+    if match := re.search(GENOME_REGEX, genome_path):
+        genome = match.group(1)
+
     return genome
 
 
@@ -94,8 +106,7 @@ def run_genome(genome_path, hmms_files):
 
 if __name__ == "__main__":
 
-    with open(GENOMES_FILE, "r") as genomes_file:
-        genomes_paths = [Path(line.rstrip()) for line in genomes_file]
+    genomes_paths = pd.read_table(GENOMES_FILE).faa_path
 
     hmms_files = get_hmms(QUERIES_DIR)
     worker = partial(run_genome, hmms_files=hmms_files)
