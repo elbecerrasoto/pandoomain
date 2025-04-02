@@ -71,6 +71,7 @@ def sort_filter_genomes(inpath: Path, outpath: Path, only_refseq: bool) -> list[
     df["refseq"] = df.genome.apply(lambda x: bool(re.search(REFSEQ_REGEX, x)))
     df["id"] = df.genome.apply(lambda x: int(re.search(ID_REGEX, x).group(1)))
     df["version"] = df.genome.apply(lambda x: int(re.search(VERSION_REGEX, x).group(1)))
+    df["faa_path"] = df.genome.apply(lambda g: OUT_DIR / f"{g}" / f"{g}.faa")
 
     df = df.drop_duplicates()
     df = df.sort_values(["id", "version", "refseq"], ascending=False)
