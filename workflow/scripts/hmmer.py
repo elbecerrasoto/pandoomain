@@ -50,7 +50,11 @@ def get_hmms(queries_path):
 
 def parse_genome(genome_path):
     genome_path = str(genome_path)
-    genome = re.search(GENOME_REGEX, genome_path).group(1)
+    genome = None
+
+    if match := re.search(GENOME_REGEX, genome_path):
+        genome = match.group(1)
+
     return genome
 
 

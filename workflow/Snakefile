@@ -4,7 +4,7 @@ include: "rules/download.smk"
 
 rule all:
     input:
-        f"{RESULTS}/absence_presence.tsv",
+        f"{RESULTS}/genomes/genomes.tsv",
 
 
 rule hmmer:
