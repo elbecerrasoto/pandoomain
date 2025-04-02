@@ -102,7 +102,6 @@ def worker(idx, genomes):
 
         # Batch Processing
         batch_dir.mkdir(parents=True)
-
         sp.run(dehydrate_cmd, check=True)
         sp.run(unzip_cmd, check=True)
         sp.run(rehydrate_cmd, check=True)
@@ -181,7 +180,7 @@ if __name__ == "__main__":
         genomes = []
         for line in h:
             if match := re.search(GENOMES_REGEX, line):
-                genome = match.groups(1)
+                genome = match.groups(1)[0]
                 genomes.append(genome)
 
     genomes = list(set(genomes))  # rm duplications
