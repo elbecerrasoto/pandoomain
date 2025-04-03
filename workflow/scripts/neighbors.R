@@ -21,6 +21,7 @@ suppressPackageStartupMessages({
 
 
 ARGV <- commandArgs(trailingOnly = TRUE)
+DEBUG <- FALSE
 
 
 if (!interactive()) {
@@ -36,14 +37,12 @@ if (!interactive()) {
 }
 
 
-HMMER <- read_tsv(HMMER_FILE, show_col_types = FALSE)
-GENOMES <- unique(HMMER$genome)
-GFFS_PATHS <- str_c(GENOMES_DIR, "/", GENOMES, "/", GENOMES, ".gff")
 
 # multicore is faster, but does not work on interactive session
 if (interactive()) plan(multisession, workers = CORES) else plan(multicore, workers = CORES)
 
 
+# output cols
 SELECT <- c(
   "genome", "neid", "neoff",
   "order", "pid", "gene",
@@ -156,42 +155,71 @@ print_tibble <- function(tib) {
 
 # Code ----
 
+get_neighbors <- function(gff_path, n, subjects) {
+  # Find all the neighborhoods on a given genome
+  # A genome is specified by an existing gff file
 
-process_gff <- function(gff, hmmer) {
-  # This local hmmer table is summarized by pid
-  # and filtered by genome
-  # and queries is a list
+  # Input:
+  #
+  #   gff_path: character
+  #     A valid gff_path
+  #
+  #   n: integer
+  #     At most +/- n neighbors to extract
+  #
+  #   subjects: tibble
+  #     A table with target genes, it contains
+  #     at least the following cols:
+  #     genome, pid, query
 
-  # this local hmmer tibble has the form
-  # pid queries
-  # p1  q1,q2,...
+  # Output:
+  #   neighborhoods_on_genome: tibble
 
-  # where is a table with subject and which query was used to find it.
+  gff <- read_gff(gff_path)
 
-  queries <- hmmer$queries
-  names(queries) <- hmmer$pid
+  # Add row numbers to extract neighborhood
+  # A neighborhood is basically the context (+- rows) around a hit
+  gff <- gff |>
+    mutate(row = 1:nrow(gff)) |>
+    relocate(row)
 
-  # redundant unique, cause hmmer is grouped by pid
-  # but better be more explit?
-  pids <- unique(hmmer$pid)
+  igenome <- extract_genome(gff_path)
+
+  # Filter by genome and reshape the subjects data to
+  # expose all the queries that found an specific hit
+  pid_queries <- subjects |>
+    filter(genome == igenome) |>
+    distinct(genome, pid, query) |>
+    group_by(pid) |>
+    summarize(queries = list(query))
+
+  queries <- pid_queries$queries
+  names(queries) <- pid_queries$pid
 
   hits <- gff |>
-    filter(pid %in% hmmer$pid)
+    filter(pid %in% pid_queries$pid)
 
   rows <- hits$row
   pids <- hits$pid
 
-  starts <- if_else(rows + N <= nrow(gff), rows + N, nrow(gff))
-  ends <- if_else(rows - N >= 1, rows - N, 1)
+  # Check boundaries
+  starts <- if_else(rows + n <= nrow(gff), rows + n, nrow(gff))
+  ends <- if_else(rows - n >= 1, rows - n, 1)
 
   out <- vector(length = length(rows), mode = "list")
+
+  # Iterate over all the hits found on a genome
+  # Extracting the context of each hit
   for (i in seq_along(rows)) {
+    # Which queries found current hit?
     matched_queries <- queries[[pids[[i]]]]
 
     s <- starts[i]
     e <- ends[i]
     icontig <- gff[rows[i], ]$contig
 
+    # Extract the hit and its context
+    # checking that they are on the same contig
     subgff <- gff[s:e, ] |>
       filter(contig == icontig)
 
@@ -200,6 +228,7 @@ process_gff <- function(gff, hmmer) {
     top <- max(subgff$row)
     neiseqs <- get_neiseq(bottom, center, top)
 
+    # Format the output
     outi <- subgff |>
       mutate(
         neid = i,
@@ -210,53 +239,31 @@ process_gff <- function(gff, hmmer) {
     out[[i]] <- outi
   }
 
+  # All neighborhoods found on a given genome
   bind_rows(out)
 }
 
+# Main ----
 
-get_neighbors <- function(gff_path) {
-  gff <- read_gff(gff_path)
-  gff <- gff |>
-    mutate(row = 1:nrow(gff)) |>
-    relocate(row)
+hmmer <- read_tsv(HMMER_FILE, show_col_types = FALSE)
 
-  igenome <- extract_genome(gff_path)
+genomes <- unique(hmmer$genome)
+gffs_paths <- str_c(GENOMES_DIR, "/", genomes, "/", genomes, ".gff")
 
-  hmmer <- HMMER |>
-    filter(genome == igenome) |>
-    distinct(genome, pid, query) |>
-    group_by(pid) |>
-    summarize(queries = list(query))
+main <- partial(get_neighbors, n = N, subjects = hmmer)
 
-  process_gff(gff, hmmer) |>
-    select(all_of(SELECT))
+if (DEBUG) {
+  # A simpler map, earsier to debug with breakpoints
+  done <- map(GFFS_PATHS, possibly(MAIN, tibble()))
+} else {
+  # Parallel map for full power
+  done <- future_map(gffs_paths, possibly(main, tibble()))
 }
-
-
-MAIN <- function(gff_path) {
-  tryCatch(
-    error = function(cnd) {
-      msg <- glue("Call: get_neignbors({gff_path})\n Error: {cnd}")
-      stop(msg)
-    },
-    {
-      get_neighbors(gff_path)
-    }
-  )
-}
-
-
-done <- future_map(GFFS_PATHS, possibly(MAIN, tibble()))
-
-# map to debug, allows breakpoints
-# done <- map(GFFS_PATHS, possibly(MAIN, tibble()))
 
 neighbors <- bind_rows(done)
 stopifnot("Empty Output." = nrow(neighbors) > 0)
 
-# stopifnot("Hits don't on hmmer and calculated neighbordhoods don't match." = nrow(neighbors |> filter(neoff == 0)) == nrow(HMMER))
-#
-
 # Printing to stdout does not work pretty well on list variables
 neighbors |>
+  select(all_of(SELECT)) |>
   print_tibble()
