@@ -44,7 +44,13 @@ GFFS_PATHS <- str_c(GENOMES_DIR, "/", GENOMES, "/", GENOMES, ".gff")
 if (interactive()) plan(multisession, workers = CORES) else plan(multicore, workers = CORES)
 
 
-SELECT <- c("genome", "neid", "neoff", "order", "pid", "gene", "product", "start", "end", "strand", "frame", "locus_tag", "contig", "queries")
+SELECT <- c(
+  "genome", "neid", "neoff",
+  "order", "pid", "gene",
+  "product", "start", "end",
+  "strand", "frame", "locus_tag",
+  "contig", "queries"
+)
 
 
 # Helpers ----
@@ -148,39 +154,29 @@ print_tibble <- function(tib) {
     writeLines(stdout(), sep = "")
 }
 
-queries2onehot <- function(neighbors) {
-  queries_onehot <- neighbors |>
-    group_by(genome, pid) |>
-    reframe(query = unlist(queries)) |>
-    mutate(presence = TRUE) |>
-    distinct() |>
-    pivot_wider(
-      names_from = query,
-      values_from = presence,
-      values_fill = FALSE,
-      names_sort = TRUE
-    )
-
-  out <- left_join(queries_onehot, neighbors, join_by(genome, pid),
-    relationship = "many-to-many"
-  ) |>
-    relocate(all_of(SELECT)) |>
-    arrange(genome, neid, neoff)
-
-  out
-}
-
 # Code ----
 
 
 process_gff <- function(gff, hmmer) {
+  # This local hmmer table is summarized by pid
+  # and filtered by genome
+  # and queries is a list
+
+  # this local hmmer tibble has the form
+  # pid queries
+  # p1  q1,q2,...
+
+  # where is a table with subject and which query was used to find it.
+
   queries <- hmmer$queries
   names(queries) <- hmmer$pid
 
+  # redundant unique, cause hmmer is grouped by pid
+  # but better be more explit?
   pids <- unique(hmmer$pid)
 
   hits <- gff |>
-    filter(pid %in% pids)
+    filter(pid %in% hmmer$pid)
 
   rows <- hits$row
   pids <- hits$pid
@@ -190,7 +186,7 @@ process_gff <- function(gff, hmmer) {
 
   out <- vector(length = length(rows), mode = "list")
   for (i in seq_along(rows)) {
-    matched_queries <- queries[pids[i]]
+    matched_queries <- queries[[pids[[i]]]]
 
     s <- starts[i]
     e <- ends[i]
@@ -208,7 +204,7 @@ process_gff <- function(gff, hmmer) {
       mutate(
         neid = i,
         neoff = neiseqs,
-        queries = matched_queries
+        queries = str_flatten(matched_queries, collapse = ",")
       )
 
     out[[i]] <- outi
@@ -250,10 +246,17 @@ MAIN <- function(gff_path) {
 }
 
 
-done <- future_map(GFFS_PATHS, possibly(MAIN, tibble()))
+# done <- future_map(GFFS_PATHS, possibly(MAIN, tibble()))
+
+# map to debug, allows breakpoints
+done <- map(GFFS_PATHS, possibly(MAIN, tibble()))
 
 neighbors <- bind_rows(done)
+# stopifnot("Empty Output." = nrow(neighbors) > 0)
 
+# stopifnot("Hits don't on hmmer and calculated neighbordhoods don't match." = nrow(neighbors |> filter(neoff == 0)) == nrow(HMMER))
+#
+
+# Printing to stdout does not work pretty well on list variables
 neighbors |>
-  queries2onehot() |>
   print_tibble()
