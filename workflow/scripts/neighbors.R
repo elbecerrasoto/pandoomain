@@ -199,6 +199,21 @@ get_neighbors <- function(gff_path, n, subjects) {
   hits <- gff |>
     filter(pid %in% pid_queries$pid)
 
+  non_found_on_gff <- setdiff(pid_queries$pid, hits$pid)
+  non_found_on_hmmer <- setdiff(hits$pid, pid_queries$pid)
+
+  if (length(non_found_on_gff) != 0) {
+    warn("Some hmmer hits weren't found on the corresponding GFF.")
+    cat("Those are the following:")
+    cat(non_found_on_gff)
+  }
+
+  if (length(non_found_on_hmmer) != 0) {
+    warn("gff subsetting is finding genes non in the subects table.")
+    cat("Those are the following:")
+    cat(non_found_on_gff)
+  }
+
   rows <- hits$row
   pids <- hits$pid
 
@@ -253,7 +268,7 @@ gffs_paths <- str_c(GENOMES_DIR, "/", genomes, "/", genomes, ".gff")
 main <- partial(get_neighbors, n = N, subjects = hmmer)
 
 if (DEBUG) {
-  # A simpler map, earsier to debug with breakpoints
+  # A simpler map, easier to debug with breakpoints
   done <- map(gffs_paths, possibly(main, tibble()))
 } else {
   # Parallel map for full power
@@ -263,7 +278,8 @@ if (DEBUG) {
 neighbors <- bind_rows(done)
 stopifnot("Empty Output." = nrow(neighbors) > 0)
 
-# Printing to stdout does not work pretty well on list variables
-neighbors |>
-  select(all_of(SELECT)) |>
-  print_tibble()
+if (!interactive()) {
+  neighbors |>
+    select(all_of(SELECT)) |>
+    print_tibble()
+}
