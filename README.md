@@ -1,7 +1,7 @@
 <h1 align="center"> <img src="pics/banner.svg" width="2048"> </h1>
 
 <p align="left">
-    <a href="https://semver.org/"><img src="https://img.shields.io/badge/version-0.0.1-blue" alt="Semantic Versioning"></a>
+    <a href="https://semver.org/"><img src="https://img.shields.io/badge/version-0.0.2-blue" alt="Semantic Versioning"></a>
    <a href="https://snakemake.github.io/"><img src="https://img.shields.io/badge/snake-make-green" alt="snakemake-green"></a>
     <a href="http://choosealicense.com/licenses/mit/"><img src="https://img.shields.io/badge/license-MIT-red.svg?style=flat" alt="MIT License"></a>
 </p>
@@ -11,7 +11,7 @@
 
 ---
 
-## v0.0.1
+## v0.0.2
 ## Contents
 
 - [Description](#description)
@@ -192,3 +192,15 @@ make test
 ---
 
 Everything should now be set up and ready to run. 🚀
+
+## Version Changes
+
+### 0.0.2
+
++ Removal of *hmmer_input rule*.
+    + It's simpler to just use the `genomes.tsv` as input for the _hmmer rule_.
++ Removal of preprocessing rule for `genomes.txt`.
+    + Now the dependant rules can parse `genomes.txt` directly.
++ Fixed taxallnomy bug, caused by an updated DB.
+    + taxallnomy now has 43 cols instead of 42.
++ Removal of utils.py
