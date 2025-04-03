@@ -246,13 +246,13 @@ MAIN <- function(gff_path) {
 }
 
 
-# done <- future_map(GFFS_PATHS, possibly(MAIN, tibble()))
+done <- future_map(GFFS_PATHS, possibly(MAIN, tibble()))
 
 # map to debug, allows breakpoints
-done <- map(GFFS_PATHS, possibly(MAIN, tibble()))
+# done <- map(GFFS_PATHS, possibly(MAIN, tibble()))
 
 neighbors <- bind_rows(done)
-# stopifnot("Empty Output." = nrow(neighbors) > 0)
+stopifnot("Empty Output." = nrow(neighbors) > 0)
 
 # stopifnot("Hits don't on hmmer and calculated neighbordhoods don't match." = nrow(neighbors |> filter(neoff == 0)) == nrow(HMMER))
 #
