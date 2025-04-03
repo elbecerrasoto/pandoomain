@@ -254,7 +254,7 @@ main <- partial(get_neighbors, n = N, subjects = hmmer)
 
 if (DEBUG) {
   # A simpler map, earsier to debug with breakpoints
-  done <- map(GFFS_PATHS, possibly(MAIN, tibble()))
+  done <- map(gffs_paths, possibly(main, tibble()))
 } else {
   # Parallel map for full power
   done <- future_map(gffs_paths, possibly(main, tibble()))
