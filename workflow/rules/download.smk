@@ -66,6 +66,7 @@ rule taxallnomy_targz:
     params:
         url="https://sourceforge.net/projects/taxallnomy/files/latest/download",
         output_name=params_output_name,
+    retries: 3
     shell:
         """
         aria2c --dir {RESULTS}\

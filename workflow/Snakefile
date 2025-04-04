@@ -159,8 +159,6 @@ rule interproscan:
                 str(ISCAN_TMP),
                 "--goterms",
                 "--enable-tsv-residue-annot",
-                "--applications",
-                "Pfam",
             ]
             return cmd
 
