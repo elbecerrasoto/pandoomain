@@ -13,10 +13,6 @@
 
 ## v0.0.2
 
-I recommend using and sending patches
-to the upstream version that is at:
-https://github.com/elbecerrasoto/pandoomain
-
 ## Contents
 
 - [Description](#description)
