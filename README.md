@@ -13,6 +13,10 @@
 
 ## v0.0.2
 
+The maintained version is at:
+https://github.com/deMoraes-Lab/Pandoomain
+
+
 ## Contents
 
 - [Description](#description)
